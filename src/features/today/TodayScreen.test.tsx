@@ -1,5 +1,6 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { getDayLog, updateDayLog } from '@/db/repos/dayLogs';
 import { getEntry } from '@/db/repos/entries';
 import { createHabit } from '@/db/repos/habits';
 import { addDays } from '@/domain/day';
@@ -92,5 +93,59 @@ describe('pantalla Hoy', () => {
     await createHabit(habitInput({ name: 'Leer' }));
     renderRoute(<TodayScreen />, { url: `/?dia=${addDays(todayLocal(), 3)}` });
     expect(await screen.findByRole('button', { name: 'Día siguiente' })).toBeDisabled();
+  });
+
+  describe('ánimo, energía y nota del día', () => {
+    it('guarda el ánimo con su significado y permite deshacer', async () => {
+      await createHabit(habitInput({ name: 'Leer' }));
+      const { user } = renderRoute(<TodayScreen />);
+
+      const group = await screen.findByRole('group', { name: 'Ánimo' });
+      await user.click(within(group).getByRole('radio', { name: '4, bueno' }));
+
+      expect(await within(group).findByText('Bueno')).toBeInTheDocument();
+      expect(await getDayLog(todayLocal())).toMatchObject({ mood: 4 });
+
+      await user.click(await screen.findByRole('button', { name: 'Deshacer' }));
+      await waitFor(async () => {
+        expect(await getDayLog(todayLocal())).toBeUndefined();
+      });
+    });
+
+    it('la energía se puede quitar', async () => {
+      await createHabit(habitInput({ name: 'Leer' }));
+      const { user } = renderRoute(<TodayScreen />);
+
+      const group = await screen.findByRole('group', { name: 'Energía' });
+      await user.click(within(group).getByRole('radio', { name: '2, baja' }));
+      expect(await getDayLog(todayLocal())).toMatchObject({ energy: 2 });
+
+      await user.click(within(group).getByRole('button', { name: 'Quitar' }));
+      await waitFor(async () => {
+        expect(await getDayLog(todayLocal())).toBeUndefined();
+      });
+    });
+
+    it('guarda la nota del día', async () => {
+      await createHabit(habitInput({ name: 'Leer' }));
+      const { user } = renderRoute(<TodayScreen />);
+
+      const note = await screen.findByRole('textbox', { name: 'Nota del día' });
+      await user.type(note, 'Día tranquilo');
+      await user.click(screen.getByRole('button', { name: 'Guardar nota' }));
+
+      expect(await getDayLog(todayLocal())).toMatchObject({ note: 'Día tranquilo' });
+    });
+
+    it('fuera del límite retroactivo solo se lee', async () => {
+      await createHabit(habitInput({ name: 'Leer', createdOn: addDays(todayLocal(), -30) }));
+      const old = addDays(todayLocal(), -10);
+      await updateDayLog(old, { mood: 5, note: 'Buen día' });
+      renderRoute(<TodayScreen />, { url: `/?dia=${old}` });
+
+      expect(await screen.findByText(/Ánimo: muy bueno/)).toBeInTheDocument();
+      expect(screen.getByText('Buen día')).toBeInTheDocument();
+      expect(screen.queryByRole('group', { name: 'Ánimo' })).not.toBeInTheDocument();
+    });
   });
 });

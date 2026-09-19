@@ -9,6 +9,11 @@ export function getDayLog(date: LocalDay): Promise<DayLog | undefined> {
   return withStorage(() => db.dayLogs.get(date));
 }
 
+/** Todos los registros diarios en orden cronológico. */
+export function listDayLogs(): Promise<DayLog[]> {
+  return withStorage(() => db.dayLogs.orderBy('date').toArray());
+}
+
 export function dayLogsBetween(from: LocalDay, to: LocalDay): Promise<DayLog[]> {
   return withStorage(() => db.dayLogs.where('date').between(from, to, true, true).toArray());
 }

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { findCorrelations } from '@/domain/correlation';
 import { addDays, type LocalDay } from '@/domain/day';
 import { isScheduledOn } from '@/domain/frequency';
 import { validateHabitInput } from '@/domain/habit';
@@ -27,6 +28,11 @@ function daysWith(key: string): Set<LocalDay> {
 function mean(values: readonly number[]): number {
   return values.reduce((a, b) => a + b, 0) / values.length;
 }
+
+const CTX = { today, weekStartsOn: 1 as const, pauses: data.pauses };
+
+/** Historia de todos los hábitos generados, como la que ven las estadísticas. */
+const histories = data.habits.map((h) => buildHistory(analyzeHabit(h, data.entries, CTX), today));
 
 function rate(key: string, from: LocalDay, to: LocalDay): number {
   const h = habitByKey(key);
@@ -131,6 +137,49 @@ describe('generateSampleData', () => {
       const { yes, no } = split(data.dayLogs, (l) => relapse.has(l.date), 'mood');
       expect(yes.length).toBeGreaterThanOrEqual(14);
       expect(mean(no) - mean(yes)).toBeGreaterThan(0.3);
+    });
+  });
+
+  /*
+   * Los datos de ejemplo existen para probar las estadísticas: si alguien toca un
+   * umbral y la pantalla de correlaciones se queda muda, estos tests lo dicen.
+   */
+  describe('las correlaciones llegan hasta la pantalla', () => {
+    const report = findCorrelations({
+      histories,
+      dayLogs: data.dayLogs,
+      range: { from: addDays(today, -(SAMPLE_DAYS - 1)), to: today },
+      today,
+    });
+
+    function finding(habitKey: string, kind: string, lag: number) {
+      return report.findings.find(
+        (f) => f.source.id === `demo-h-${habitKey}` && f.kind === kind && f.lag === lag,
+      );
+    }
+
+    it('encuentra el ánimo de los días de ejercicio', () => {
+      const found = finding('ejercicio', 'mood', 0);
+      expect(found).toBeDefined();
+      expect(found?.delta).toBeGreaterThan(0.4);
+      expect(found?.withDays).toBeGreaterThanOrEqual(14);
+      expect(found?.withoutDays).toBeGreaterThanOrEqual(14);
+    });
+
+    it('encuentra la energía del día siguiente a dormir pronto', () => {
+      const found = finding('dormir', 'energy', 1);
+      expect(found).toBeDefined();
+      expect(found?.delta).toBeGreaterThan(0.4);
+      expect(found?.withDays).toBeGreaterThanOrEqual(14);
+      expect(found?.withoutDays).toBeGreaterThanOrEqual(14);
+    });
+
+    it('examina bastantes parejas y solo afirma unas pocas', () => {
+      expect(report.compared).toBeGreaterThan(20);
+      expect(report.tested).toBeGreaterThan(10);
+      expect(report.findings.length).toBeLessThanOrEqual(6);
+      expect(report.findings.length).toBeGreaterThan(0);
+      expect(report.confidence).toBeGreaterThan(0.99);
     });
   });
 });

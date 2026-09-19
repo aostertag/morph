@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom/vitest';
 import 'fake-indexeddb/auto';
 import { cleanup } from '@testing-library/react';
+import { toast } from 'sonner';
 import { afterEach, beforeEach } from 'vitest';
 import { db } from '@/db/schema';
 
@@ -8,6 +9,9 @@ beforeEach(async () => {
   await db.open();
   await Promise.all(db.tables.map((table) => table.clear()));
   localStorage.clear();
+  // Los toasts de Sonner viven en un store global que sobrevive al desmontaje:
+  // sin esto, un test vería los avisos del anterior.
+  toast.dismiss();
 });
 
 afterEach(() => {

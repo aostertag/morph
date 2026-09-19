@@ -1,4 +1,6 @@
+import type { LocalDay } from '@/domain/day';
 import type { EvaluationContext } from '@/domain/evaluate';
+import { buildHistory, type HabitHistory } from '@/domain/history';
 import { analyzeHabit, type HabitAnalysis } from '@/domain/today';
 import type { Entry, Habit } from '@/domain/types';
 
@@ -34,4 +36,19 @@ export function cachedAnalysis(
   const analysis = analyzeHabit(habit, entries, ctx);
   byEntries.set(entries, { key, analysis });
   return analysis;
+}
+
+/*
+ * Historias día a día, cacheadas por identidad del análisis. Las estadísticas
+ * globales necesitan la historia de todos los hábitos a la vez; sin esto se
+ * reconstruirían enteras en cada render.
+ */
+const histories = new WeakMap<HabitAnalysis, { today: LocalDay; history: HabitHistory }>();
+
+export function cachedHistory(analysis: HabitAnalysis, today: LocalDay): HabitHistory {
+  const hit = histories.get(analysis);
+  if (hit && hit.today === today) return hit.history;
+  const history = buildHistory(analysis, today);
+  histories.set(analysis, { today, history });
+  return history;
 }

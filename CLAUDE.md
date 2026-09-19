@@ -10,18 +10,18 @@ La especificación completa está en `SPEC.md`; la sección 9 (diseño) prevalec
 | 1 | Tooling, tokens, modelo de datos Dexie, dominio (frecuencias, rachas, comodines, pausas) + tests | **Hecha** |
 | 2 | Pantalla Hoy y gestión de hábitos | **Hecha** |
 | 3 | Detalle de hábito, heatmap, métricas, generador de datos | **Hecha** |
-| 4 | Estadísticas globales y correlaciones | Pendiente |
-| 5 | Revisión semanal, ánimo/energía, hitos | Pendiente |
+| 4 | Estadísticas globales, correlaciones y registro de ánimo/energía | **Hecha** |
+| 5 | Revisión semanal e hitos | Pendiente |
 | 6 | Ajustes, backup, recordatorios, PWA, onboarding, atajos, a11y | Pendiente |
 | 7 | Pulido final | Pendiente |
 
-**Siguiente: Fase 4** (estadísticas globales y correlaciones).
+**Siguiente: Fase 5** (revisión semanal e hitos).
 
 **Pendiente para fases posteriores:**
-- Fase 5: registro de ánimo, energía y nota del día, el aviso de revisión semanal y los **hitos** del detalle. El repositorio `dayLogs` ya existe y el generador ya crea ánimo y energía correlacionados.
+- Fase 5: el aviso de revisión semanal con su historial y los **hitos** del detalle. El registro de ánimo, energía y nota del día se adelantó a la fase 4, porque sin él las correlaciones solo funcionaban con el generador.
 - Fase 6: atajos de teclado (números, ←/→, `N`, `?`) y llevar el botón de datos de ejemplo a Ajustes.
 
-Rutas provisionales: `/estadisticas` y `/ajustes` muestran un marcador de posición hasta su fase.
+Ruta provisional: `/ajustes` muestra un marcador de posición hasta su fase.
 
 ## Stack (versiones verificadas con `npm view` el 2026-09-19)
 
@@ -46,6 +46,9 @@ UI (`features/`, `ui/`, `charts/`) → datos (`db/`) → dominio (`domain/`). **
   - `evaluate.ts`: `evaluateHabit()` devuelve las unidades con estado `done | missed | paused | pending`. También contiene `canLogOn()` (límite retroactivo).
   - `streaks.ts`: `computeStreaks()` calcula racha actual, mejor racha, comodines disponibles y usos.
   - `habit.ts`: normalización y validación del formulario de hábito.
+  - `range.ts`: rango de análisis (semana, mes, trimestre, año, personalizado) y el período anterior comparable.
+  - `stats.ts`: puntuación del período, comparación, evolución por tramos, ranking de consistencia, día de la semana, mejora/caída de 4 semanas y resumen de "a evitar".
+  - `correlation.ts`: series binarias por día, comparación de medias (Welch) y de proporciones, cuantil normal y corrección de Bonferroni.
   - `history.ts`: `buildHistory()` convierte el análisis en una línea de tiempo día a día (valor, si tocaba, pausa, éxito, unidad y comodín). De ella salen el heatmap y todas las métricas. También `heatLevel()` y `relapseLevel()`.
   - `metrics.ts`: tasas por ventana, evolución por semanas o meses, día de la semana, totales, cantidades con tendencia, estadísticas de "a evitar" e historial (notas, comodines y pausas).
   - `types.ts`: modelo de datos y `DEFAULT_SETTINGS`.
@@ -79,8 +82,13 @@ UI (`features/`, `ui/`, `charts/`) → datos (`db/`) → dominio (`domain/`). **
   - `Heatmap.tsx`: la rejilla es una tabla con un solo punto de tabulación; las flechas mueven un día o una semana;
   - `DayPanel.tsx`: el día elegido, con su nota editable dentro del límite retroactivo;
   - `Summary.tsx`, `WeeklyChart.tsx`, `WeekdayTable.tsx`, `ValueSection.tsx`, `HistoryList.tsx`.
+- `src/features/stats/`: pantalla de estadísticas globales, cargada con `lazy()` (arrastra Recharts).
+  - `useStats.ts` reutiliza los análisis de la caché compartida y añade `dayLogs`;
+  - `RangePicker.tsx` (select nativo + dos fechas), `ScoreSection.tsx`, `ConsistencySection.tsx`, `MomentumSection.tsx`, `WeekdaySection.tsx`, `AvoidSection.tsx`, `CorrelationsSection.tsx`;
+  - `describe.ts` genera las frases de las correlaciones, siempre con su muestra y sin verbos de causa.
+- `src/features/today/DayLogPanel.tsx` y `dayLogActions.ts`: ánimo y energía (escalas 1–5 con radios nativos), nota del día y deshacer. De aquí salen los datos de las correlaciones.
 - `src/charts/ChartFigure.tsx`: marco común de los gráficos (título, controles, alternativa en tabla y nota) y `DataTable`.
-- `src/lib/analysisCache.ts`: la caché de análisis que comparten Hoy y el detalle, para no recalcular al abrirlo.
+- `src/lib/analysisCache.ts`: la caché de análisis que comparten Hoy, el detalle y las estadísticas, para no recalcular al abrirlos. `cachedHistory()` guarda además la historia día a día por identidad del análisis.
 - `src/dev/`: solo en desarrollo. `sampleData.ts` genera seis meses deterministas y `DevTools.tsx` solo renderiza el botón si `import.meta.env.DEV`, así que nada de esto entra en producción. Escribe con `db/repos/dataset.ts` (`replaceAllData`), que la Fase 6 reutilizará al importar un backup.
 - `src/features/habits/`:
   - lista con dnd-kit (puntero y teclado, anuncios en español) y las alternativas "Subir"/"Bajar" en el menú;
@@ -89,7 +97,7 @@ UI (`features/`, `ui/`, `charts/`) → datos (`db/`) → dominio (`domain/`). **
 - `src/ui/`:
   - primitivas: `Button`/`ButtonLink`/`IconButton`, `Field`/`Fieldset` (ARIA conectado vía render prop), `Segmented` (radios nativos), `ConfirmDialog` (Base UI AlertDialog), `ActionsMenu` (Base UI Menu), `ColorBar`/`HabitIcon`, `EmptyState`/`ScreenHeader`;
   - `ui/icons.ts` es la lista curada de iconos Lucide, importados uno a uno.
-- `src/test/factories.ts`: fábricas para los tests (`habit()`, `entry()`, `entriesOn()`, `pause()`, `days()`, `d()`).
+- `src/test/factories.ts`: fábricas para los tests (`habit()`, `entry()`, `entriesOn()`, `dayLog()`, `pause()`, `days()`, `d()`).
 
 ## Decisiones de dominio (acordadas con el usuario)
 
@@ -115,6 +123,12 @@ UI (`features/`, `ui/`, `charts/`) → datos (`db/`) → dominio (`domain/`). **
 - **Heatmap:** la escala `heat-0…4` para todos los hábitos, con el color del hábito solo como marca de identidad. En cantidad y tiempo la intensidad va relativa a la meta (menos de 1/3, de 2/3, de la meta, meta), así que el paso 4 siempre significa "cumplido". Los hábitos **a evitar** pintan las recaídas con una escala propia (`relapse-1…3`, ladrillo apagado), nunca con el azul de "cumplido", y la leyenda lo dice. Nada se distingue solo por color: punto pequeño si no toca, trazo si hay pausa y punto de tinta si un comodín cubrió el día.
 - **Primer día de la semana:** configurable (`weekStartsOn`, lunes por defecto).
 - **Idioma:** interfaz solo en español, con formato `es-ES`.
+- **Rango de estadísticas:** períodos naturales en curso, recortados a hoy. El período anterior se recorta al mismo número de días transcurridos (comparar 12 días contra 31 sería mentir), sin salirse nunca de ese período.
+- **Puntuación del período:** crédito total entre días evaluables sumando todos los hábitos, así que un hábito con más días programados pesa más. **Los "a evitar" no puntúan** (no son tareas) y tienen su propio bloque de recaídas.
+- **Muestra mínima:** 7 días evaluables para dar una tasa o comparar períodos; 4 días de cada día de la semana y 2 semanas de rango para nombrar el mejor y el peor; 7 días en cada ventana y 10 puntos de cambio para hablar de mejora o caída. Lo que no llega se aparta y se dice, en vez de ordenarse como si fuera lo peor.
+- **Correlaciones (tres filtros):** 14 días en cada grupo, diferencia mínima relevante (0,4 puntos de ánimo o energía; 10 puntos porcentuales entre hábitos) e intervalo de confianza que excluya el cero, con el nivel **corregido por Bonferroni** según cuántas comparaciones se examinan. Solo entran días decididos (tocaba, sin pausa, hábito vivo y día terminado); hoy nunca cuenta.
+- **Desfase de un día:** cada hábito se compara con el ánimo y la energía del mismo día y con los del día siguiente. Las dos comparaciones cuentan para la corrección; en la lista se enseña la más marcada de cada pareja, porque las dos suelen ser la misma historia. El texto dice siempre de cuál se trata ("Los días después de cumplir…").
+- **Lenguaje de las correlaciones:** cada frase lleva su muestra y ninguna usa verbos de causa. Al pie van el recuento de lo examinado y la advertencia fija de que es correlación, no causa.
 
 ## Diseño (resumen; los valores están en `src/styles/tokens.css`)
 
@@ -143,7 +157,8 @@ UI (`features/`, `ui/`, `charts/`) → datos (`db/`) → dominio (`domain/`). **
   - `lib` ejecuta los tests puros de `lib/`, `state/`, `hooks/` y `features/` (`*.test.ts`) en Node;
   - `lib` incluye también `src/dev/` (el generador de datos);
   - `ui` usa jsdom (`*.test.tsx`) con fake-indexeddb. `src/test/setup.ts` limpia la base entre tests y añade polyfills de `matchMedia`, de la captura de puntero y de `ResizeObserver` (lo necesita Recharts); `src/test/render.tsx` ofrece `renderRoute()` (router en memoria y Toaster montado).
-- En los tests de UI se busca por rol y nombre accesible, lo que de paso comprueba la accesibilidad.
+- En los tests de UI se busca por rol y nombre accesible, lo que de paso comprueba la accesibilidad. `setup.ts` descarta los toasts entre tests: el store de Sonner es global y sobrevive al desmontaje.
+- `src/dev/sampleData.test.ts` comprueba que las correlaciones del generador llegan enteras hasta `findCorrelations` (ejercicio → ánimo y dormir pronto → energía del día siguiente). Si alguien toca un umbral y la pantalla se queda muda, ese test lo dice.
 - Controles nativos antes que roles ARIA: casillas reales (`input type=checkbox` visualmente oculto), radios para los segmentados, `fieldset`/`legend` para grupos. Biome (`useSemanticElements`) lo exige.
 - Colores de hábito en estilos en línea con `habitColorVar(color)`; para todo lo demás, utilidades de los tokens.
 - Comentarios y mensajes de usuario en español; código (identificadores) en inglés.

@@ -19,7 +19,10 @@ const NewHabitScreen = lazy(() =>
 const EditHabitScreen = lazy(() =>
   import('@/features/habits/HabitFormScreens').then((m) => ({ default: m.EditHabitScreen })),
 );
-// El detalle carga Recharts, que no debe entrar en el bundle de Hoy.
+// Las estadísticas y el detalle cargan Recharts, que no debe entrar en el bundle de Hoy.
+const StatsScreen = lazy(() =>
+  import('@/features/stats/StatsScreen').then((m) => ({ default: m.StatsScreen })),
+);
 const HabitDetailScreen = lazy(() =>
   import('@/features/habit-detail/HabitDetailScreen').then((m) => ({
     default: m.HabitDetailScreen,
@@ -74,7 +77,7 @@ function AppShell() {
             <Route path="habitos/nuevo" element={<NewHabitScreen />} />
             <Route path="habitos/:id" element={<HabitDetailScreen />} />
             <Route path="habitos/:id/editar" element={<EditHabitScreen />} />
-            <Route path="estadisticas" element={<Placeholder title="Estadísticas" phase={4} />} />
+            <Route path="estadisticas" element={<StatsScreen />} />
             <Route path="ajustes" element={<Placeholder title="Ajustes" phase={6} />} />
             <Route path="*" element={<NotFound />} />
           </Route>

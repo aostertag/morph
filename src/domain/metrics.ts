@@ -41,7 +41,7 @@ export interface Rate {
 }
 
 /** Crédito del día según su unidad, o `null` si el día no se evalúa. */
-function dayCredit(record: DayRecord): number | null {
+export function dayCredit(record: DayRecord): number | null {
   const { unit } = record;
   if (!unit || record.paused) return null;
   if (unit.status === 'done') return 1;

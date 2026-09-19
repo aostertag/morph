@@ -1,8 +1,17 @@
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale/es';
-import { diffDays, type LocalDay, toLocalDate, WEEKDAYS, type Weekday, yearOf } from '@/domain/day';
+import {
+  diffDays,
+  type LocalDay,
+  monthOf,
+  toLocalDate,
+  WEEKDAYS,
+  type Weekday,
+  yearOf,
+} from '@/domain/day';
 import type { PeriodUnit } from '@/domain/frequency';
-import type { Frequency, HabitKind, TimeOfDay } from '@/domain/types';
+import type { DayRange, RangePreset } from '@/domain/range';
+import type { Frequency, HabitKind, Scale, TimeOfDay } from '@/domain/types';
 
 const numberFormat = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 });
 const percentFormat = new Intl.NumberFormat('es-ES', {
@@ -41,6 +50,11 @@ export function formatMonthYear(day: LocalDay): string {
 /** "19 sep" */
 export function formatShortDate(day: LocalDay): string {
   return format(toLocalDate(day), 'd MMM', { locale: es }).replace('.', '');
+}
+
+/** "sep" */
+export function formatMonthShort(day: LocalDay): string {
+  return format(toLocalDate(day), 'MMM', { locale: es }).replace('.', '');
 }
 
 /** "Hoy", "Ayer", "Hace 3 días", o la fecha corta si queda lejos. */
@@ -115,6 +129,56 @@ export const HABIT_KIND_LABEL: Readonly<Record<HabitKind, string>> = {
   quantity: 'Cantidad',
   time: 'Tiempo',
   avoid: 'A evitar',
+};
+
+export const RANGE_LABEL: Readonly<Record<RangePreset, string>> = {
+  week: 'Esta semana',
+  month: 'Este mes',
+  quarter: 'Este trimestre',
+  year: 'Este año',
+  custom: 'Personalizado',
+};
+
+/** "Del 1 al 19 de septiembre", "Del 1 de julio al 19 de septiembre". */
+export function describeRange(range: DayRange, today: LocalDay): string {
+  if (range.from === range.to) return capitalize(formatDate(range.from, today));
+  const sameMonth =
+    yearOf(range.from) === yearOf(range.to) && monthOf(range.from) === monthOf(range.to);
+  const start = sameMonth
+    ? format(toLocalDate(range.from), 'd', { locale: es })
+    : formatDate(range.from, today);
+  return `Del ${start} al ${formatDate(range.to, today)}`;
+}
+
+/** Diferencia en puntos porcentuales, con signo: "+8 puntos", "-3 puntos". */
+export function formatPoints(delta: number): string {
+  const points = Math.round(delta * 100);
+  const sign = points > 0 ? '+' : points < 0 ? '−' : '';
+  return `${sign}${formatNumber(Math.abs(points))} ${Math.abs(points) === 1 ? 'punto' : 'puntos'}`;
+}
+
+/** "4,1" para medias de ánimo y energía. */
+export function formatScaleValue(value: number): string {
+  return new Intl.NumberFormat('es-ES', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
+export const MOOD_LABEL: Readonly<Record<Scale, string>> = {
+  1: 'Muy bajo',
+  2: 'Bajo',
+  3: 'Normal',
+  4: 'Bueno',
+  5: 'Muy bueno',
+};
+
+export const ENERGY_LABEL: Readonly<Record<Scale, string>> = {
+  1: 'Muy baja',
+  2: 'Baja',
+  3: 'Normal',
+  4: 'Alta',
+  5: 'Muy alta',
 };
 
 /** "12 d", "8 sem", "3 meses". */

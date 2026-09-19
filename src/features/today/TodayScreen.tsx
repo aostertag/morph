@@ -3,11 +3,13 @@ import { DevSampleData } from '@/dev/DevTools';
 import { addDays, isLocalDay, type LocalDay } from '@/domain/day';
 import { canLogOn } from '@/domain/evaluate';
 import { dayProgress, groupByTimeOfDay, viewForDay } from '@/domain/today';
+import { useDayLog } from '@/hooks/useData';
 import { useToday } from '@/hooks/useToday';
 import { formatRelativeDay, TIME_OF_DAY_LABEL } from '@/lib/format';
 import { ButtonLink } from '@/ui/Button';
 import { EmptyState } from '@/ui/EmptyState';
 import { DayHeader } from './DayHeader';
+import { DayLogPanel } from './DayLogPanel';
 import { DayProgress } from './DayProgress';
 import { HabitRow } from './HabitRow';
 import { SidePanel } from './SidePanel';
@@ -28,6 +30,7 @@ export function TodayScreen() {
   const today = useToday();
   const [day, setDay] = useSelectedDay(today);
   const data = useHabitAnalyses(today);
+  const log = useDayLog(day);
 
   if (!data) return null;
 
@@ -105,6 +108,10 @@ export function TodayScreen() {
               );
             })}
           </>
+        )}
+
+        {hasHabits && (
+          <DayLogPanel day={day} today={today} log={log ?? undefined} locked={tooOld} />
         )}
       </div>
 

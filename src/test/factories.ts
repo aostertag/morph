@@ -1,5 +1,5 @@
 import { addDays, eachDay, type LocalDay, localDay } from '@/domain/day';
-import type { Entry, Habit, Pause } from '@/domain/types';
+import type { DayLog, Entry, Habit, Pause, Scale } from '@/domain/types';
 
 export const d = localDay;
 
@@ -41,6 +41,15 @@ export function entry(date: string, value = 1, habitId = 'h1'): Entry {
 /** Un registro por cada día indicado. */
 export function entriesOn(days: readonly string[], value = 1, habitId = 'h1'): Entry[] {
   return days.map((day) => entry(day, value, habitId));
+}
+
+export function dayLog(
+  date: string,
+  mood: Scale | null = null,
+  energy: Scale | null = null,
+  note: string | null = null,
+): DayLog {
+  return { date: d(date), mood, energy, note, updatedAt: 0 };
 }
 
 export function pause(start: string, end: string, habitId: string | null = null): Pause {

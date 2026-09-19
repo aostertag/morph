@@ -2,11 +2,13 @@ import { liveQuery } from 'dexie';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useState } from 'react';
 import { listCategories } from '@/db/repos/categories';
+import { getDayLog, listDayLogs } from '@/db/repos/dayLogs';
 import { entriesForHabit } from '@/db/repos/entries';
 import { listHabits } from '@/db/repos/habits';
 import { listPauses } from '@/db/repos/pauses';
 import { getSettings } from '@/db/repos/settings';
-import type { Category, Entry, Habit, Pause, Settings } from '@/domain/types';
+import type { LocalDay } from '@/domain/day';
+import type { Category, DayLog, Entry, Habit, Pause, Settings } from '@/domain/types';
 
 /*
  * Lecturas reactivas: se vuelven a ejecutar solas cuando cambian los datos que leen.
@@ -28,6 +30,16 @@ export function useSettings(): Settings | undefined {
 
 export function useCategories(): Category[] | undefined {
   return useLiveQuery(listCategories);
+}
+
+/** Registro de un día: `null` si no hay ninguno, `undefined` mientras carga. */
+export function useDayLog(date: LocalDay): DayLog | null | undefined {
+  return useLiveQuery(async () => (await getDayLog(date)) ?? null, [date]);
+}
+
+/** Ánimo, energía y nota de cada día, en orden cronológico. */
+export function useDayLogs(): DayLog[] | undefined {
+  return useLiveQuery(listDayLogs);
 }
 
 interface EntriesState {

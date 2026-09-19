@@ -134,6 +134,11 @@ export function yearOf(day: LocalDay): number {
   return parts(day)[0];
 }
 
+/** Mes del día, de 1 a 12. */
+export function monthOf(day: LocalDay): number {
+  return parts(day)[1];
+}
+
 export function minDay(a: LocalDay, b: LocalDay): LocalDay {
   return a <= b ? a : b;
 }
