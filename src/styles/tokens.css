@@ -1,0 +1,157 @@
+/*
+ * Tokens de diseño: ÚNICO lugar donde se definen color, tipografía, espaciado,
+ * radios, sombras y movimiento. Los componentes usan estas variables (o las
+ * utilidades de Tailwind generadas a partir de ellas) y nunca valores sueltos.
+ *
+ * Tema claro en @theme; el oscuro redefine las mismas variables bajo
+ * [data-theme='dark']. `data-theme` siempre contiene el tema ya resuelto.
+ * Contrastes WCAG verificados: ver CLAUDE.md.
+ */
+
+@theme static {
+  /* Se eliminan las paletas y escalas por defecto: solo existe lo definido aquí. */
+  --color-*: initial;
+  --font-*: initial;
+  --text-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --blur-*: initial;
+  --ease-*: initial;
+  --animate-*: initial;
+
+  /* Neutros */
+  --color-bg: #f6f5f1;
+  --color-surface: #ffffff;
+  --color-sunken: #edebe6;
+  --color-border: #dddad3;
+  --color-border-strong: #8c877e;
+  --color-text: #1b1a18;
+  --color-text-muted: #5c5952;
+  --color-text-faint: #6f6b63;
+
+  /* Acento (tinta azul) y semánticos */
+  --color-accent: #2b50c8;
+  --color-on-accent: #ffffff;
+  --color-danger: #b42318;
+  --color-on-danger: #ffffff;
+
+  /* Escala del heatmap: 0 = sin registro … 4 = máximo */
+  --color-heat-0: #edebe6;
+  --color-heat-1: #d4dcf6;
+  --color-heat-2: #a7b8ec;
+  --color-heat-3: #6a87db;
+  --color-heat-4: #2b50c8;
+
+  /* Paleta curada de hábitos (≥4,5:1 sobre el fondo en claro) */
+  --color-habit-rojo: #c0392f;
+  --color-habit-naranja: #ab520c;
+  --color-habit-ocre: #8f6a00;
+  --color-habit-oliva: #4f7a1c;
+  --color-habit-verde: #1e7f4f;
+  --color-habit-turquesa: #0b7a78;
+  --color-habit-azul: #1c6fae;
+  --color-habit-violeta: #7e4cc2;
+  --color-habit-magenta: #b03a78;
+  --color-habit-grafito: #5b6573;
+  /* Texto o icono sobre un color de hábito */
+  --color-on-habit: #ffffff;
+
+  /* Tipografía: una familia; sus cifras son tabulares por diseño */
+  --font-sans: "IBM Plex Sans Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --text-xs: 0.75rem; /* 12 */
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.8125rem; /* 13 */
+  --text-sm--line-height: 1.125rem;
+  --text-md: 0.875rem; /* 14 */
+  --text-md--line-height: 1.25rem;
+  --text-base: 1rem; /* 16 */
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.125rem; /* 18 */
+  --text-lg--line-height: 1.625rem;
+  --text-xl: 1.375rem; /* 22 */
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.75rem; /* 28 */
+  --text-2xl--line-height: 2.125rem;
+  --text-3xl: 2.5rem; /* 40 */
+  --text-3xl--line-height: 2.75rem;
+  --text-3xl--letter-spacing: -0.01em;
+  --text-4xl: 3.5rem; /* 56: cifras protagonistas */
+  --text-4xl--line-height: 3.75rem;
+  --text-4xl--letter-spacing: -0.02em;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+
+  --tracking-caps: 0.06em;
+
+  /* Espaciado: rejilla de 4px (p-1 = 4, p-4 = 16, p-8 = 32…) */
+  --spacing: 0.25rem;
+  --spacing-gutter: 1rem;
+  --spacing-gutter-desktop: 2rem;
+  --spacing-touch: 2.75rem; /* 44px: objetivo táctil mínimo */
+
+  /* Radios */
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  /* Sombras: solo para capas superpuestas (diálogos, popovers) */
+  --shadow-overlay: 0 8px 24px rgb(0 0 0 / 0.12), 0 0 0 1px var(--color-border);
+
+  /* Movimiento: funcional, entre 150 y 200 ms */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --duration-fast: 150ms;
+  --duration-base: 180ms;
+  --duration-slow: 200ms;
+
+  /* Anchos de la maqueta */
+  --container-list: 42.5rem; /* 680 */
+  --container-panel: 20rem; /* 320 */
+}
+
+:root {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-bg: #131312;
+  --color-surface: #1b1b19;
+  --color-sunken: #0c0c0b;
+  --color-border: #2f2e2b;
+  --color-border-strong: #6b675f;
+  --color-text: #eceae4;
+  --color-text-muted: #a6a299;
+  --color-text-faint: #8f8b83;
+
+  --color-accent: #8ca3ff;
+  --color-on-accent: #131312;
+  --color-danger: #ff8a7a;
+  --color-on-danger: #131312;
+
+  --color-heat-0: #1f1f1d;
+  --color-heat-1: #243058;
+  --color-heat-2: #344893;
+  --color-heat-3: #5673d6;
+  --color-heat-4: #8ca3ff;
+
+  --color-habit-rojo: #f27c70;
+  --color-habit-naranja: #ee9550;
+  --color-habit-ocre: #ddb24a;
+  --color-habit-oliva: #a8c65a;
+  --color-habit-verde: #5cc98f;
+  --color-habit-turquesa: #4cc7c2;
+  --color-habit-azul: #6aaeeb;
+  --color-habit-violeta: #b596f0;
+  --color-habit-magenta: #ee82b8;
+  --color-habit-grafito: #a3aebc;
+  --color-on-habit: #131312;
+
+  --shadow-overlay: 0 8px 24px rgb(0 0 0 / 0.4), 0 0 0 1px var(--color-border);
+}
