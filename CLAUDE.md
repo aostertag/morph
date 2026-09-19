@@ -15,6 +15,8 @@ La especificación completa está en `SPEC.md`; la sección 9 (diseño) prevalec
 | 6 | Ajustes, backup, recordatorios, PWA, onboarding, atajos, a11y | Pendiente |
 | 7 | Pulido final | Pendiente |
 
+**Siguiente: Fase 3** (detalle de hábito, heatmap, métricas, generador de datos).
+
 **Pendiente de la pantalla Hoy para fases posteriores:**
 - Fase 5: registro de ánimo, energía y nota del día, y el aviso de revisión semanal. El repositorio `dayLogs` ya existe.
 - Fase 6: atajos de teclado (números, ←/→, `N`, `?`).
