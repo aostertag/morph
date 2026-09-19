@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { habit } from '@/test/factories';
-import { type HabitInput, normalizeHabitInput, validateHabitInput } from './habit';
+import { d, habit } from '@/test/factories';
+import {
+  archiveDayFor,
+  type HabitInput,
+  normalizeHabitInput,
+  quantityStep,
+  unarchiveGap,
+  validateHabitInput,
+} from './habit';
 
 function input(overrides: Partial<HabitInput> = {}): HabitInput {
   const { id: _id, order: _order, archivedOn: _archived, ...rest } = habit();
@@ -49,5 +56,34 @@ describe('validateHabitInput', () => {
       validateHabitInput(input({ reminder: { time: '25:00', enabled: true } })).reminder,
     ).toBeDefined();
     expect(validateHabitInput(input({ reminder: { time: '07:30', enabled: true } }))).toEqual({});
+  });
+});
+
+describe('quantityStep', () => {
+  it('usa 1 para metas pequeñas y valores redondos para metas grandes', () => {
+    expect(quantityStep(null)).toBe(1);
+    expect(quantityStep(8)).toBe(1);
+    expect(quantityStep(20)).toBe(1);
+    expect(quantityStep(30)).toBe(2);
+    expect(quantityStep(50)).toBe(5);
+    expect(quantityStep(100)).toBe(10);
+    expect(quantityStep(8000)).toBe(1000);
+    expect(quantityStep(10000)).toBe(1000);
+  });
+});
+
+describe('archivado', () => {
+  it('archiveDayFor conserva hoy solo si ya tiene registro', () => {
+    expect(archiveDayFor(d('2026-03-01'), true)).toBe('2026-03-01');
+    expect(archiveDayFor(d('2026-03-01'), false)).toBe('2026-02-28');
+  });
+
+  it('unarchiveGap cubre desde el día siguiente al archivado hasta ayer', () => {
+    expect(unarchiveGap(d('2026-01-10'), d('2026-01-20'))).toEqual({
+      start: '2026-01-11',
+      end: '2026-01-19',
+    });
+    expect(unarchiveGap(d('2026-01-10'), d('2026-01-11'))).toBeNull();
+    expect(unarchiveGap(d('2026-01-10'), d('2026-01-10'))).toBeNull();
   });
 });

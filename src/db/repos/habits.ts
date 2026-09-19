@@ -1,5 +1,11 @@
 import type { LocalDay } from '@/domain/day';
-import { type HabitInput, normalizeHabitInput, validateHabitInput } from '@/domain/habit';
+import {
+  archiveDayFor,
+  type HabitInput,
+  normalizeHabitInput,
+  unarchiveGap,
+  validateHabitInput,
+} from '@/domain/habit';
 import type { Entry, Habit, Pause } from '@/domain/types';
 import { ValidationError, withStorage } from '../errors';
 import { db, newId } from '../schema';
@@ -50,10 +56,69 @@ export async function updateHabit(id: string, input: HabitInput): Promise<Habit>
   );
 }
 
-export function setArchived(id: string, archivedOn: LocalDay | null): Promise<void> {
+/** Sustituye el hábito por una versión anterior (para deshacer ediciones). */
+export function restoreHabitRecord(habit: Habit): Promise<void> {
   return withStorage(async () => {
-    await db.habits.update(id, { archivedOn });
+    await db.habits.put(habit);
   });
+}
+
+async function requireHabit(id: string): Promise<Habit> {
+  const habit = await db.habits.get(id);
+  if (!habit) throw new ValidationError('El hábito ya no existe.');
+  return habit;
+}
+
+/**
+ * Archiva conservando el historial. Hoy cuenta solo si ya tiene registro.
+ * Devuelve el hábito anterior para deshacer.
+ */
+export function archiveHabit(id: string, today: LocalDay): Promise<Habit> {
+  return withStorage(() =>
+    db.transaction('rw', db.habits, db.entries, async () => {
+      const previous = await requireHabit(id);
+      const hasEntryToday =
+        (await db.entries.where('[habitId+date]').equals([id, today]).count()) > 0;
+      await db.habits.update(id, { archivedOn: archiveDayFor(today, hasEntryToday) });
+      return previous;
+    }),
+  );
+}
+
+export interface UnarchiveResult {
+  readonly previous: Habit;
+  /** Pausa creada para el tiempo que estuvo archivado; `null` si no hizo falta. */
+  readonly gapPause: Pause | null;
+}
+
+/**
+ * Restaura un hábito archivado. El tiempo que estuvo archivado queda en pausa,
+ * así que ni rompe la racha ni cuenta como fallado.
+ */
+export function unarchiveHabit(id: string, today: LocalDay): Promise<UnarchiveResult> {
+  return withStorage(() =>
+    db.transaction('rw', db.habits, db.pauses, async () => {
+      const previous = await requireHabit(id);
+      if (previous.archivedOn === null) return { previous, gapPause: null };
+      const gap = unarchiveGap(previous.archivedOn, today);
+      let gapPause: Pause | null = null;
+      if (gap) {
+        gapPause = { id: newId(), habitId: id, ...gap, reason: 'otro', note: 'Archivado' };
+        await db.pauses.add(gapPause);
+      }
+      await db.habits.update(id, { archivedOn: null });
+      return { previous, gapPause };
+    }),
+  );
+}
+
+export function undoUnarchive(result: UnarchiveResult): Promise<void> {
+  return withStorage(() =>
+    db.transaction('rw', db.habits, db.pauses, async () => {
+      await db.habits.put(result.previous);
+      if (result.gapPause) await db.pauses.delete(result.gapPause.id);
+    }),
+  );
 }
 
 /** Guarda el nuevo orden: la posición en `ids` pasa a ser el `order`. */

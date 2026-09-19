@@ -2,7 +2,7 @@
 
 Aplicación web de seguimiento de hábitos, local-first: los datos viven en tu navegador (IndexedDB), funciona sin conexión y ofrece un recuento detallado de tu progreso.
 
-> Estado: **Fase 1** (base técnica, modelo de datos y lógica de dominio). La interfaz llega en la Fase 2.
+> Estado: **Fase 2**. Ya están la pantalla Hoy y la gestión de hábitos. El detalle, las estadísticas y los ajustes llegan en las siguientes fases.
 
 ## Requisitos
 

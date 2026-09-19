@@ -8,14 +8,18 @@ La especificación completa está en `SPEC.md`; la sección 9 (diseño) prevalec
 | Fase | Contenido | Estado |
 |---|---|---|
 | 1 | Tooling, tokens, modelo de datos Dexie, dominio (frecuencias, rachas, comodines, pausas) + tests | **Hecha** |
-| 2 | Pantalla Hoy y gestión de hábitos | Pendiente |
+| 2 | Pantalla Hoy y gestión de hábitos | **Hecha** |
 | 3 | Detalle de hábito, heatmap, métricas, generador de datos | Pendiente |
 | 4 | Estadísticas globales y correlaciones | Pendiente |
 | 5 | Revisión semanal, ánimo/energía, hitos | Pendiente |
 | 6 | Ajustes, backup, recordatorios, PWA, onboarding, atajos, a11y | Pendiente |
 | 7 | Pulido final | Pendiente |
 
-`src/app/TokenSpecimen.tsx` es una página temporal de comprobación de tokens: se elimina en la Fase 2.
+**Pendiente de la pantalla Hoy para fases posteriores:**
+- Fase 5: registro de ánimo, energía y nota del día, y el aviso de revisión semanal. El repositorio `dayLogs` ya existe.
+- Fase 6: atajos de teclado (números, ←/→, `N`, `?`).
+
+Rutas provisionales: `/estadisticas`, `/ajustes` y `/habitos/:id` (el detalle) muestran un marcador de posición hasta su fase.
 
 ## Stack (versiones verificadas con `npm view` el 2026-09-19)
 
@@ -46,7 +50,33 @@ UI (`features/`, `ui/`, `charts/`) → datos (`db/`) → dominio (`domain/`). **
   - `migrations.ts`: lista versionada. **Nunca se edita una versión publicada; se añade otra.**
   - `errors.ts`: `StorageError` (mensaje claro para el usuario) y `ValidationError`.
   - `repos/*`: todas las escrituras pasan por aquí. Las mutaciones devuelven el estado anterior para poder deshacer.
+- `src/domain/today.ts`:
+  - `analyzeHabit()` evalúa todo el historial; es la parte costosa y se cachea.
+  - `viewForDay()` construye el estado de un día a partir de ese análisis (valor, progreso del período, rachas, último comodín en la racha).
+  - `dayProgress()` y `groupByTimeOfDay()`.
+- `src/domain/templates.ts`: plantillas sugeridas, sin emojis.
 - `src/lib/theme.ts`: resuelve el tema y guarda en `localStorage` una copia de la preferencia, que un script inline de `index.html` aplica antes del primer pintado.
+- `src/lib/format.ts`: todo el texto formateado (fechas con date-fns/es, números `es-ES`, frecuencias, rachas, cronómetro). Importa **solo** `date-fns/locale/es`: el barrel `date-fns/locale` tarda 12 s en cargarse.
+- `src/lib/toast.tsx`:
+  - `notify(msg, { key, undo })` usa toasts headless de Sonner.
+  - Con `key`, las acciones seguidas sobre lo mismo actualizan un único toast, y "Deshacer" vuelve al estado anterior a la primera.
+  - `notifyError(err)` muestra siempre un mensaje claro.
+- `src/hooks/useData.ts`:
+  - lecturas reactivas (`useLiveQuery`);
+  - `useEntriesByHabit(ids)` abre una suscripción `liveQuery` por hábito, así que marcar uno solo vuelve a leer ese hábito.
+- `src/hooks/useToday.ts`: `useToday()` cambia a medianoche y al volver a la pestaña; `useNow()` es el tic del cronómetro.
+- `src/state/timer.ts`: cronómetros en Zustand, persistidos en `localStorage` con un envoltorio seguro. Solo guardan `startedAt` y el día de inicio.
+- `src/features/today/`:
+  - `useHabitAnalyses` cachea en un `WeakMap` por identidad del hábito, del array de registros y de la clave de contexto;
+  - `actions.ts` contiene todas las escrituras con deshacer;
+  - `describe.ts` genera la línea de contexto de cada fila.
+- `src/features/habits/`:
+  - lista con dnd-kit (puntero y teclado, anuncios en español) y las alternativas "Subir"/"Bajar" en el menú;
+  - formulario con vista previa (`HabitRow` en modo `preview`) y selector de plantillas.
+  - Estas rutas se cargan con `lazy()`, para que Hoy no cargue dnd-kit ni Base UI.
+- `src/ui/`:
+  - primitivas: `Button`/`ButtonLink`/`IconButton`, `Field`/`Fieldset` (ARIA conectado vía render prop), `Segmented` (radios nativos), `ConfirmDialog` (Base UI AlertDialog), `ActionsMenu` (Base UI Menu), `ColorBar`/`HabitIcon`, `EmptyState`/`ScreenHeader`;
+  - `ui/icons.ts` es la lista curada de iconos Lucide, importados uno a uno.
 - `src/test/factories.ts`: fábricas para los tests (`habit()`, `entry()`, `entriesOn()`, `pause()`, `days()`, `d()`).
 
 ## Decisiones de dominio (acordadas con el usuario)
@@ -58,14 +88,24 @@ UI (`features/`, `ui/`, `charts/`) → datos (`db/`) → dominio (`domain/`). **
 - **Registro único por hábito y día** (índice único `&[habitId+date]`). Cuantitativo y tiempo acumulan en ese registro. Un valor 0 sin nota elimina el registro. `loggedAt` es el instante real del último cambio.
 - **Hábitos "a evitar":** solo admiten frecuencia diaria o días concretos. Un registro es una recaída.
 - **Retroactivo:** `settings.retroLimitDays` (7 por defecto). No se puede registrar antes de `createdOn` ni después de `archivedOn`. Para rellenar días anteriores, el formulario permitirá adelantar la fecha de inicio.
-- **Archivar:** `archivedOn: LocalDay` es el último día que cuenta. *Pendiente (Fase 2):* al desarchivar, crear una pausa automática que cubra el hueco.
+- **Archivar:** `archivedOn: LocalDay` es el último día que cuenta. Es hoy si hoy ya tiene registro; si no, ayer (`archiveDayFor`). Al restaurar se crea una pausa del hábito (nota "Archivado") que cubre el hueco, para que esos días no cuenten como fallados (`unarchiveGap`). Deshacer la restauración borra esa pausa.
+- **Progreso del día (Hoy):**
+  - Cuentan los hábitos programados y no pausados.
+  - **Los hábitos "a evitar" no cuentan:** no son tareas.
+  - Un hábito por semana o mes con la meta ya cumplida otros días no cuenta ese día, salvo que también se haga ese día.
+  - Los hábitos de días concretos solo aparecen los días que tocan.
+- **Rachas mostradas:** siempre a fecha de hoy, aunque se esté viendo un día pasado.
+- **Cronómetro:** solo se ofrece para hoy. Al detenerlo se suman los minutos redondeados al día en que empezó. Si no llega a un minuto no se suma nada. Deshacer resta los minutos y reanuda el cronómetro.
+- **Cantidades:** el paso de +/- sale de `quantityStep` (1 para metas ≤20; si no, un valor redondo cercano a meta/10: 8.000 pasos avanza de 1.000 en 1.000). Tocar el valor permite escribirlo.
+- **Día seleccionado:** va en la URL (`/?dia=YYYY-MM-DD`, con `replace`). Las fechas futuras se ignoran. Más allá del límite retroactivo el día es de solo lectura, con un aviso.
+- **Al crear un hábito** se vuelve a Hoy si se llegó desde allí (`?volver=hoy`) y, si no, a la lista. Crear, editar, archivar, restaurar y eliminar se pueden deshacer. Eliminar además pide confirmación e indica cuántos registros se borrarán.
 - **Primer día de la semana:** configurable (`weekStartsOn`, lunes por defecto).
 - **Idioma:** interfaz solo en español, con formato `es-ES`.
 
 ## Diseño (resumen; los valores están en `src/styles/tokens.css`)
 
 - **Tokens:** todos en `src/styles/tokens.css` (`@theme static`). Se borran las escalas por defecto de Tailwind (`--color-*: initial`, etc.). El tema oscuro redefine las variables bajo `:root[data-theme='dark']`. Nunca uses colores o tamaños sueltos.
-- **Paleta:** neutros cálidos de papel y tinta, acento tinta azul (`#2B50C8` en claro y `#8CA3FF` en oscuro), 10 colores de hábito (`--color-habit-<clave>`, claves en `HABIT_COLORS`) y una escala de heatmap `heat-0…4`. Texto sobre un color: `on-accent` y `on-habit`.
+- **Paleta:** neutros cálidos de papel y tinta, acento tinta azul (`#2B50C8` en claro y `#8CA3FF` en oscuro), 10 colores de hábito (`--color-habit-<clave>`, claves en `HABIT_COLORS`) y una escala de heatmap `heat-0…4`. Texto sobre un color: `on-accent` y `on-habit`. Velo de diálogos: `scrim`.
 - **Contrastes medidos:**
   - texto 15,9/15,5; muted 6,4/7,3; faint 4,9/5,5; border-strong 3,3/3,3; accent 6,2/7,8;
   - hábitos ≥4,5 en claro y ≥7 en oscuro;
@@ -84,7 +124,11 @@ UI (`features/`, `ui/`, `charts/`) → datos (`db/`) → dominio (`domain/`). **
 - Tests colocados junto al módulo (`*.test.ts`), organizados en proyectos de Vitest:
   - `domain` se ejecuta tres veces, con `TZ=Europe/Madrid`, `America/Santiago` y `America/New_York`;
   - `db` usa fake-indexeddb;
-  - `ui` usa jsdom (`*.test.tsx`).
+  - `lib` ejecuta los tests puros de `lib/`, `state/`, `hooks/` y `features/` (`*.test.ts`) en Node;
+  - `ui` usa jsdom (`*.test.tsx`) con fake-indexeddb. `src/test/setup.ts` limpia la base entre tests y añade polyfills de `matchMedia` y de la captura de puntero; `src/test/render.tsx` ofrece `renderRoute()` (router en memoria y Toaster montado).
+- En los tests de UI se busca por rol y nombre accesible, lo que de paso comprueba la accesibilidad.
+- Controles nativos antes que roles ARIA: casillas reales (`input type=checkbox` visualmente oculto), radios para los segmentados, `fieldset`/`legend` para grupos. Biome (`useSemanticElements`) lo exige.
+- Colores de hábito en estilos en línea con `habitColorVar(color)`; para todo lo demás, utilidades de los tokens.
 - Comentarios y mensajes de usuario en español; código (identificadores) en inglés.
 - Estilo Biome: 2 espacios, comillas simples y línea de 100 caracteres. Ejecuta `npm run lint:fix` antes de hacer commit.
 - Para escribir archivos con contenido complejo usa la herramienta Write, no heredocs en bash: en este entorno Windows los heredocs largos fallan.

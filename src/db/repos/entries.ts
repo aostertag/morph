@@ -110,3 +110,7 @@ export function restoreEntry(
     }),
   );
 }
+
+export function countEntries(habitId: string): Promise<number> {
+  return withStorage(() => db.entries.where('habitId').equals(habitId).count());
+}

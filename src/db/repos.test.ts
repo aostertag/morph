@@ -14,12 +14,15 @@ import {
   setEntryValue,
 } from './repos/entries';
 import {
+  archiveHabit,
   createHabit,
   deleteHabit,
   getHabit,
   listHabits,
   reorderHabits,
   restoreHabit,
+  unarchiveHabit,
+  undoUnarchive,
   updateHabit,
 } from './repos/habits';
 import { createPause, deletePause, listPauses, restorePause } from './repos/pauses';
@@ -224,5 +227,45 @@ describe('ajustes', () => {
   it('rechaza un límite retroactivo fuera de rango', async () => {
     await expect(updateSettings({ retroLimitDays: -1 })).rejects.toBeInstanceOf(ValidationError);
     await expect(updateSettings({ retroLimitDays: 1.5 })).rejects.toBeInstanceOf(ValidationError);
+  });
+});
+
+describe('archivar y restaurar', () => {
+  it('archivar sin registro hoy deja ayer como último día', async () => {
+    const h = await createHabit(input({ createdOn: d('2026-01-01') }));
+    const previous = await archiveHabit(h.id, d('2026-01-20'));
+    expect(previous.archivedOn).toBeNull();
+    expect((await getHabit(h.id))?.archivedOn).toBe('2026-01-19');
+  });
+
+  it('archivar con registro hoy conserva hoy', async () => {
+    const h = await createHabit(input({ createdOn: d('2026-01-01') }));
+    await setEntryValue(h.id, d('2026-01-20'), 1);
+    await archiveHabit(h.id, d('2026-01-20'));
+    expect((await getHabit(h.id))?.archivedOn).toBe('2026-01-20');
+  });
+
+  it('restaurar pone en pausa el tiempo archivado y se puede deshacer', async () => {
+    const h = await createHabit(input({ createdOn: d('2026-01-01') }));
+    await archiveHabit(h.id, d('2026-01-11'));
+    const result = await unarchiveHabit(h.id, d('2026-01-20'));
+    expect((await getHabit(h.id))?.archivedOn).toBeNull();
+    expect(result.gapPause).toMatchObject({
+      habitId: h.id,
+      start: '2026-01-11',
+      end: '2026-01-19',
+    });
+    expect(await listPauses()).toHaveLength(1);
+
+    await undoUnarchive(result);
+    expect((await getHabit(h.id))?.archivedOn).toBe('2026-01-10');
+    expect(await listPauses()).toEqual([]);
+  });
+
+  it('restaurar al día siguiente no crea pausa', async () => {
+    const h = await createHabit(input({ createdOn: d('2026-01-01') }));
+    await archiveHabit(h.id, d('2026-01-11'));
+    const result = await unarchiveHabit(h.id, d('2026-01-11'));
+    expect(result.gapPause).toBeNull();
   });
 });

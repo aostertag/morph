@@ -58,6 +58,9 @@
   /* Texto o icono sobre un color de hábito */
   --color-on-habit: #ffffff;
 
+  /* Velo bajo los diálogos */
+  --color-scrim: rgb(0 0 0 / 0.32);
+
   /* Tipografía: una familia; sus cifras son tabulares por diseño */
   --font-sans: "IBM Plex Sans Variable", ui-sans-serif, system-ui, sans-serif;
 
@@ -152,6 +155,7 @@
   --color-habit-magenta: #ee82b8;
   --color-habit-grafito: #a3aebc;
   --color-on-habit: #131312;
+  --color-scrim: rgb(0 0 0 / 0.6);
 
   --shadow-overlay: 0 8px 24px rgb(0 0 0 / 0.4), 0 0 0 1px var(--color-border);
 }

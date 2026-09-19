@@ -1,0 +1,168 @@
+import { useLiveQuery } from 'dexie-react-hooks';
+import { Plus } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router';
+import { countEntries } from '@/db/repos/entries';
+import type { Habit } from '@/domain/types';
+import { useHabits, useSettings } from '@/hooks/useData';
+import { useToday } from '@/hooks/useToday';
+import { formatDate } from '@/lib/format';
+import { ActionsMenu } from '@/ui/ActionsMenu';
+import { Button, ButtonLink } from '@/ui/Button';
+import { ConfirmDialog } from '@/ui/ConfirmDialog';
+import { EmptyState, ScreenHeader } from '@/ui/EmptyState';
+import { ColorBar, HabitIcon } from '@/ui/HabitMarks';
+import { describeHabit } from './describe';
+import { archive, remove, reorder, unarchive } from './habitActions';
+import { SortableHabitList } from './SortableHabitList';
+
+function DeleteDialog({ habit: requested, onClose }: { habit: Habit | null; onClose: () => void }) {
+  // Se conserva el último hábito para que el texto no desaparezca durante la animación de cierre.
+  const [habit, setHabit] = useState(requested);
+  if (requested && requested !== habit) setHabit(requested);
+  const count = useLiveQuery(
+    () => (habit ? countEntries(habit.id) : Promise.resolve(0)),
+    [habit?.id],
+  );
+  const records =
+    count === undefined ? 'sus registros' : count === 1 ? 'su registro' : `sus ${count} registros`;
+  return (
+    <ConfirmDialog
+      open={requested !== null}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      title={`¿Eliminar «${habit?.name ?? ''}»?`}
+      description={
+        count === 0
+          ? 'Todavía no tiene registros.'
+          : `Se borrarán también ${records}. Si solo quieres dejar de verlo, archívalo: el historial se conserva.`
+      }
+      confirmLabel="Eliminar"
+      destructive
+      onConfirm={() => {
+        if (habit) void remove(habit);
+      }}
+    />
+  );
+}
+
+export function HabitsScreen() {
+  const habits = useHabits();
+  const settings = useSettings();
+  const today = useToday();
+  const navigate = useNavigate();
+  const [toDelete, setToDelete] = useState<Habit | null>(null);
+
+  if (!habits || !settings) return null;
+
+  const active = habits.filter((h) => h.archivedOn === null);
+  const archived = habits.filter((h) => h.archivedOn !== null);
+  const move = (index: number, delta: number) => {
+    const ids = active.map((h) => h.id);
+    const target = index + delta;
+    if (target < 0 || target >= ids.length) return;
+    [ids[index], ids[target]] = [ids[target] as string, ids[index] as string];
+    void reorder(ids);
+  };
+
+  return (
+    <div className="max-w-list">
+      <ScreenHeader
+        title="Hábitos"
+        actions={
+          <ButtonLink to="/habitos/nuevo" variant="primary">
+            <Plus size={18} aria-hidden="true" />
+            Nuevo hábito
+          </ButtonLink>
+        }
+      />
+
+      {active.length === 0 ? (
+        <EmptyState
+          title={archived.length > 0 ? 'No hay hábitos activos.' : 'Todavía no hay hábitos.'}
+          text="Crea uno desde cero o parte de una plantilla: agua, lectura, ejercicio, meditación…"
+        />
+      ) : (
+        <SortableHabitList
+          habits={active}
+          onReorder={(ids) => void reorder(ids)}
+          renderRow={(habit, index) => (
+            <>
+              <ColorBar color={habit.color} />
+              <div className="flex min-w-0 flex-1 flex-col justify-center py-2 pl-3">
+                <div className="flex min-w-0 items-center gap-2">
+                  <HabitIcon name={habit.icon} />
+                  <Link
+                    to={`/habitos/${habit.id}`}
+                    className="truncate underline-offset-4 hover:underline"
+                  >
+                    {habit.name}
+                  </Link>
+                </div>
+                <p className="truncate text-sm text-text-muted">
+                  {describeHabit(habit, settings.weekStartsOn)}
+                </p>
+              </div>
+              <div className="flex items-center">
+                <ActionsMenu
+                  label={`Acciones de ${habit.name}`}
+                  actions={[
+                    { label: 'Editar', onSelect: () => navigate(`/habitos/${habit.id}/editar`) },
+                    { label: 'Subir', onSelect: () => move(index, -1), disabled: index === 0 },
+                    {
+                      label: 'Bajar',
+                      onSelect: () => move(index, 1),
+                      disabled: index === active.length - 1,
+                    },
+                    { label: 'Archivar', onSelect: () => void archive(habit, today) },
+                    { label: 'Eliminar…', onSelect: () => setToDelete(habit), destructive: true },
+                  ]}
+                />
+              </div>
+            </>
+          )}
+        />
+      )}
+
+      {archived.length > 0 && (
+        <section aria-labelledby="archivados" className="mt-12">
+          <h2 id="archivados" className="label-caps mb-2">
+            Archivados · {archived.length}
+          </h2>
+          <ul className="border-t border-border">
+            {archived.map((habit) => (
+              <li
+                key={habit.id}
+                className="flex min-h-14 items-stretch gap-3 border-b border-border"
+              >
+                <ColorBar color={habit.color} className="opacity-50" />
+                <div className="flex min-w-0 flex-1 flex-col justify-center py-2">
+                  <Link
+                    to={`/habitos/${habit.id}`}
+                    className="truncate text-text-muted underline-offset-4 hover:underline"
+                  >
+                    {habit.name}
+                  </Link>
+                  <p className="truncate text-sm text-text-muted">
+                    Hasta el {habit.archivedOn ? formatDate(habit.archivedOn, today) : ''}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" onClick={() => void unarchive(habit, today)}>
+                    Restaurar
+                  </Button>
+                  <Button variant="danger-ghost" onClick={() => setToDelete(habit)}>
+                    Eliminar
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <DeleteDialog habit={toDelete} onClose={() => setToDelete(null)} />
+    </div>
+  );
+}

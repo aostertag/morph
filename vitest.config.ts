@@ -38,6 +38,15 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          name: 'lib',
+          include: ['src/{lib,state,hooks,features}/**/*.test.ts'],
+          environment: 'node',
+          env: { TZ: 'Europe/Madrid' },
+        },
+      },
+      {
+        extends: true,
+        test: {
           name: 'ui',
           include: ['src/**/*.test.tsx'],
           environment: 'jsdom',

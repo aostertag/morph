@@ -1,3 +1,4 @@
+import { addDays, type LocalDay } from './day';
 import { validateFrequency } from './frequency';
 import { HABIT_COLORS, type Habit } from './types';
 
@@ -79,4 +80,38 @@ export function validateHabitInput(raw: HabitInput): HabitErrors {
 
 export function isValidHabitInput(input: HabitInput): boolean {
   return Object.keys(validateHabitInput(input)).length === 0;
+}
+
+/**
+ * Paso de los botones +/- en cuantitativos: 1 para metas pequeñas y, para metas
+ * grandes, un valor "redondo" cercano a una décima parte (10.000 pasos → 1.000).
+ */
+export function quantityStep(target: number | null): number {
+  if (target === null || target <= 20) return 1;
+  const raw = target / 10;
+  const magnitude = 10 ** Math.floor(Math.log10(raw));
+  const normalized = raw / magnitude;
+  const nice = normalized < 1.5 ? 1 : normalized < 3.5 ? 2 : normalized < 7.5 ? 5 : 10;
+  return nice * magnitude;
+}
+
+/**
+ * Último día que cuenta al archivar hoy: hoy si ya tiene registro (para no
+ * perderlo) y ayer si no (para que hoy no quede como fallado).
+ */
+export function archiveDayFor(today: LocalDay, hasEntryToday: boolean): LocalDay {
+  return hasEntryToday ? today : addDays(today, -1);
+}
+
+/**
+ * Hueco entre el archivado y la restauración, que debe quedar en pausa para que
+ * esos días no cuenten como fallados. `null` si no hay hueco.
+ */
+export function unarchiveGap(
+  archivedOn: LocalDay,
+  today: LocalDay,
+): { start: LocalDay; end: LocalDay } | null {
+  const start = addDays(archivedOn, 1);
+  const end = addDays(today, -1);
+  return start <= end ? { start, end } : null;
 }
