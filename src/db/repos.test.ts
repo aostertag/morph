@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { generateSampleData } from '@/dev/sampleData';
 import type { HabitInput } from '@/domain/habit';
 import { d, habit as habitFixture } from '@/test/factories';
 import { ValidationError } from './errors';
 import { createCategory, deleteCategory, listCategories } from './repos/categories';
+import { replaceAllData } from './repos/dataset';
 import { getDayLog, restoreDayLog, updateDayLog } from './repos/dayLogs';
 import {
   adjustEntryValue,
@@ -267,5 +269,32 @@ describe('archivar y restaurar', () => {
     await archiveHabit(h.id, d('2026-01-11'));
     const result = await unarchiveHabit(h.id, d('2026-01-11'));
     expect(result.gapPause).toBeNull();
+  });
+});
+
+describe('sustituir todos los datos', () => {
+  const sample = { ...generateSampleData({ today: d('2026-09-19') }), reviews: [] };
+
+  it('borra lo anterior, escribe lo nuevo y conserva los ajustes', async () => {
+    const old = await createHabit(input());
+    await updateSettings({ weekStartsOn: 0 });
+    await replaceAllData(sample);
+    expect(await getHabit(old.id)).toBeUndefined();
+    expect(await listHabits()).toHaveLength(sample.habits.length);
+    expect(await db.entries.count()).toBe(sample.entries.length);
+    expect(await db.dayLogs.count()).toBe(sample.dayLogs.length);
+    expect(await listPauses()).toHaveLength(sample.pauses.length);
+    expect(await listCategories()).toHaveLength(sample.categories.length);
+    expect((await getSettings()).weekStartsOn).toBe(0);
+  });
+
+  it('si algo falla no cambia nada', async () => {
+    const old = await createHabit(input());
+    const first = sample.entries[0];
+    if (!first) throw new Error('Sin registros de ejemplo');
+    // Dos registros del mismo hábito y día violan el índice único.
+    const broken = { ...sample, entries: [...sample.entries, { ...first, id: 'duplicado' }] };
+    await expect(replaceAllData(broken)).rejects.toThrow();
+    expect((await listHabits()).map((h) => h.id)).toEqual([old.id]);
   });
 });

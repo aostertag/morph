@@ -44,6 +44,12 @@
   --color-heat-3: #6a87db;
   --color-heat-4: #2b50c8;
 
+  /* Recaídas en hábitos "a evitar": escala propia, para no confundirla con "cumplido".
+     Los tres pasos superan 3:1 sobre la celda vacía y sobre el fondo. */
+  --color-relapse-1: #b9674d;
+  --color-relapse-2: #8f4129;
+  --color-relapse-3: #5c2413;
+
   /* Paleta curada de hábitos (≥4,5:1 sobre el fondo en claro) */
   --color-habit-rojo: #c0392f;
   --color-habit-naranja: #ab520c;
@@ -143,6 +149,10 @@
   --color-heat-2: #344893;
   --color-heat-3: #5673d6;
   --color-heat-4: #8ca3ff;
+
+  --color-relapse-1: #a35a45;
+  --color-relapse-2: #d57c5d;
+  --color-relapse-3: #f7b8a2;
 
   --color-habit-rojo: #f27c70;
   --color-habit-naranja: #ee9550;

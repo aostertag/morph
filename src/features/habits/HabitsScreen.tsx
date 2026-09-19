@@ -1,51 +1,19 @@
-import { useLiveQuery } from 'dexie-react-hooks';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { countEntries } from '@/db/repos/entries';
+import { DevToolsFooter } from '@/dev/DevTools';
 import type { Habit } from '@/domain/types';
 import { useHabits, useSettings } from '@/hooks/useData';
 import { useToday } from '@/hooks/useToday';
 import { formatDate } from '@/lib/format';
 import { ActionsMenu } from '@/ui/ActionsMenu';
 import { Button, ButtonLink } from '@/ui/Button';
-import { ConfirmDialog } from '@/ui/ConfirmDialog';
 import { EmptyState, ScreenHeader } from '@/ui/EmptyState';
 import { ColorBar, HabitIcon } from '@/ui/HabitMarks';
+import { DeleteDialog } from './DeleteDialog';
 import { describeHabit } from './describe';
-import { archive, remove, reorder, unarchive } from './habitActions';
+import { archive, reorder, unarchive } from './habitActions';
 import { SortableHabitList } from './SortableHabitList';
-
-function DeleteDialog({ habit: requested, onClose }: { habit: Habit | null; onClose: () => void }) {
-  // Se conserva el último hábito para que el texto no desaparezca durante la animación de cierre.
-  const [habit, setHabit] = useState(requested);
-  if (requested && requested !== habit) setHabit(requested);
-  const count = useLiveQuery(
-    () => (habit ? countEntries(habit.id) : Promise.resolve(0)),
-    [habit?.id],
-  );
-  const records =
-    count === undefined ? 'sus registros' : count === 1 ? 'su registro' : `sus ${count} registros`;
-  return (
-    <ConfirmDialog
-      open={requested !== null}
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-      title={`¿Eliminar «${habit?.name ?? ''}»?`}
-      description={
-        count === 0
-          ? 'Todavía no tiene registros.'
-          : `Se borrarán también ${records}. Si solo quieres dejar de verlo, archívalo: el historial se conserva.`
-      }
-      confirmLabel="Eliminar"
-      destructive
-      onConfirm={() => {
-        if (habit) void remove(habit);
-      }}
-    />
-  );
-}
 
 export function HabitsScreen() {
   const habits = useHabits();
@@ -162,6 +130,7 @@ export function HabitsScreen() {
         </section>
       )}
 
+      <DevToolsFooter />
       <DeleteDialog habit={toDelete} onClose={() => setToDelete(null)} />
     </div>
   );

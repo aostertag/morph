@@ -33,6 +33,11 @@ export function formatDate(day: LocalDay, today: LocalDay): string {
   return format(toLocalDate(day), pattern, { locale: es });
 }
 
+/** "Septiembre de 2026" */
+export function formatMonthYear(day: LocalDay): string {
+  return capitalize(format(toLocalDate(day), "MMMM 'de' yyyy", { locale: es }));
+}
+
 /** "19 sep" */
 export function formatShortDate(day: LocalDay): string {
   return format(toLocalDate(day), 'd MMM', { locale: es }).replace('.', '');

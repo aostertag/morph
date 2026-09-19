@@ -1,43 +1,11 @@
 import type { LocalDay } from '@/domain/day';
 import type { EvaluationContext } from '@/domain/evaluate';
-import { analyzeHabit, type HabitAnalysis } from '@/domain/today';
-import type { Entry, Habit, Pause, Settings } from '@/domain/types';
+import type { HabitAnalysis } from '@/domain/today';
+import type { Entry, Pause, Settings } from '@/domain/types';
 import { useEntriesByHabit, useHabits, usePauses, useSettings } from '@/hooks/useData';
-
-/*
- * Caché de análisis por (hábito, historial, contexto). Los objetos de hábito y los
- * arrays de registros conservan su identidad mientras no cambian, así que al marcar
- * un hábito solo se recalcula ese; los demás salen de la caché.
- */
-const cache = new WeakMap<
-  Habit,
-  WeakMap<readonly Entry[], { key: string; analysis: HabitAnalysis }>
->();
+import { cachedAnalysis, contextKey } from '@/lib/analysisCache';
 
 const EMPTY: readonly Entry[] = [];
-
-function contextKey(ctx: EvaluationContext): string {
-  const pauses = ctx.pauses.map((p) => `${p.id}:${p.habitId}:${p.start}:${p.end}`).join(',');
-  return `${ctx.today}|${ctx.weekStartsOn}|${pauses}`;
-}
-
-function cachedAnalysis(
-  habit: Habit,
-  entries: readonly Entry[],
-  ctx: EvaluationContext,
-  key: string,
-): HabitAnalysis {
-  let byEntries = cache.get(habit);
-  if (!byEntries) {
-    byEntries = new WeakMap();
-    cache.set(habit, byEntries);
-  }
-  const hit = byEntries.get(entries);
-  if (hit && hit.key === key) return hit.analysis;
-  const analysis = analyzeHabit(habit, entries, ctx);
-  byEntries.set(entries, { key, analysis });
-  return analysis;
-}
 
 export interface HabitAnalyses {
   readonly settings: Settings;

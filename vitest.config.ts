@@ -39,7 +39,7 @@ export default defineConfig({
         extends: true,
         test: {
           name: 'lib',
-          include: ['src/{lib,state,hooks,features}/**/*.test.ts'],
+          include: ['src/{lib,state,hooks,features,dev}/**/*.test.ts'],
           environment: 'node',
           env: { TZ: 'Europe/Madrid' },
         },
