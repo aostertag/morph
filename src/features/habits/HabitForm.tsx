@@ -140,7 +140,7 @@ export function HabitForm({
         <Fieldset legend="Tipo" description={KIND_HELP[draft.kind]}>
           <Segmented
             name="kind"
-            className="grid-flow-row grid-cols-2 sm:grid-flow-col sm:grid-cols-none"
+            wrap
             value={draft.kind}
             onChange={setKind}
             options={[
@@ -213,7 +213,7 @@ export function HabitForm({
         <Fieldset legend="Momento del día" description="Agrupa los hábitos en la pantalla Hoy.">
           <Segmented<TimeOfDay>
             name="timeOfDay"
-            className="grid-flow-row grid-cols-2 sm:grid-flow-col sm:grid-cols-none"
+            wrap
             value={draft.timeOfDay}
             onChange={(timeOfDay) => update({ timeOfDay })}
             options={[

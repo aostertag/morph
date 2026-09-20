@@ -12,6 +12,8 @@ interface SegmentedProps<T extends string> {
   readonly value: T;
   readonly onChange: (value: T) => void;
   readonly className?: string;
+  /** En pantallas estrechas reparte las opciones en dos columnas en vez de una fila. */
+  readonly wrap?: boolean;
 }
 
 /**
@@ -24,11 +26,15 @@ export function Segmented<T extends string>({
   value,
   onChange,
   className,
+  wrap = false,
 }: SegmentedProps<T>) {
   return (
     <div
       className={cx(
-        'grid auto-cols-fr grid-flow-col overflow-hidden rounded-md border border-border-strong',
+        // Las divisorias son el hueco de 1px sobre el color del borde: así todas las líneas
+        // (exterior e interiores) tienen el mismo grosor, también cuando pasa a dos filas.
+        'grid auto-cols-fr grid-flow-col gap-px overflow-hidden rounded-md border border-border-strong bg-border-strong',
+        wrap && 'max-sm:grid-flow-row max-sm:grid-cols-2',
         className,
       )}
     >
@@ -36,7 +42,8 @@ export function Segmented<T extends string>({
         <label
           key={option.value}
           className={cx(
-            'flex min-h-touch cursor-pointer items-center justify-center border-border-strong px-2 text-center text-md not-first:border-l',
+            'flex min-h-touch cursor-pointer items-center justify-center bg-bg px-2 text-center text-md',
+            wrap && 'max-sm:last:odd:col-span-2',
             'transition-colors duration-(--duration-fast)',
             'has-checked:bg-text has-checked:font-medium has-checked:text-bg',
             'has-focus-visible:relative has-focus-visible:outline-2 has-focus-visible:-outline-offset-4 has-focus-visible:outline-accent',

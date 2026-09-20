@@ -58,7 +58,7 @@ export function FrequencyField({
     >
       <Segmented
         name="frequency"
-        className="grid-flow-row grid-cols-2 sm:grid-flow-col sm:grid-cols-none"
+        wrap
         value={value.type}
         onChange={(type) => onChange(FREQUENCY_DEFAULTS[type])}
         options={[
