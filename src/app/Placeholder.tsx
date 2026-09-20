@@ -13,6 +13,10 @@ export function Placeholder({ title, phase }: { title: string; phase: number }) 
 
 export function NotFound() {
   return (
-    <EmptyState title="Esta página no existe." actions={<ButtonLink to="/">Ir a Hoy</ButtonLink>} />
+    <EmptyState
+      standalone
+      title="Esta página no existe."
+      actions={<ButtonLink to="/">Ir a Hoy</ButtonLink>}
+    />
   );
 }

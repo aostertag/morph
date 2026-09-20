@@ -87,6 +87,7 @@ export function HabitDetailScreen() {
   if (detail.state === 'missing') {
     return (
       <EmptyState
+        standalone
         title="Este hábito no existe."
         text="Puede que lo hayas eliminado."
         actions={<ButtonLink to="/habitos">Ver hábitos</ButtonLink>}
@@ -97,6 +98,7 @@ export function HabitDetailScreen() {
   if (detail.state === 'future') {
     return (
       <EmptyState
+        standalone
         title="Este hábito empieza más adelante."
         text={`Empieza a contar el ${formatDate(detail.habit.createdOn, today)}; hasta entonces no hay historial.`}
         actions={<ButtonLink to={`/habitos/${detail.habit.id}/editar`}>Editar hábito</ButtonLink>}

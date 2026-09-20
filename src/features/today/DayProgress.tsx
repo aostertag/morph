@@ -34,17 +34,20 @@ export function DayProgress({
         aria-valuemax={progress.total}
         aria-valuenow={progress.done}
         aria-valuetext={`${progress.done} de ${progress.total}`}
-        className="mt-3 flex h-1 gap-0.5"
+        className="mt-3 flex h-1.5 gap-0.5"
       >
         {counted.map((view) => (
           <span
             key={view.habit.id}
-            className="flex-1 transition-[background-color] duration-(--duration-base) ease-(--ease-out)"
-            style={{
-              backgroundColor: view.doneForProgress
-                ? habitColorVar(view.habit.color)
-                : 'var(--color-sunken)',
-            }}
+            className="flex-1 border transition-[background-color,border-color] duration-(--duration-base) ease-(--ease-out)"
+            style={
+              view.doneForProgress
+                ? {
+                    backgroundColor: habitColorVar(view.habit.color),
+                    borderColor: habitColorVar(view.habit.color),
+                  }
+                : { borderColor: 'var(--color-border-strong)' }
+            }
           />
         ))}
       </div>

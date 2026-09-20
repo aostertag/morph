@@ -152,7 +152,7 @@ recordatorios con y sin permiso, y la lista de hábitos mientras se reordena por
   la izquierda o se centren, como ya ocurre de hecho en «Evolución semanal» del detalle, donde hay
   muchos tramos y se ve bien.
 - **Severidad:** media
-- **Estado:** pendiente
+- **Estado:** hecho — `maxBarSize={32}` en «Evolución del período»; con tres tramos las barras miden 32 px.
 
 ### H5 · 404 — no tiene encabezado y arrastra un filete huérfano
 
@@ -166,7 +166,7 @@ recordatorios con y sin permiso, y la lista de hábitos mientras se reordena por
 - **Propuesta:** dar a la pantalla un `h1` («Esta página no existe.») y que el filete de
   `EmptyState` solo salga cuando hay algo encima.
 - **Severidad:** media (accesibilidad)
-- **Estado:** pendiente
+- **Estado:** hecho — `EmptyState standalone`: el título es el `h1` y no lleva filete. Se aplicó también a «hábito inexistente» y «empieza más adelante».
 
 ### H6 · Hoy, tema oscuro — los segmentos vacíos de la barra del día son invisibles
 
@@ -179,7 +179,7 @@ recordatorios con y sin permiso, y la lista de hábitos mientras se reordena por
 - **Propuesta:** subir el segmento vacío al menos al escalón de `border` en oscuro (3:1 contra el
   fondo es lo que pide 1.4.11 para un objeto gráfico que informa).
 - **Severidad:** media
-- **Estado:** pendiente
+- **Estado:** hecho — El segmento vacío es un contorno de `border-strong` (3,3:1 en ambos temas) y la barra pasa de 4 a 6 px.
 
 ### H7 · Detalle — las celdas del heatmap miden 12×12 px (decisión tuya)
 
@@ -220,7 +220,7 @@ recordatorios con y sin permiso, y la lista de hábitos mientras se reordena por
 - **Propuesta:** estrechar el campo (es un número de dos cifras) y darle al sufijo
   `whitespace-nowrap`.
 - **Severidad:** baja
-- **Estado:** pendiente
+- **Estado:** hecho — Campo en un contenedor de 80 px (`inputClasses` traía `w-full`, que pisaba a `w-24`) y sufijo con `whitespace-nowrap`.
 
 ### H10 · Onboarding — sus plantillas no se parecen a las del formulario
 

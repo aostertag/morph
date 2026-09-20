@@ -142,6 +142,7 @@ export function EditHabitScreen() {
   if (habit === null) {
     return (
       <EmptyState
+        standalone
         title="Este hábito no existe."
         text="Puede que se haya eliminado."
         actions={<ButtonLink to="/habitos">Ver hábitos</ButtonLink>}

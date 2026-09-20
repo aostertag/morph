@@ -65,22 +65,24 @@ function RetroLimit({ value }: { value: number }) {
     >
       {(props) => (
         <div className="flex items-center gap-3">
-          <input
-            {...props}
-            type="text"
-            inputMode="numeric"
-            className={`${inputClasses} w-24`}
-            value={text}
-            onChange={(event) => setText(event.target.value)}
-            onBlur={commit}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.preventDefault();
-                commit();
-              }
-            }}
-          />
-          <span className="text-md text-text-muted">días atrás</span>
+          <div className="w-20 shrink-0">
+            <input
+              {...props}
+              type="text"
+              inputMode="numeric"
+              className={inputClasses}
+              value={text}
+              onChange={(event) => setText(event.target.value)}
+              onBlur={commit}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  commit();
+                }
+              }}
+            />
+          </div>
+          <span className="whitespace-nowrap text-md text-text-muted">días atrás</span>
         </div>
       )}
     </Field>

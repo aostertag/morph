@@ -55,9 +55,9 @@ describe('pantalla Hoy', () => {
 
     const segments = [...screen.getByRole('progressbar').children];
     expect(segments.map((s) => s.getAttribute('style'))).toEqual([
-      'background-color: var(--color-habit-azul);',
-      'background-color: var(--color-sunken);',
-      'background-color: var(--color-sunken);',
+      'border-color: var(--color-habit-azul); background-color: var(--color-habit-azul);',
+      'border-color: var(--color-border-strong);',
+      'border-color: var(--color-border-strong);',
     ]);
   });
 

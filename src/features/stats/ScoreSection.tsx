@@ -189,7 +189,7 @@ export function ScoreSection({
                 tick={{ fill: 'var(--color-text-muted)', fontSize: 12 }}
               />
               <Tooltip content={<ScoreTooltip />} cursor={{ fill: 'var(--color-sunken)' }} />
-              <Bar dataKey="ratio" isAnimationActive={false}>
+              <Bar dataKey="ratio" maxBarSize={32} isAnimationActive={false}>
                 {points.map((point) => (
                   <Cell
                     key={point.full}

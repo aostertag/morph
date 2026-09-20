@@ -5,14 +5,21 @@ export function EmptyState({
   title,
   text,
   actions,
+  standalone = false,
 }: {
   title: string;
   text?: string | undefined;
   actions?: ReactNode;
+  /** Pantalla entera sin encabezado propio: el título pasa a ser el `h1` y no lleva filete. */
+  standalone?: boolean;
 }) {
   return (
-    <div className="border-t border-border py-10">
-      <p className="text-xl font-medium">{title}</p>
+    <div className={standalone ? 'py-10' : 'border-t border-border py-10'}>
+      {standalone ? (
+        <h1 className="text-2xl font-semibold">{title}</h1>
+      ) : (
+        <p className="text-xl font-medium">{title}</p>
+      )}
       {text && <p className="mt-2 max-w-md text-md text-text-muted">{text}</p>}
       {actions && <div className="mt-6 flex flex-wrap gap-3">{actions}</div>}
     </div>
