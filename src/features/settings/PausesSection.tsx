@@ -34,7 +34,7 @@ function PauseRow({
   const name = scopeName(pause.habitId, habits);
   const days = diffDays(pause.start, pause.end) + 1;
   return (
-    <li className="flex min-h-14 items-stretch gap-3 border-b border-border">
+    <li className="flex min-h-14 items-stretch gap-3 border-b border-border last:border-b-0">
       <ColorBar color={habit?.color ?? null} />
       <div className="flex min-w-0 flex-1 flex-col justify-center py-2">
         <div className="flex items-baseline justify-between gap-3">

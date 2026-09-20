@@ -17,11 +17,13 @@ export function DevSampleData() {
 export function DevToolsFooter() {
   if (!SampleDataButton) return null;
   return (
-    <section aria-labelledby="desarrollo" className="mt-16 border-t border-border pt-4">
-      <h2 id="desarrollo" className="label-caps mb-3">
+    <section aria-labelledby="desarrollo" className="mt-12">
+      <h2 id="desarrollo" className="label-caps border-b border-border pb-2">
         Solo en desarrollo
       </h2>
-      <DevSampleData />
+      <div className="mt-4">
+        <DevSampleData />
+      </div>
     </section>
   );
 }

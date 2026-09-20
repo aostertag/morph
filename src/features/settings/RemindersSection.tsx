@@ -57,7 +57,10 @@ export function RemindersSection({ habits }: { habits: readonly Habit[] }) {
       ) : (
         <ul className="mt-4 border-t border-border">
           {withReminder.map((habit) => (
-            <li key={habit.id} className="flex min-h-14 items-stretch gap-3 border-b border-border">
+            <li
+              key={habit.id}
+              className="flex min-h-14 items-stretch gap-3 border-b border-border last:border-b-0"
+            >
               <ColorBar color={habit.color} />
               <div className="flex min-w-0 flex-1 items-center justify-between gap-3 py-2">
                 <Link

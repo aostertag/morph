@@ -43,7 +43,7 @@ function describeContents(summary: BackupSummary): string {
 
 function Row({ title, text, children }: { title: string; text: string; children: ReactNode }) {
   return (
-    <li className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-border py-4">
+    <li className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-border py-4 last:border-b-0">
       <div className="min-w-0 max-w-prose flex-1 basis-64">
         <p className="font-medium">{title}</p>
         <p className="text-sm text-text-muted">{text}</p>
