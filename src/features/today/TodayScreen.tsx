@@ -3,7 +3,8 @@ import { DevSampleData } from '@/dev/DevTools';
 import { addDays, isLocalDay, type LocalDay } from '@/domain/day';
 import { canLogOn } from '@/domain/evaluate';
 import { dayProgress, groupByTimeOfDay, viewForDay } from '@/domain/today';
-import { useDayLog } from '@/hooks/useData';
+import { ReviewPrompt } from '@/features/review/ReviewPrompt';
+import { useDayLog, useReviews } from '@/hooks/useData';
 import { useToday } from '@/hooks/useToday';
 import { formatRelativeDay, TIME_OF_DAY_LABEL } from '@/lib/format';
 import { ButtonLink } from '@/ui/Button';
@@ -31,6 +32,7 @@ export function TodayScreen() {
   const [day, setDay] = useSelectedDay(today);
   const data = useHabitAnalyses(today);
   const log = useDayLog(day);
+  const reviews = useReviews();
 
   if (!data) return null;
 
@@ -44,6 +46,10 @@ export function TodayScreen() {
     <div className="grid gap-12 lg:grid-cols-[minmax(0,var(--container-list))_var(--container-panel)] lg:justify-between">
       <div className="min-w-0">
         <DayHeader day={day} today={today} onChange={setDay} />
+
+        {day === today && hasHabits && reviews && (
+          <ReviewPrompt analyses={analyses} settings={settings} reviews={reviews} today={today} />
+        )}
 
         {tooOld && (
           <p className="mt-4 border-y border-border py-3 text-md text-text-muted">

@@ -6,9 +6,10 @@ import { getDayLog, listDayLogs } from '@/db/repos/dayLogs';
 import { entriesForHabit } from '@/db/repos/entries';
 import { listHabits } from '@/db/repos/habits';
 import { listPauses } from '@/db/repos/pauses';
+import { getReview, listReviews } from '@/db/repos/reviews';
 import { getSettings } from '@/db/repos/settings';
 import type { LocalDay } from '@/domain/day';
-import type { Category, DayLog, Entry, Habit, Pause, Settings } from '@/domain/types';
+import type { Category, DayLog, Entry, Habit, Pause, Settings, WeeklyReview } from '@/domain/types';
 
 /*
  * Lecturas reactivas: se vuelven a ejecutar solas cuando cambian los datos que leen.
@@ -40,6 +41,16 @@ export function useDayLog(date: LocalDay): DayLog | null | undefined {
 /** Ánimo, energía y nota de cada día, en orden cronológico. */
 export function useDayLogs(): DayLog[] | undefined {
   return useLiveQuery(listDayLogs);
+}
+
+/** Revisión de una semana: `null` si no hay ninguna, `undefined` mientras carga. */
+export function useReview(weekStart: LocalDay): WeeklyReview | null | undefined {
+  return useLiveQuery(async () => (await getReview(weekStart)) ?? null, [weekStart]);
+}
+
+/** Revisiones escritas, de la más reciente a la más antigua. */
+export function useReviews(): WeeklyReview[] | undefined {
+  return useLiveQuery(listReviews);
 }
 
 interface EntriesState {

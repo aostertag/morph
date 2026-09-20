@@ -139,15 +139,25 @@ export const RANGE_LABEL: Readonly<Record<RangePreset, string>> = {
   custom: 'Personalizado',
 };
 
-/** "Del 1 al 19 de septiembre", "Del 1 de julio al 19 de septiembre". */
-export function describeRange(range: DayRange, today: LocalDay): string {
-  if (range.from === range.to) return capitalize(formatDate(range.from, today));
+/** "1 al 19 de septiembre", "1 de julio al 19 de septiembre". */
+function spanOf(range: DayRange, today: LocalDay): string {
   const sameMonth =
     yearOf(range.from) === yearOf(range.to) && monthOf(range.from) === monthOf(range.to);
   const start = sameMonth
     ? format(toLocalDate(range.from), 'd', { locale: es })
     : formatDate(range.from, today);
-  return `Del ${start} al ${formatDate(range.to, today)}`;
+  return `${start} al ${formatDate(range.to, today)}`;
+}
+
+/** "Del 1 al 19 de septiembre", "Del 1 de julio al 19 de septiembre". */
+export function describeRange(range: DayRange, today: LocalDay): string {
+  if (range.from === range.to) return capitalize(formatDate(range.from, today));
+  return `Del ${spanOf(range, today)}`;
+}
+
+/** "Semana del 14 al 20 de septiembre". */
+export function formatWeek(week: DayRange, today: LocalDay): string {
+  return `Semana del ${spanOf(week, today)}`;
 }
 
 /** Diferencia en puntos porcentuales, con signo: "+8 puntos", "-3 puntos". */

@@ -1,8 +1,10 @@
 import type { LocalDay } from '@/domain/day';
 import { dailyGoal } from '@/domain/evaluate';
+import type { PeriodUnit } from '@/domain/frequency';
 import type { DayRecord } from '@/domain/history';
-import type { Habit } from '@/domain/types';
-import { formatDate, formatMinutes, formatWeekday, withUnit } from '@/lib/format';
+import type { Milestone } from '@/domain/milestones';
+import type { Habit, HabitKind } from '@/domain/types';
+import { formatDate, formatMinutes, formatNumber, formatWeekday, withUnit } from '@/lib/format';
 
 /** Qué pasó ese día: "6 de 8 vasos", "Hecho", "En pausa"… */
 export function describeDayValue(habit: Habit, record: DayRecord | null): string {
@@ -38,4 +40,34 @@ export function describeDay(
       ? ', cubierto por un comodín'
       : '';
   return `${when}: ${state}${extra}`;
+}
+
+/** "días", "semanas" o "meses" según la unidad en la que se evalúa el hábito. */
+const UNIT_PLURAL: Readonly<Record<PeriodUnit, string>> = {
+  day: 'días',
+  week: 'semanas',
+  month: 'meses',
+};
+
+/**
+ * Nombre de un hito: "Primera semana completa", "30 días cumplidos",
+ * "100 registros", "30 días sin recaer".
+ */
+export function describeMilestone(milestone: Milestone, unit: PeriodUnit, kind: HabitKind): string {
+  const count = formatNumber(milestone.threshold);
+  const plural = UNIT_PLURAL[unit];
+
+  switch (milestone.kind) {
+    case 'streak':
+      if (kind === 'avoid') return `${count} ${plural} seguidos sin recaer`;
+      // Siete días seguidos son justo eso: la primera semana entera.
+      if (unit === 'day' && milestone.threshold === 7) return 'Primera semana completa';
+      return `Racha de ${count} ${plural}`;
+    case 'completed':
+      if (kind === 'avoid') return `${count} ${plural} limpios`;
+      if (milestone.threshold === 1) return 'Primer día cumplido';
+      return `${count} ${plural} cumplidos`;
+    case 'logged':
+      return milestone.threshold === 1 ? 'Primer registro' : `${count} registros`;
+  }
 }

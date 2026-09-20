@@ -23,6 +23,9 @@ const EditHabitScreen = lazy(() =>
 const StatsScreen = lazy(() =>
   import('@/features/stats/StatsScreen').then((m) => ({ default: m.StatsScreen })),
 );
+const ReviewScreen = lazy(() =>
+  import('@/features/review/ReviewScreen').then((m) => ({ default: m.ReviewScreen })),
+);
 const HabitDetailScreen = lazy(() =>
   import('@/features/habit-detail/HabitDetailScreen').then((m) => ({
     default: m.HabitDetailScreen,
@@ -78,6 +81,7 @@ function AppShell() {
             <Route path="habitos/:id" element={<HabitDetailScreen />} />
             <Route path="habitos/:id/editar" element={<EditHabitScreen />} />
             <Route path="estadisticas" element={<StatsScreen />} />
+            <Route path="revision" element={<ReviewScreen />} />
             <Route path="ajustes" element={<Placeholder title="Ajustes" phase={6} />} />
             <Route path="*" element={<NotFound />} />
           </Route>

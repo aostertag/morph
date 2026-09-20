@@ -11,17 +11,20 @@ La especificación completa está en `SPEC.md`; la sección 9 (diseño) prevalec
 | 2 | Pantalla Hoy y gestión de hábitos | **Hecha** |
 | 3 | Detalle de hábito, heatmap, métricas, generador de datos | **Hecha** |
 | 4 | Estadísticas globales, correlaciones y registro de ánimo/energía | **Hecha** |
-| 5 | Revisión semanal e hitos | Pendiente |
+| 5 | Revisión semanal e hitos | **En curso** (dominio, datos y UI hechos; faltan tests de UI y datos de ejemplo) |
 | 6 | Ajustes, backup, recordatorios, PWA, onboarding, atajos, a11y | Pendiente |
 | 7 | Pulido final | Pendiente |
 
-**Siguiente: Fase 5** (revisión semanal e hitos).
+**Siguiente: cerrar la fase 5.** Lo hecho pasa `npm run check` (817 tests). Falta:
+- `src/features/review/ReviewScreen.test.tsx` (proyecto `ui`): pinta el resumen, guarda una reflexión y la relee, el historial enlaza a semanas anteriores, estado sin hábitos.
+- Un caso en `src/features/today/TodayScreen.test.tsx`: el aviso aparece y "Ahora no" lo retira.
+- Reflexiones en el generador: `generateSampleData` aún no devuelve `reviews`, así que `SampleDataButton.tsx:12` y `repos.test.ts` pasan `reviews: []` a mano y el historial nace vacío.
+- Repaso manual (aviso en Hoy, `/revision`, deshacer, hitos con registro retroactivo) y teclado/contraste.
 
 **Pendiente para fases posteriores:**
-- Fase 5: el aviso de revisión semanal con su historial y los **hitos** del detalle. El registro de ánimo, energía y nota del día se adelantó a la fase 4, porque sin él las correlaciones solo funcionaban con el generador.
 - Fase 6: atajos de teclado (números, ←/→, `N`, `?`) y llevar el botón de datos de ejemplo a Ajustes.
 
-Ruta provisional: `/ajustes` muestra un marcador de posición hasta su fase.
+Ruta provisional: `/ajustes` muestra un marcador de posición hasta su fase. La navegación sigue con cuatro pestañas: a `/revision` se llega por el aviso de Hoy y por el historial.
 
 ## Stack (versiones verificadas con `npm view` el 2026-09-19)
 
@@ -44,7 +47,9 @@ UI (`features/`, `ui/`, `charts/`) → datos (`db/`) → dominio (`domain/`). **
   - `frequency.ts`: unidad de evaluación, períodos, prorrateo y validación.
   - `pauses.ts`: pausas globales (`habitId: null`) y por hábito.
   - `evaluate.ts`: `evaluateHabit()` devuelve las unidades con estado `done | missed | paused | pending`. También contiene `canLogOn()` (límite retroactivo).
-  - `streaks.ts`: `computeStreaks()` calcula racha actual, mejor racha, comodines disponibles y usos.
+  - `streaks.ts`: `computeStreaks()` calcula racha actual, mejor racha, comodines disponibles y usos. `records` guarda la **primera** vez que la racha alcanzó cada longitud (`bestRange` se queda con el empate más reciente; aquí interesa la primera), y de ahí salen las fechas de los hitos.
+  - `milestones.ts`: hitos derivados de la historia, sin persistir. Tres familias (`streak`, `completed`, `logged`) con umbrales escalados a la unidad del hábito. Los "a evitar" no tienen familia `logged`: un registro es una recaída. "Primera semana completa" es el hito de racha 7 en unidad de día, no uno aparte.
+  - `review.ts`: `lastCompleteWeek()`, `weekOf()`, `weekSummary()` (puntuación contra la semana anterior, ranking, más constante, el que más costó, recaídas y medias de ánimo) y `reviewPending()`. El informe **no se persiste**: de `WeeklyReview` solo se guarda la reflexión. `consistencyRanking` admite un `minDays` opcional y la revisión usa `MIN_REVIEW_DAYS = 3`, porque sobre siete días un hábito de lunes, miércoles y viernes solo aporta tres.
   - `habit.ts`: normalización y validación del formulario de hábito.
   - `range.ts`: rango de análisis (semana, mes, trimestre, año, personalizado) y el período anterior comparable.
   - `stats.ts`: puntuación del período, comparación, evolución por tramos, ranking de consistencia, día de la semana, mejora/caída de 4 semanas y resumen de "a evitar".
@@ -82,6 +87,13 @@ UI (`features/`, `ui/`, `charts/`) → datos (`db/`) → dominio (`domain/`). **
   - `Heatmap.tsx`: la rejilla es una tabla con un solo punto de tabulación; las flechas mueven un día o una semana;
   - `DayPanel.tsx`: el día elegido, con su nota editable dentro del límite retroactivo;
   - `Summary.tsx`, `WeeklyChart.tsx`, `WeekdayTable.tsx`, `ValueSection.tsx`, `HistoryList.tsx`.
+- `src/features/review/`: revisión semanal, cargada con `lazy()`.
+  - `useReviewData.ts` reutiliza la caché compartida, como `useStats`;
+  - `ReviewScreen.tsx` lee la semana de la URL (`/revision?semana=YYYY-MM-DD`; solo semanas cerradas que empiecen el día configurado) y al abrirse marca `lastReviewOffered`, así que el aviso deja de salir;
+  - `ReviewPrompt.tsx` es el aviso de Hoy (no `lazy`: lo monta `TodayScreen`), `WeekReport.tsx` el informe, `ReflectionForm.tsx` la reflexión y `ReviewHistory.tsx` el historial;
+  - `reviewActions.ts`: `saveReview` (con deshacer) y `dismissReview` (sin él: no se pierde nada).
+  - Las **rachas** solo se enseñan en la última semana cerrada, porque van siempre a fecha de hoy.
+- `src/features/habit-detail/MilestonesSection.tsx`: hitos alcanzados con su fecha y el siguiente de cada familia con su progreso. Las etiquetas salen de `describeMilestone` en `habit-detail/describe.ts`.
 - `src/features/stats/`: pantalla de estadísticas globales, cargada con `lazy()` (arrastra Recharts).
   - `useStats.ts` reutiliza los análisis de la caché compartida y añade `dayLogs`;
   - `RangePicker.tsx` (select nativo + dos fechas), `ScoreSection.tsx`, `ConsistencySection.tsx`, `MomentumSection.tsx`, `WeekdaySection.tsx`, `AvoidSection.tsx`, `CorrelationsSection.tsx`;
@@ -114,7 +126,9 @@ UI (`features/`, `ui/`, `charts/`) → datos (`db/`) → dominio (`domain/`). **
   - **Los hábitos "a evitar" no cuentan:** no son tareas.
   - Un hábito por semana o mes con la meta ya cumplida otros días no cuenta ese día, salvo que también se haga ese día.
   - Los hábitos de días concretos solo aparecen los días que tocan.
-- **Rachas mostradas:** siempre a fecha de hoy, aunque se esté viendo un día pasado.
+- **Rachas mostradas:** siempre a fecha de hoy, aunque se esté viendo un día pasado. Por eso la revisión semanal solo las enseña en la última semana cerrada.
+- **Hitos:** derivados de la historia, nunca guardados, igual que los comodines: un registro retroactivo los recoloca solo y ninguna fecha puede quedarse mintiendo.
+- **Revisión semanal:** se ofrece una vez por semana cerrada (`settings.lastReviewOffered`). No se ofrece si ya hay reflexión escrita ni si la semana no tenía días evaluables. La reflexión se puede escribir y corregir siempre: es una nota sobre algo que ya pasó, así que el límite retroactivo no la afecta. Vaciarla borra la revisión.
 - **Cronómetro:** solo se ofrece para hoy. Al detenerlo se suman los minutos redondeados al día en que empezó. Si no llega a un minuto no se suma nada. Deshacer resta los minutos y reanuda el cronómetro.
 - **Cantidades:** el paso de +/- sale de `quantityStep` (1 para metas ≤20; si no, un valor redondo cercano a meta/10: 8.000 pasos avanza de 1.000 en 1.000). Tocar el valor permite escribirlo.
 - **Día seleccionado:** va en la URL (`/?dia=YYYY-MM-DD`, con `replace`). Las fechas futuras se ignoran. Más allá del límite retroactivo el día es de solo lectura, con un aviso.

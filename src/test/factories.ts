@@ -1,5 +1,5 @@
 import { addDays, eachDay, type LocalDay, localDay } from '@/domain/day';
-import type { DayLog, Entry, Habit, Pause, Scale } from '@/domain/types';
+import type { DayLog, Entry, Habit, Pause, Scale, WeeklyReview } from '@/domain/types';
 
 export const d = localDay;
 
@@ -61,6 +61,10 @@ export function pause(start: string, end: string, habitId: string | null = null)
     reason: 'vacaciones',
     note: null,
   };
+}
+
+export function review(weekStart: string, reflection = 'Semana normal'): WeeklyReview {
+  return { weekStart: d(weekStart), reflection, createdAt: 0, updatedAt: 0 };
 }
 
 /** `count` días consecutivos empezando en `from`. */

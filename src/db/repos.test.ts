@@ -28,6 +28,7 @@ import {
   updateHabit,
 } from './repos/habits';
 import { createPause, deletePause, listPauses, restorePause } from './repos/pauses';
+import { getReview, listReviews, restoreReview, saveReflection } from './repos/reviews';
 import { getSettings, updateSettings } from './repos/settings';
 import { db } from './schema';
 
@@ -269,6 +270,58 @@ describe('archivar y restaurar', () => {
     await archiveHabit(h.id, d('2026-01-11'));
     const result = await unarchiveHabit(h.id, d('2026-01-11'));
     expect(result.gapPause).toBeNull();
+  });
+});
+
+describe('revisiones semanales', () => {
+  const week = d('2026-09-07');
+
+  it('guarda la reflexión y conserva la fecha de creación al reescribirla', async () => {
+    await saveReflection(week, '  Semana floja  ', 1000);
+    expect(await getReview(week)).toEqual({
+      weekStart: week,
+      reflection: 'Semana floja',
+      createdAt: 1000,
+      updatedAt: 1000,
+    });
+
+    await saveReflection(week, 'Mejor de lo que parecía', 2000);
+    expect(await getReview(week)).toMatchObject({
+      reflection: 'Mejor de lo que parecía',
+      createdAt: 1000,
+      updatedAt: 2000,
+    });
+  });
+
+  it('una reflexión vacía borra la revisión', async () => {
+    await saveReflection(week, 'Algo', 1000);
+    await saveReflection(week, '   ', 2000);
+    expect(await getReview(week)).toBeUndefined();
+  });
+
+  it('devuelve el estado anterior y se puede deshacer', async () => {
+    const first = await saveReflection(week, 'Primera', 1000);
+    expect(first).toBeNull();
+
+    const snapshot = await saveReflection(week, 'Segunda', 2000);
+    expect(snapshot).toMatchObject({ reflection: 'Primera' });
+
+    await restoreReview(week, snapshot);
+    expect(await getReview(week)).toMatchObject({ reflection: 'Primera' });
+
+    await restoreReview(week, null);
+    expect(await getReview(week)).toBeUndefined();
+  });
+
+  it('las lista de la más reciente a la más antigua', async () => {
+    await saveReflection(d('2026-08-31'), 'Agosto');
+    await saveReflection(d('2026-09-14'), 'Septiembre');
+    await saveReflection(week, 'Intermedia');
+    expect((await listReviews()).map((r) => r.weekStart)).toEqual([
+      '2026-09-14',
+      '2026-09-07',
+      '2026-08-31',
+    ]);
   });
 });
 

@@ -167,15 +167,22 @@ export interface Ranking {
 /**
  * Ranking de consistencia. Los hábitos con pocos días en el rango van aparte:
  * colocarlos al final del ranking los haría parecer los peores sin serlo.
+ *
+ * `minDays` se puede bajar para rangos cortos: sobre una semana cerrada, un
+ * hábito de días concretos solo aporta dos o tres días evaluables.
  */
-export function consistencyRanking(histories: readonly HabitHistory[], range: DayRange): Ranking {
+export function consistencyRanking(
+  histories: readonly HabitHistory[],
+  range: DayRange,
+  minDays: number = MIN_RANKING_DAYS,
+): Ranking {
   const ranked: HabitRate[] = [];
   const insufficient: HabitRate[] = [];
   for (const history of histories) {
     if (isAvoid(history)) continue;
     const rate = completionRate(history, range.from, range.to);
     if (rate.days === 0) continue;
-    (rate.days >= MIN_RANKING_DAYS ? ranked : insufficient).push({ habit: history.habit, rate });
+    (rate.days >= minDays ? ranked : insufficient).push({ habit: history.habit, rate });
   }
   ranked.sort((a, b) => (b.rate.ratio ?? 0) - (a.rate.ratio ?? 0) || b.rate.days - a.rate.days);
   insufficient.sort((a, b) => b.rate.days - a.rate.days);

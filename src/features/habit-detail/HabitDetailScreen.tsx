@@ -17,6 +17,7 @@ import { DayPanel } from './DayPanel';
 import { Heatmap, MonthTable } from './Heatmap';
 import { HistoryList } from './HistoryList';
 import { availableYears, type HeatRange, rollingRange, yearRange } from './heatmapModel';
+import { MilestonesSection } from './MilestonesSection';
 import { Figures, RatesTable } from './Summary';
 import { useHabitDetail } from './useHabitDetail';
 import { ValueSection } from './ValueSection';
@@ -179,6 +180,7 @@ export function HabitDetailScreen() {
         </div>
         <div className="min-w-0">
           <RatesTable history={history} />
+          <MilestonesSection history={history} streak={analysis.streak} />
           <WeekdayTable history={history} weekStartsOn={weekStartsOn} />
           <HistoryList
             history={history}

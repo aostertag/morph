@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { d } from '@/test/factories';
 import {
   describeFrequency,
+  describeRange,
   formatDate,
   formatElapsed,
   formatMinutes,
@@ -9,6 +10,7 @@ import {
   formatPercent,
   formatRelativeDay,
   formatStreak,
+  formatWeek,
   formatWeekday,
   orderedWeekdays,
 } from './format';
@@ -24,6 +26,18 @@ describe('formato', () => {
     expect(formatWeekday(d('2026-09-19'))).toBe('Sábado');
     expect(formatDate(d('2026-09-19'), d('2026-09-19'))).toBe('19 de septiembre');
     expect(formatDate(d('2025-12-31'), d('2026-01-02'))).toBe('31 de diciembre de 2025');
+  });
+
+  it('rangos y semanas', () => {
+    const today = d('2026-09-19');
+    const week = { from: d('2026-09-14'), to: d('2026-09-20') };
+    expect(describeRange(week, today)).toBe('Del 14 al 20 de septiembre');
+    expect(formatWeek(week, today)).toBe('Semana del 14 al 20 de septiembre');
+    // A caballo entre dos meses se nombran los dos.
+    expect(formatWeek({ from: d('2026-08-31'), to: d('2026-09-06') }, today)).toBe(
+      'Semana del 31 de agosto al 6 de septiembre',
+    );
+    expect(describeRange({ from: today, to: today }, today)).toBe('19 de septiembre');
   });
 
   it('días relativos', () => {

@@ -110,6 +110,29 @@ describe('comodines', () => {
   });
 });
 
+describe('marcas de racha', () => {
+  it('anota la primera vez que se alcanza cada longitud', () => {
+    expect(streaks('DDD').records).toEqual([
+      { start: '2026-01-01', end: '2026-01-01', length: 1 },
+      { start: '2026-01-01', end: '2026-01-02', length: 2 },
+      { start: '2026-01-01', end: '2026-01-03', length: 3 },
+    ]);
+  });
+
+  it('una racha posterior solo anota lo que supera la marca anterior', () => {
+    // Tres, se rompe, y luego cinco: solo los pasos 4 y 5 son marcas nuevas.
+    const s = streaks('DDD M DDDDD');
+    expect(s.records.map((r) => r.length)).toEqual([1, 2, 3, 4, 5]);
+    expect(s.records.at(-1)).toEqual({ start: '2026-01-05', end: '2026-01-09', length: 5 });
+    // La marca de 3 sigue siendo la de la primera racha, no la de la segunda.
+    expect(s.records[2]).toEqual({ start: '2026-01-01', end: '2026-01-03', length: 3 });
+  });
+
+  it('sin unidades cumplidas no hay marcas', () => {
+    expect(streaks('MM').records).toEqual([]);
+  });
+});
+
 describe('integración con evaluateHabit', () => {
   const ctx = (today: string) => ({ today: d(today), weekStartsOn: 1 as const, pauses: [] });
 

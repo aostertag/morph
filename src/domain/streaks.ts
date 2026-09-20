@@ -31,6 +31,11 @@ export interface StreakSummary {
   readonly wildcardsAvailable: number;
   /** Todas las veces que un comodín cubrió una unidad fallada, en orden. */
   readonly wildcardUses: readonly WildcardUse[];
+  /**
+   * La primera vez que la racha alcanzó cada longitud nueva, en orden creciente.
+   * De aquí salen las fechas de los hitos de racha.
+   */
+  readonly records: readonly StreakRange[];
 }
 
 /**
@@ -52,6 +57,7 @@ export function computeStreaks(unit: PeriodUnit, units: readonly EvaluatedUnit[]
   let best: StreakRange | null = null;
   let wildcards = 0;
   const uses: WildcardUse[] = [];
+  const records: StreakRange[] = [];
 
   for (const u of units) {
     switch (u.status) {
@@ -65,6 +71,10 @@ export function computeStreaks(unit: PeriodUnit, units: readonly EvaluatedUnit[]
         if (current % WILDCARD_EVERY === 0 && wildcards < WILDCARD_MAX) wildcards++;
         if (best === null || current >= best.length) {
           best = { start: currentStart, end: currentEnd, length: current };
+        }
+        // `best` se queda con el empate más reciente; aquí interesa la primera vez.
+        if (current > (records.at(-1)?.length ?? 0)) {
+          records.push({ start: currentStart, end: currentEnd, length: current });
         }
         break;
       }
@@ -94,5 +104,6 @@ export function computeStreaks(unit: PeriodUnit, units: readonly EvaluatedUnit[]
     bestRange: best,
     wildcardsAvailable: wildcards,
     wildcardUses: uses,
+    records,
   };
 }
