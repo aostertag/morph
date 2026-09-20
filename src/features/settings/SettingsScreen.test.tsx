@@ -83,6 +83,13 @@ describe('ajustes: preferencias', () => {
   });
 });
 
+describe('ajustes: aviso de almacenamiento', () => {
+  it('avisa de que los datos viven solo en este navegador', async () => {
+    renderRoute(<SettingsScreen />);
+    expect(await screen.findByText(/viven solo en este navegador/)).toBeInTheDocument();
+  });
+});
+
 describe('ajustes: exportar', () => {
   it('la copia exportada es un archivo que la propia app acepta', async () => {
     await createHabit(habitInput({ name: 'Leer' }));
