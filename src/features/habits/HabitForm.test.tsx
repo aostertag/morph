@@ -23,6 +23,24 @@ describe('crear hábito', () => {
     expect(await listHabits()).toEqual([]);
   });
 
+  it('«Ninguno» es una opción más del selector de icono', async () => {
+    const { user } = renderRoute(<NewHabitScreen />, {
+      path: '/habitos/nuevo',
+      url: '/habitos/nuevo?plantilla=blanco',
+    });
+    const none = await screen.findByRole('radio', { name: 'Ninguno' });
+    const book = screen.getByRole('radio', { name: 'Libro' });
+    expect(none).toBeChecked();
+    // Misma caja y mismo estado elegido que el resto: solo cambia el dibujo.
+    expect(none.parentElement?.className).toBe(book.parentElement?.className);
+    expect(none.parentElement).toHaveAttribute('title', 'Ninguno');
+    expect(book.parentElement).toHaveAttribute('title', 'Libro');
+
+    await user.click(book);
+    expect(book).toBeChecked();
+    expect(none).not.toBeChecked();
+  });
+
   it('crea un hábito cuantitativo y vuelve a la lista', async () => {
     const { user } = renderRoute(<NewHabitScreen />, {
       path: '/habitos/nuevo',

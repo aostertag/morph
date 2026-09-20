@@ -28,16 +28,39 @@ function save(patch: Partial<Settings>): void {
   updateSettings(patch).catch(notifyError);
 }
 
+/** Devuelve el número escrito si está dentro del rango; si no, `null`. */
+function parseRetroLimit(text: string): number | null {
+  const trimmed = text.trim();
+  if (!/^\d{1,3}$/.test(trimmed)) return null;
+  const parsed = Number(trimmed);
+  return parsed >= 0 && parsed <= RETRO_MAX ? parsed : null;
+}
+
 function RetroLimit({ value }: { value: number }) {
   const [text, setText] = useState(String(value));
-  const parsed = /^\d{1,3}$/.test(text.trim()) ? Number(text) : Number.NaN;
-  const valid = Number.isInteger(parsed) && parsed >= 0 && parsed <= RETRO_MAX;
+  const [saved, setSaved] = useState(value);
+  // Si el valor cambia por fuera (importar una copia, borrar todo, deshacer), el campo lo refleja.
+  if (saved !== value) {
+    setSaved(value);
+    setText(String(value));
+  }
+
+  const parsed = parseRetroLimit(text);
+
+  /** Se guarda al terminar de escribir, no en cada tecla: «14» pasaría por «1». */
+  const commit = () => {
+    if (parsed === null) {
+      setText(String(value));
+      return;
+    }
+    if (parsed !== value) save({ retroLimitDays: parsed });
+  };
 
   return (
     <Field
       label="Registrar días anteriores"
       description="Cuántos días hacia atrás se puede registrar o corregir. Con 0 solo se registra hoy. Más allá de ese límite un día es de solo lectura."
-      error={valid ? undefined : `Escribe un número entero entre 0 y ${RETRO_MAX}.`}
+      error={parsed === null ? `Escribe un número entero entre 0 y ${RETRO_MAX}.` : undefined}
       className="max-w-sm"
     >
       {(props) => (
@@ -48,17 +71,13 @@ function RetroLimit({ value }: { value: number }) {
             inputMode="numeric"
             className={`${inputClasses} w-24`}
             value={text}
-            onChange={(event) => {
-              setText(event.target.value);
-              const next = /^\d{1,3}$/.test(event.target.value.trim())
-                ? Number(event.target.value)
-                : Number.NaN;
-              if (Number.isInteger(next) && next >= 0 && next <= RETRO_MAX) {
-                save({ retroLimitDays: next });
+            onChange={(event) => setText(event.target.value)}
+            onBlur={commit}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                commit();
               }
-            }}
-            onBlur={() => {
-              if (!valid) setText(String(value));
             }}
           />
           <span className="text-md text-text-muted">días atrás</span>

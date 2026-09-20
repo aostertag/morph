@@ -1,3 +1,4 @@
+import { CircleSlash } from 'lucide-react';
 import { useState } from 'react';
 import { createCategory } from '@/db/repos/categories';
 import type { Weekday } from '@/domain/day';
@@ -171,10 +172,13 @@ export function IconField({
       <div className="flex flex-wrap gap-1">
         {options.map((name) => {
           const entry = name ? HABIT_ICONS[name] : undefined;
-          const Icon = entry?.icon;
+          // «Ninguno» es un icono más (círculo tachado): mismo tamaño y mismo estado elegido.
+          const Icon = entry?.icon ?? CircleSlash;
+          const label = entry?.label ?? 'Ninguno';
           return (
             <label
               key={name ?? 'ninguno'}
+              title={label}
               className={cx(
                 'flex size-touch cursor-pointer items-center justify-center rounded-md border border-transparent text-text-muted',
                 'hover:bg-sunken has-checked:border-text has-checked:text-text',
@@ -188,14 +192,8 @@ export function IconField({
                 onChange={() => onChange(name)}
                 className="sr-only"
               />
-              {Icon ? (
-                <>
-                  <Icon size={18} aria-hidden="true" />
-                  <span className="sr-only">{entry.label}</span>
-                </>
-              ) : (
-                <span className="text-xs">Ninguno</span>
-              )}
+              <Icon size={18} aria-hidden="true" />
+              <span className="sr-only">{label}</span>
             </label>
           );
         })}

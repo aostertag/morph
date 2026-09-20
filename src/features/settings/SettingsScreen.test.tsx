@@ -58,20 +58,28 @@ describe('ajustes: preferencias', () => {
     await waitFor(async () => expect((await getSettings()).weekStartsOn).toBe(0));
   });
 
-  it('el límite retroactivo solo guarda valores válidos', async () => {
+  it('el límite retroactivo se guarda al terminar de escribir, no en cada tecla', async () => {
     const { user } = renderRoute(<SettingsScreen />);
     const input = await screen.findByLabelText('Registrar días anteriores');
     await user.clear(input);
     await user.type(input, '14');
+    // Escribir «14» pasa por «1», que sería válido: nada se guarda hasta salir del campo.
+    expect((await getSettings()).retroLimitDays).toBe(7);
+    await user.tab();
     await waitFor(async () => expect((await getSettings()).retroLimitDays).toBe(14));
+
+    // Enter también confirma, sin salir del campo.
+    await user.clear(input);
+    await user.type(input, '30{Enter}');
+    await waitFor(async () => expect((await getSettings()).retroLimitDays).toBe(30));
 
     // Un valor fuera de rango se avisa y no se guarda; se recupera al salir del campo.
     await user.clear(input);
     await user.type(input, '400');
     expect(await screen.findByText(/número entero entre 0 y 365/)).toBeInTheDocument();
-    expect((await getSettings()).retroLimitDays).toBe(40);
     await user.tab();
-    expect(input).toHaveValue('40');
+    expect(input).toHaveValue('30');
+    expect((await getSettings()).retroLimitDays).toBe(30);
   });
 });
 
