@@ -62,6 +62,19 @@ describe('hábitos', () => {
     expect(updated).toMatchObject({ id: created.id, order: 0, name: 'Leer 20 páginas' });
   });
 
+  it('permite mover el inicio hasta el primer registro y no más allá', async () => {
+    const created = await createHabit(input({ createdOn: d('2026-01-01') }));
+    await setEntryValue(created.id, d('2026-01-10'), 1);
+    const earlier = await updateHabit(created.id, input({ createdOn: d('2025-12-25') }));
+    expect(earlier.createdOn).toBe('2025-12-25');
+    const later = await updateHabit(created.id, input({ createdOn: d('2026-01-10') }));
+    expect(later.createdOn).toBe('2026-01-10');
+    await expect(
+      updateHabit(created.id, input({ createdOn: d('2026-01-11') })),
+    ).rejects.toBeInstanceOf(ValidationError);
+    expect((await listHabits())[0]?.createdOn).toBe('2026-01-10');
+  });
+
   it('actualizar un hábito inexistente da un error de validación', async () => {
     await expect(updateHabit('nope', input())).rejects.toBeInstanceOf(ValidationError);
   });

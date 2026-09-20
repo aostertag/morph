@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ChevronRight } from 'lucide-react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
+import { firstEntryDate } from '@/db/repos/entries';
 import {
   createHabit,
   deleteHabit,
@@ -137,8 +138,9 @@ export function EditHabitScreen() {
   const settings = useSettings();
   const categories = useCategories();
   const habit = useLiveQuery(async () => (await getHabit(id)) ?? null, [id]);
+  const firstEntry = useLiveQuery(() => firstEntryDate(id), [id]);
 
-  if (habit === undefined || !settings || !categories) return null;
+  if (habit === undefined || firstEntry === undefined || !settings || !categories) return null;
   if (habit === null) {
     return (
       <EmptyState
@@ -172,6 +174,7 @@ export function EditHabitScreen() {
         today={today}
         weekStartsOn={settings.weekStartsOn}
         retroLimitDays={settings.retroLimitDays}
+        firstEntry={firstEntry}
         categories={categories}
         onSubmit={submit}
         onCancel={() => navigate(-1)}

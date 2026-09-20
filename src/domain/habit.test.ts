@@ -5,6 +5,7 @@ import {
   type HabitInput,
   normalizeHabitInput,
   quantityStep,
+  startDateRange,
   unarchiveGap,
   validateHabitInput,
 } from './habit';
@@ -85,5 +86,31 @@ describe('archivado', () => {
     });
     expect(unarchiveGap(d('2026-01-10'), d('2026-01-11'))).toBeNull();
     expect(unarchiveGap(d('2026-01-10'), d('2026-01-10'))).toBeNull();
+  });
+});
+
+describe('startDateRange', () => {
+  const today = d('2026-09-20');
+
+  it('permite adelantar hasta el límite retroactivo y llega como mucho a hoy', () => {
+    expect(startDateRange(today, 7, d('2026-09-20'), null)).toEqual({
+      min: d('2026-09-13'),
+      max: today,
+    });
+  });
+
+  it('nunca pasa del primer registro', () => {
+    expect(startDateRange(today, 7, d('2026-09-10'), d('2026-09-12'))).toEqual({
+      min: d('2026-09-10'),
+      max: d('2026-09-12'),
+    });
+  });
+
+  it('un inicio más antiguo que el límite se puede conservar', () => {
+    expect(startDateRange(today, 7, d('2026-03-23'), null).min).toBe(d('2026-03-23'));
+  });
+
+  it('un hábito que empieza más adelante puede conservar su fecha', () => {
+    expect(startDateRange(today, 7, d('2026-09-25'), null).max).toBe(d('2026-09-25'));
   });
 });

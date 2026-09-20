@@ -46,9 +46,22 @@ export async function createHabit(input: HabitInput): Promise<Habit> {
 export async function updateHabit(id: string, input: HabitInput): Promise<Habit> {
   const data = assertValid(input);
   return withStorage(() =>
-    db.transaction('rw', db.habits, async () => {
+    db.transaction('rw', db.habits, db.entries, async () => {
       const current = await db.habits.get(id);
       if (!current) throw new ValidationError('El hábito ya no existe.');
+      if (data.createdOn !== current.createdOn) {
+        // Un inicio posterior al primer registro dejaría registros fuera del hábito.
+        const first = await db.entries
+          .where('[habitId+date]')
+          .between([id, ''], [id, '￿'], true, true)
+          .first();
+        if (first && data.createdOn > first.date) {
+          throw new ValidationError('El hábito no puede empezar después de su primer registro.');
+        }
+        if (current.archivedOn && data.createdOn > current.archivedOn) {
+          throw new ValidationError('El hábito no puede empezar después de archivarse.');
+        }
+      }
       const next: Habit = { ...current, ...data };
       await db.habits.put(next);
       return next;

@@ -1,4 +1,4 @@
-import { addDays, type LocalDay } from './day';
+import { addDays, type LocalDay, maxDay, minDay } from './day';
 import { validateFrequency } from './frequency';
 import { HABIT_COLORS, type Habit } from './types';
 
@@ -116,4 +116,22 @@ export function unarchiveGap(
   const start = addDays(archivedOn, 1);
   const end = addDays(today, -1);
   return start <= end ? { start, end } : null;
+}
+
+/**
+ * Fechas de inicio que se pueden elegir al editar un hábito. Como al crear, hasta
+ * `retroLimitDays` días atrás (nunca más lejos que el inicio actual, para poder
+ * deshacer un cambio), y nunca después del primer registro: quedarían días fallados
+ * que ya no se pueden registrar.
+ */
+export function startDateRange(
+  today: LocalDay,
+  retroLimitDays: number,
+  currentStart: LocalDay,
+  firstEntry: LocalDay | null,
+): { min: LocalDay; max: LocalDay } {
+  return {
+    min: minDay(addDays(today, -retroLimitDays), currentStart),
+    max: firstEntry ?? maxDay(today, currentStart),
+  };
 }

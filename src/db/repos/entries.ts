@@ -20,6 +20,17 @@ export function entriesForHabit(habitId: string, from?: LocalDay, to?: LocalDay)
   );
 }
 
+/** Fecha del primer registro de un hábito, o `null` si no tiene ninguno. */
+export function firstEntryDate(habitId: string): Promise<LocalDay | null> {
+  return withStorage(async () => {
+    const first = await db.entries
+      .where('[habitId+date]')
+      .between([habitId, ''], [habitId, '￿'], true, true)
+      .first();
+    return first?.date ?? null;
+  });
+}
+
 /** Registros de todos los hábitos en [from, to], ordenados por fecha. */
 export function entriesBetween(from: LocalDay, to: LocalDay): Promise<Entry[]> {
   return withStorage(() => db.entries.where('date').between(from, to, true, true).toArray());

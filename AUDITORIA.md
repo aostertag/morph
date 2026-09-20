@@ -207,7 +207,7 @@ recordatorios con y sin permiso, y la lista de hábitos mientras se reordena por
 - **Propuesta:** dejar editable «Empieza el» también al editar, permitiendo solo adelantarla (y
   nunca más allá del primer registro).
 - **Severidad:** media (funcional)
-- **Estado:** pendiente
+- **Estado:** hecho — «Empieza el» es editable: hasta el límite retroactivo desde hoy (o la fecha actual si es más antigua, para poder volver atrás) y nunca después del primer registro (`startDateRange` en `domain/habit.ts`, comprobado también en `updateHabit`). Con «Deshacer» como el resto de ediciones. Si ya hay un registro el primer día, el campo lo explica y no se mueve.
 
 ### H9 · Ajustes — «días atrás» se parte en dos líneas junto al campo
 

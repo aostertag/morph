@@ -1,8 +1,10 @@
 import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { listHabits } from '@/db/repos/habits';
-import { renderRoute } from '@/test/render';
-import { NewHabitScreen } from './HabitFormScreens';
+import { setEntryValue } from '@/db/repos/entries';
+import { createHabit, listHabits } from '@/db/repos/habits';
+import { addDays } from '@/domain/day';
+import { habitInput, renderRoute, todayLocal } from '@/test/render';
+import { EditHabitScreen, NewHabitScreen } from './HabitFormScreens';
 
 describe('crear hábito', () => {
   it('ofrece plantillas y la opción en blanco', async () => {
@@ -124,5 +126,37 @@ describe('crear hábito', () => {
     expect(screen.getByRole('radio', { name: 'Con aviso' })).toBeInTheDocument();
     await user.click(screen.getByRole('radio', { name: 'A evitar' }));
     expect(screen.queryByRole('radio', { name: 'Con aviso' })).not.toBeInTheDocument();
+  });
+});
+
+describe('editar hábito: fecha de inicio', () => {
+  it('se puede adelantar dentro del límite y se guarda', async () => {
+    const created = await createHabit(habitInput({ name: 'Leer' }));
+    const { user } = renderRoute(<EditHabitScreen />, {
+      path: '/habitos/:id/editar',
+      url: `/habitos/${created.id}/editar`,
+    });
+    const start = await screen.findByLabelText('Empieza el');
+    const wanted = addDays(todayLocal(), -3);
+    fireEvent.change(start, { target: { value: wanted } });
+    expect(start).toHaveValue(wanted);
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+    await screen.findByText('Otra pantalla');
+    expect((await listHabits())[0]?.createdOn).toBe(wanted);
+  });
+
+  it('no deja pasar del primer registro ni del límite retroactivo', async () => {
+    const today = todayLocal();
+    const created = await createHabit(habitInput({ name: 'Leer', createdOn: addDays(today, -5) }));
+    await setEntryValue(created.id, addDays(today, -2), 1);
+    renderRoute(<EditHabitScreen />, {
+      path: '/habitos/:id/editar',
+      url: `/habitos/${created.id}/editar`,
+    });
+    const start = await screen.findByLabelText('Empieza el');
+    expect(start).toHaveAttribute('max', addDays(today, -2));
+    expect(start).toHaveAttribute('min', addDays(today, -7));
+    fireEvent.change(start, { target: { value: addDays(today, -1) } });
+    expect(start).toHaveValue(addDays(today, -5));
   });
 });
