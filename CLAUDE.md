@@ -17,13 +17,9 @@ La especificación completa está en `SPEC.md`; la sección 9 (diseño) prevalec
 
 ### Fase 7 (pulido final): terminada
 
-Recorrido completo contra las secciones 9 y 10 de `SPEC.md` (nueve pantallas, móvil 390×844 y escritorio
-1440×900, oscuro y claro), verificación en build de producción de PWA, backup, CSV, notificaciones, atajos
-y onboarding, y corrección de los 12 hallazgos H1–H12 aprobados por el usuario. Todo está en
-`AUDITORIA.md`, cada hallazgo con su captura, su propuesta y su estado `hecho`; las capturas están en
-`auditoria/capturas/` (ignorado por git; las de comprobación de los arreglos empiezan por `fix<lote>-`).
-El servicio de trabajo se hizo en cuatro lotes, con `npm run check` y recaptura de las pantallas afectadas
-en cada uno. El estado actual pasa `npm run check` y `npm run build` (chunk de entrada de 305 kB, sin cambios).
+Recorrido contra las secciones 9 y 10 de `SPEC.md` y corrección de los 12 hallazgos H1–H12. El detalle,
+con capturas, está en `AUDITORIA.md` (las capturas viven en `auditoria/capturas/`, ignorado por git).
+El estado actual pasa `npm run check` y `npm run build` (chunk de entrada de ~305 kB).
 
 Lo que cambió y conviene saber al tocar esas zonas:
 
@@ -44,7 +40,8 @@ descargó el Chromium que pide la versión actual (`chromium-1246`). Ojo: con
 `launchPersistentContext`, `CacheStorage` falla en esta máquina y el service worker no llega a
 instalarse; con un contexto normal funciona.
 
-La navegación sigue con cuatro pestañas: a `/revision` se llega por el aviso de Hoy y por el historial.
+La navegación tiene cuatro pestañas (Hoy, Estadísticas, Hábitos, Ajustes; `NAV` en `app/Layout.tsx`): a
+`/revision` se llega por el aviso de Hoy y por el historial.
 
 **Peso del paquete (comprobado en la build del cierre de la fase 6):** el chunk de entrada (Hoy, con `ReviewPrompt`, `Onboarding`, `RemindersRunner` y `GlobalShortcuts` dentro, ~305 kB) solo importa de forma estática el runtime, `Button` y `HabitMarks`. Recharts vive en los chunks de `HabitDetailScreen` y `BarChart`, el informe de la revisión en `ReviewScreen`, Zod y el backup en `SettingsScreen` y Base UI del diálogo de atajos en `ShortcutsDialog`, todos `lazy()`. Si Hoy empieza a arrastrar alguno de ellos, es que algo se importó fuera de un `lazy()`.
 
@@ -83,7 +80,8 @@ UI (`features/`, `ui/`, `charts/`) → datos (`db/`) → dominio (`domain/`). **
   - `schema.ts`: `TrackerDB` y el singleton `db`.
   - `migrations.ts`: lista versionada. **Nunca se edita una versión publicada; se añade otra.**
   - `errors.ts`: `StorageError` (mensaje claro para el usuario) y `ValidationError`.
-  - `repos/*`: todas las escrituras pasan por aquí. Las mutaciones devuelven el estado anterior para poder deshacer.
+  - `repos/*`: todas las escrituras pasan por aquí (`habits`, `entries`, `dayLogs`, `pauses`, `reviews`, `categories`, `settings`, `dataset`). Las mutaciones devuelven el estado anterior para poder deshacer. `categories` solo se usa desde el campo «Categoría» del formulario de hábito (crear al vuelo); no hay pantalla para renombrar ni borrar.
+  - `useSettings()` devuelve `undefined` mientras carga; `getSettings()` rellena con `DEFAULT_SETTINGS`, así que un campo nuevo no rompe bases existentes.
 - `src/domain/today.ts`:
   - `analyzeHabit()` evalúa todo el historial; es la parte costosa y se cachea.
   - `viewForDay()` construye el estado de un día a partir de ese análisis (valor, progreso del período, rachas, último comodín en la racha).
@@ -134,7 +132,7 @@ UI (`features/`, `ui/`, `charts/`) → datos (`db/`) → dominio (`domain/`). **
 - `src/features/shortcuts/`: `GlobalShortcuts` (en el chunk de entrada; `N` y `?`) y `ShortcutsDialog` (`lazy`, arrastra Base UI). Los números y las flechas de Hoy están en `features/today/TodayShortcuts.tsx`. Lógica pura en `lib/shortcuts.ts`; `hooks/useShortcuts.ts` la conecta.
 - `src/lib/pwa.ts` registra el service worker (solo en producción, aviso "Recargar" en vez de recarga automática); `src/lib/download.ts` descarga archivos; `src/app/routeTitle.ts` da el título por ruta.
 - `scripts/generate-icons.mjs` genera los iconos de `public/` (cuadrado plano de tinta azul con una marca blanca, sin dependencias). `public/sw-extra.js` se carga dentro del service worker y enfoca la app al pulsar un recordatorio.
-- `src/dev/`: solo en desarrollo. `sampleData.ts` genera seis meses deterministas —incluidas cuatro reflexiones semanales, que empiezan el día que diga `weekStartsOn` y dejan la última semana cerrada sin escribir para que el aviso de Hoy tenga algo que ofrecer— y `DevTools.tsx` solo renderiza el botón si `import.meta.env.DEV`, así que nada de esto entra en producción. Escribe con `db/repos/dataset.ts` (`replaceAllData`), que también usa la importación de backups.
+- `src/dev/`: solo en desarrollo. `sampleData.ts` genera seis meses deterministas —incluidas cuatro reflexiones semanales, que empiezan el día que diga `weekStartsOn` y dejan la última semana cerrada sin escribir para que el aviso de Hoy tenga algo que ofrecer—; `DevTools.tsx` solo renderiza el botón (`SampleDataButton.tsx`) si `import.meta.env.DEV`, así que nada de esto entra en producción. Escribe con `db/repos/dataset.ts` (`replaceAllData`), que también usa la importación de backups.
 - `src/features/habits/`:
   - lista con dnd-kit (puntero y teclado, anuncios en español) y las alternativas "Subir"/"Bajar" en el menú;
   - formulario con vista previa (`HabitRow` en modo `preview`) y selector de plantillas.
@@ -143,6 +141,69 @@ UI (`features/`, `ui/`, `charts/`) → datos (`db/`) → dominio (`domain/`). **
   - primitivas: `Button`/`ButtonLink`/`IconButton`, `Field`/`Fieldset` (ARIA conectado vía render prop), `Segmented` (radios nativos), `ConfirmDialog` (Base UI AlertDialog), `ActionsMenu` (Base UI Menu), `ColorBar`/`HabitIcon`, `EmptyState`/`ScreenHeader`;
   - `ui/icons.ts` es la lista curada de iconos Lucide, importados uno a uno.
 - `src/test/factories.ts`: fábricas para los tests (`habit()`, `entry()`, `entriesOn()`, `dayLog()`, `pause()`, `days()`, `d()`).
+
+## Mapa del proyecto
+
+Mira aquí primero; el detalle de cada módulo está en «Arquitectura». Alias `@/` = `src/`.
+
+```
+SPEC.md            especificación (sección 9 = diseño, prevalece)      AUDITORIA.md  informe de la fase 7
+vite.config.ts     Vite + React Compiler + Tailwind + PWA (precache, manifest)
+vitest.config.ts   proyectos de test: domain ×3 zonas horarias, db, lib, ui
+biome.json         lint + formato · tsconfig.json  TS estricto
+index.html         script inline que aplica el tema antes del primer pintado
+public/            iconos PWA y sw-extra.js (los genera scripts/generate-icons.mjs)
+src/
+  main.tsx         arranque · pwa.ts registra el service worker
+  app/             App.tsx (rutas y lazy) · Layout.tsx (pestañas, foco) · routeTitle.ts · ErrorBoundary · Placeholder.tsx (solo se usa `NotFound`)
+  domain/          lógica pura (sin React ni Dexie), tests al lado
+  db/              schema.ts, migrations.ts, errors.ts, repos/* (única vía de escritura)
+  hooks/           useData (lecturas reactivas), useToday, useShortcuts
+  state/           Zustand: timer.ts (cronómetros), shortcutsDialog.ts
+  lib/             format.ts (todo el texto), toast.tsx, theme.ts, analysisCache.ts, shortcuts.ts, download.ts
+  features/        una carpeta por pantalla o funcionalidad (abajo)
+  ui/              primitivas: Button, Field, Segmented, ConfirmDialog, ActionsMenu, EmptyState, HabitMarks, icons.ts
+  charts/          ChartFigure.tsx (gráfico + tabla alternativa)
+  styles/          tokens.css (todos los valores de diseño), base.css, app.css
+  test/            factories.ts, render.tsx, setup.ts
+  dev/             datos de ejemplo, solo en desarrollo
+```
+
+| Archivo | Qué contiene | Tócalo cuando… |
+|---|---|---|
+| `domain/types.ts` | `Habit`, `Entry`, `Pause`, `Settings`, `DEFAULT_SETTINGS`, `HabitKind`, `Frequency` | cambia el modelo de datos |
+| `domain/evaluate.ts` | estado de cada unidad (`done/missed/paused/pending`), `canLogOn` | cambian las reglas de cumplimiento o el límite retroactivo |
+| `domain/frequency.ts` | unidades, períodos, prorrateo | nuevo tipo de frecuencia |
+| `domain/streaks.ts`, `milestones.ts` | rachas, comodines, hitos | cambian las reglas de racha o los umbrales |
+| `domain/history.ts`, `metrics.ts` | línea de tiempo día a día y todas las métricas del detalle | métrica nueva de un hábito |
+| `domain/stats.ts`, `range.ts`, `correlation.ts` | estadísticas globales, rangos, correlaciones | métrica nueva global o de un rango |
+| `domain/today.ts` | `analyzeHabit`, `viewForDay`, `dayProgress` | cambia lo que muestra una fila de Hoy |
+| `domain/habit.ts`, `templates.ts` | validación del formulario, plantillas | nuevo campo de hábito o plantilla |
+| `domain/backup.ts` | esquema Zod estricto y migraciones de formato de la copia | cambia cualquier campo persistido |
+| `db/migrations.ts` | versiones del esquema Dexie (nunca se edita una publicada) | cambia un índice o hay que transformar datos |
+| `db/repos/dataset.ts` | lectura/reemplazo atómico de todo | tabla nueva (entra en backup, borrar todo, generador) |
+| `features/today/actions.ts` | escrituras de Hoy con deshacer | nueva forma de registrar |
+| `features/today/controls.tsx`, `HabitRow.tsx`, `describe.ts` | control de cada tipo, fila y línea de contexto | cambia cómo se registra o se ve un hábito en Hoy |
+| `features/habits/HabitForm.tsx`, `fields.tsx` | formulario y sus campos | campo nuevo de hábito |
+| `features/habit-detail/` | heatmap, resumen, gráficos, hitos, historial | sección nueva del detalle |
+| `features/stats/` | secciones de Estadísticas y `useStats` | sección nueva de Estadísticas |
+| `features/settings/SettingsScreen.tsx` | ajustes; `Data/Pauses/RemindersSection` | ajuste nuevo |
+| `lib/format.ts` | fechas, números, frecuencias, rachas | cualquier texto formateado (no formatees en los componentes) |
+| `lib/analysisCache.ts` | caché compartida de análisis | cambia qué se calcula por hábito |
+| `lib/shortcuts.ts`, `features/shortcuts/`, `today/TodayShortcuts.tsx` | atajos | atajo nuevo (y su fila en el diálogo de ayuda) |
+| `styles/tokens.css` | colores, tipografía, radios, movimiento | cambia el diseño; nunca valores sueltos |
+| `test/factories.ts` | `habit()`, `entry()`, `pause()`, `d()`… | campo nuevo en un modelo (que las fábricas lo rellenen) |
+| `dev/sampleData.ts` | seis meses de datos de ejemplo | conviene que cubra lo nuevo |
+
+## Cómo hacer cambios frecuentes
+
+Tras cualquiera: `npm run check`. Si tocas una pantalla, mírala también con `npm run dev`.
+
+- **Nuevo tipo de hábito** (`HabitKind`): añádelo en `domain/types.ts` y en el `z.enum` de `kind` de `domain/backup.ts`; TS marcará los `switch` incompletos (`evaluate`, `history`, `metrics`, `csv`, `stats`, `milestones`). Además: reglas en `domain/habit.ts`, control en `today/controls.tsx` + `HabitRow.tsx` + `describe.ts` + `TodayShortcuts.tsx`, campos en `habits/fields.tsx`, heatmap (`heatmapModel.ts`) y detalle. Decide su `target`/`unit`, si cuenta en el progreso del día y si admite recordatorio. Tests en `domain` y uno de UI.
+- **Métrica nueva:** función pura en `domain/metrics.ts` (por hábito, sobre `buildHistory`) o `domain/stats.ts` (global), con `today` como argumento y test en las tres zonas horarias. Muestra mínima explícita si es una tasa. Se lee en `useHabitDetail`/`useStats`, se pinta en una sección con su tabla alternativa (`ChartFigure`) y sus frases van en el `describe.ts` de la carpeta. No la persistas: se deriva.
+- **Pantalla nueva:** `features/<nombre>/<Nombre>Screen.tsx` con `ScreenHeader`, cargada con `lazy()` y ruta en `app/App.tsx`; título en `app/routeTitle.ts` (y pestaña en `NAV` de `Layout.tsx` si va en la barra). Si arrastra Recharts, Zod o Base UI, **nunca** la importes de forma estática desde Hoy (vigila el chunk de entrada). Test de UI con `renderRoute()`.
+- **Migración de base de datos:** añade una entrada con la versión siguiente a `MIGRATIONS` en `db/migrations.ts` (`stores` solo cambia lo que cambia; `upgrade` para transformar datos) y un caso en `migrations.test.ts`. Si el campo se persiste, actualiza también `domain/backup.ts` (esquema y, si el formato de la copia cambia de forma incompatible, `BACKUP_VERSION` + un paso en su `MIGRATIONS`), `dataset.ts` si es una tabla nueva, y `dev/sampleData.ts`. Recuerda: IndexedDB no indexa `null` ni booleanos.
+- **Campo nuevo en ajustes:** `Settings` y `DEFAULT_SETTINGS` en `domain/types.ts`; `settingsSchema` en `domain/backup.ts` (es `strictObject`: sin un valor por defecto, las copias antiguas dejarían de importarse, así que dale `.default(...)` o súbela de versión); validación en `updateSettings` (`db/repos/settings.ts`) si tiene rango; control en `SettingsScreen.tsx` que llama a `save({...})`. No hace falta migración de Dexie: `settings` no indexa campos y `getSettings` rellena con los valores por defecto.
 
 ## Decisiones de dominio (acordadas con el usuario)
 
