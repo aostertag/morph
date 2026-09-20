@@ -9,7 +9,7 @@ import { useSettings } from '@/hooks/useData';
 import { applyTheme, type ResolvedTheme, readCachedPreference } from '@/lib/theme';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Layout } from './Layout';
-import { NotFound } from './Placeholder';
+import { NotFound } from './NotFound';
 
 // La gestión de hábitos (arrastrar, menús, diálogos) se carga bajo demanda: Hoy abre antes.
 const HabitsScreen = lazy(() =>

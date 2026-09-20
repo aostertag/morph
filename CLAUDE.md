@@ -158,7 +158,7 @@ index.html         script inline que aplica el tema antes del primer pintado
 public/            iconos PWA y sw-extra.js (los genera scripts/generate-icons.mjs)
 src/
   main.tsx         arranque · pwa.ts registra el service worker
-  app/             App.tsx (rutas y lazy) · Layout.tsx (pestañas, foco) · routeTitle.ts · ErrorBoundary · Placeholder.tsx (solo se usa `NotFound`)
+  app/             App.tsx (rutas y lazy) · Layout.tsx (pestañas, foco) · routeTitle.ts · ErrorBoundary · NotFound.tsx
   domain/          lógica pura (sin React ni Dexie), tests al lado
   db/              schema.ts, migrations.ts, errors.ts, repos/* (única vía de escritura)
   hooks/           useData (lecturas reactivas), useToday, useShortcuts
