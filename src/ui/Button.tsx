@@ -9,7 +9,7 @@ const VARIANTS: Record<ButtonVariant, string> = {
   secondary: 'border border-border-strong text-text hover:bg-sunken',
   ghost: 'text-text hover:bg-sunken',
   danger: 'bg-danger text-on-danger hover:bg-danger/90',
-  'danger-ghost': 'text-danger hover:bg-sunken',
+  'danger-ghost': 'border border-danger text-danger hover:bg-sunken',
 };
 
 export function buttonClasses(variant: ButtonVariant = 'secondary', className?: string): string {
