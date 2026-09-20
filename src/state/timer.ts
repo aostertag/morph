@@ -20,6 +20,8 @@ interface TimerState {
   stop: (habitId: string) => RunningTimer | undefined;
   /** Vuelve a poner en marcha un cronómetro detenido (deshacer). */
   resume: (timer: RunningTimer) => void;
+  /** Descarta todos los cronómetros (al sustituir o borrar los datos). */
+  clearAll: () => void;
 }
 
 /** localStorage que no falla si el navegador lo bloquea (modo privado, permisos). */
@@ -64,6 +66,7 @@ export const useTimerStore = create<TimerState>()(
       },
       resume: (timer) =>
         set((state) => ({ running: { ...state.running, [timer.habitId]: timer } })),
+      clearAll: () => set({ running: {} }),
     }),
     {
       name: 'tracker:timers',

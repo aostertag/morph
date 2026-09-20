@@ -30,6 +30,8 @@ export function normalizeHabitInput(input: HabitInput): HabitInput {
     description: input.description.trim(),
     target: needsTarget ? input.target : null,
     unit: unitFor(input),
+    // Recaer no es algo que se recuerde a una hora: los hábitos a evitar no llevan aviso.
+    reminder: input.kind === 'avoid' ? null : input.reminder,
   };
 }
 

@@ -7,6 +7,7 @@ import {
   HABIT_COLORS,
   type HabitColor,
   type HabitKind,
+  type Reminder,
 } from '@/domain/types';
 import { cx } from '@/lib/cx';
 import { orderedWeekdays, weekdayLetter, weekdayLong } from '@/lib/format';
@@ -280,5 +281,54 @@ export function CategoryField({
         </div>
       )}
     </div>
+  );
+}
+
+const DEFAULT_REMINDER_TIME = '09:00';
+
+/** Recordatorio diario con hora: se avisa solo si ese día el hábito sigue pendiente. */
+export function ReminderField({
+  value,
+  error,
+  onChange,
+}: {
+  value: Reminder | null;
+  error?: string | undefined;
+  onChange: (value: Reminder | null) => void;
+}) {
+  const enabled = value?.enabled ?? false;
+  const time = value?.time ?? DEFAULT_REMINDER_TIME;
+  return (
+    <Fieldset
+      legend="Recordatorio"
+      description="Una notificación a esa hora si el hábito toca y sigue pendiente. Solo sale con la app abierta; el permiso se da en Ajustes."
+      error={error}
+    >
+      <Segmented<'off' | 'on'>
+        name="recordatorio"
+        className="max-w-xs"
+        value={enabled ? 'on' : 'off'}
+        onChange={(next) =>
+          onChange(next === 'on' ? { time, enabled: true } : value && { ...value, enabled: false })
+        }
+        options={[
+          { value: 'off', label: 'Sin aviso' },
+          { value: 'on', label: 'Con aviso' },
+        ]}
+      />
+      {enabled && (
+        <Field label="Hora del aviso" className="mt-3 max-w-40" error={error}>
+          {(props) => (
+            <input
+              {...props}
+              type="time"
+              value={time}
+              className={inputClasses}
+              onChange={(event) => onChange({ time: event.target.value, enabled: true })}
+            />
+          )}
+        </Field>
+      )}
+    </Fieldset>
   );
 }

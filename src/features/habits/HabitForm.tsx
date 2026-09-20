@@ -8,7 +8,7 @@ import { formatDate } from '@/lib/format';
 import { Button } from '@/ui/Button';
 import { Field, Fieldset, inputClasses } from '@/ui/Field';
 import { Segmented } from '@/ui/Segmented';
-import { CategoryField, ColorField, FrequencyField, IconField } from './fields';
+import { CategoryField, ColorField, FrequencyField, IconField, ReminderField } from './fields';
 
 const KIND_HELP: Record<HabitKind, string> = {
   boolean: 'Se marca como hecho o no.',
@@ -194,6 +194,14 @@ export function HabitForm({
             ]}
           />
         </Fieldset>
+
+        {draft.kind !== 'avoid' && (
+          <ReminderField
+            value={draft.reminder}
+            error={errors.reminder}
+            onChange={(reminder) => update({ reminder })}
+          />
+        )}
 
         <ColorField value={draft.color} onChange={(color) => update({ color })} />
         <IconField value={draft.icon} onChange={(icon) => update({ icon })} />

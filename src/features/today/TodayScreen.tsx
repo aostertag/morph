@@ -1,5 +1,4 @@
 import { useSearchParams } from 'react-router';
-import { DevSampleData } from '@/dev/DevTools';
 import { addDays, isLocalDay, type LocalDay } from '@/domain/day';
 import { canLogOn } from '@/domain/evaluate';
 import { dayProgress, groupByTimeOfDay, viewForDay } from '@/domain/today';
@@ -64,12 +63,9 @@ export function TodayScreen() {
               title="Todavía no hay hábitos."
               text="Crea el primero o empieza desde una plantilla."
               actions={
-                <>
-                  <ButtonLink to="/habitos/nuevo?volver=hoy" variant="primary">
-                    Crear hábito
-                  </ButtonLink>
-                  <DevSampleData />
-                </>
+                <ButtonLink to="/habitos/nuevo?volver=hoy" variant="primary">
+                  Crear hábito
+                </ButtonLink>
               }
             />
           </div>

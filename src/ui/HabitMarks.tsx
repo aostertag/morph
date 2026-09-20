@@ -19,13 +19,13 @@ export const HABIT_COLOR_LABEL: Readonly<Record<HabitColor, string>> = {
   grafito: 'Grafito',
 };
 
-/** Barra vertical de 3px con el color del hábito. */
-export function ColorBar({ color, className }: { color: HabitColor; className?: string }) {
+/** Barra vertical de 3px con el color del hábito; sin color (`null`) es un gris neutro. */
+export function ColorBar({ color, className }: { color: HabitColor | null; className?: string }) {
   return (
     <span
       aria-hidden="true"
       className={cx('w-0.75 shrink-0 self-stretch', className)}
-      style={{ backgroundColor: habitColorVar(color) }}
+      style={{ backgroundColor: color ? habitColorVar(color) : 'var(--color-border-strong)' }}
     />
   );
 }

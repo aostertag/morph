@@ -27,7 +27,7 @@ import {
   undoUnarchive,
   updateHabit,
 } from './repos/habits';
-import { createPause, deletePause, listPauses, restorePause } from './repos/pauses';
+import { createPause, deletePause, listPauses, restorePause, updatePause } from './repos/pauses';
 import { getReview, listReviews, restoreReview, saveReflection } from './repos/reviews';
 import { getSettings, updateSettings } from './repos/settings';
 import { db } from './schema';
@@ -350,5 +350,79 @@ describe('sustituir todos los datos', () => {
     const broken = { ...sample, entries: [...sample.entries, { ...first, id: 'duplicado' }] };
     await expect(replaceAllData(broken)).rejects.toThrow();
     expect((await listHabits()).map((h) => h.id)).toEqual([old.id]);
+  });
+});
+
+describe('pausas: edición y solapes', () => {
+  const base = { habitId: null, reason: 'vacaciones', note: null } as const;
+
+  it('rechaza un solape del mismo ámbito y no guarda nada', async () => {
+    await createPause({ ...base, start: d('2026-08-01'), end: d('2026-08-10') });
+    await expect(
+      createPause({ ...base, start: d('2026-08-10'), end: d('2026-08-12') }),
+    ).rejects.toThrow(/se solapa/i);
+    expect(await listPauses()).toHaveLength(1);
+  });
+
+  it('admite pausas seguidas y una global con una de hábito', async () => {
+    const h = await createHabit(input());
+    await createPause({ ...base, start: d('2026-08-01'), end: d('2026-08-10') });
+    await createPause({ ...base, start: d('2026-08-11'), end: d('2026-08-12') });
+    await createPause({ ...base, habitId: h.id, start: d('2026-08-05'), end: d('2026-08-06') });
+    expect(await listPauses()).toHaveLength(3);
+  });
+
+  it('rechaza una pausa de un hábito que no existe', async () => {
+    await expect(
+      createPause({ ...base, habitId: 'fantasma', start: d('2026-08-01'), end: d('2026-08-02') }),
+    ).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it('rechaza un motivo desconocido', async () => {
+    await expect(
+      createPause({
+        ...base,
+        reason: 'viaje' as 'otro',
+        start: d('2026-08-01'),
+        end: d('2026-08-02'),
+      }),
+    ).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it('edita y devuelve la anterior; deshacer la recupera', async () => {
+    const p = await createPause({ ...base, start: d('2026-08-01'), end: d('2026-08-10') });
+    const previous = await updatePause(p.id, { end: d('2026-08-20'), note: 'Playa' });
+    expect(previous).toEqual(p);
+    expect(await listPauses()).toEqual([{ ...p, end: d('2026-08-20'), note: 'Playa' }]);
+    await restorePause(previous);
+    expect(await listPauses()).toEqual([p]);
+  });
+
+  it('al editar no choca consigo misma, pero sí con las demás', async () => {
+    const a = await createPause({ ...base, start: d('2026-08-01'), end: d('2026-08-10') });
+    await createPause({ ...base, start: d('2026-08-20'), end: d('2026-08-25') });
+    await updatePause(a.id, { start: d('2026-08-02'), end: d('2026-08-09') });
+    await expect(updatePause(a.id, { end: d('2026-08-21') })).rejects.toThrow(/se solapa/i);
+    expect((await listPauses())[0]).toMatchObject({ start: '2026-08-02', end: '2026-08-09' });
+  });
+
+  it('un rango invertido al editar no cambia nada', async () => {
+    const p = await createPause({ ...base, start: d('2026-08-01'), end: d('2026-08-10') });
+    await expect(updatePause(p.id, { end: d('2026-07-01') })).rejects.toBeInstanceOf(
+      ValidationError,
+    );
+    expect(await listPauses()).toEqual([p]);
+  });
+
+  it('editar una pausa que ya no existe avisa', async () => {
+    await expect(updatePause('nada', { note: 'x' })).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it('restaurar un hábito archivado no choca con una pausa que cubre el hueco', async () => {
+    const h = await createHabit(input());
+    await archiveHabit(h.id, d('2026-08-01'));
+    await createPause({ ...base, habitId: h.id, start: d('2026-08-02'), end: d('2026-08-30') });
+    const result = await unarchiveHabit(h.id, d('2026-09-01'));
+    expect(result.gapPause).not.toBeNull();
   });
 });

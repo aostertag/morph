@@ -1,7 +1,6 @@
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { DevToolsFooter } from '@/dev/DevTools';
 import type { Habit } from '@/domain/types';
 import { useHabits, useSettings } from '@/hooks/useData';
 import { useToday } from '@/hooks/useToday';
@@ -130,7 +129,6 @@ export function HabitsScreen() {
         </section>
       )}
 
-      <DevToolsFooter />
       <DeleteDialog habit={toDelete} onClose={() => setToDelete(null)} />
     </div>
   );

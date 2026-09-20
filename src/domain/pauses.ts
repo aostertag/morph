@@ -1,4 +1,4 @@
-import { dayNumber, type LocalDay, maxDay, minDay } from './day';
+import { dayNumber, isLocalDay, type LocalDay, maxDay, minDay } from './day';
 import type { Pause } from './types';
 
 /** Pausas que afectan a un hábito: las suyas y las globales. */
@@ -32,6 +32,47 @@ export function pausedDaysBetween(from: LocalDay, to: LocalDay, pauses: readonly
 }
 
 export function validatePause(pause: Pick<Pause, 'start' | 'end'>): string | null {
+  if (!isLocalDay(pause.start) || !isLocalDay(pause.end)) return 'Fecha no válida.';
   if (pause.end < pause.start) return 'La fecha de fin no puede ser anterior a la de inicio.';
   return null;
+}
+
+/**
+ * Otra pausa del mismo ámbito (global con global, o del mismo hábito) que comparte
+ * algún día con la candidata. Dos pausas seguidas (una acaba y la otra empieza al
+ * día siguiente) no chocan. Una global y una de un hábito sí pueden coincidir:
+ * son ámbitos distintos y el efecto es la unión de ambas.
+ *
+ * `ignoreId` es la pausa que se está editando, para que no choque consigo misma.
+ */
+export function findPauseConflict(
+  candidate: Pick<Pause, 'habitId' | 'start' | 'end'>,
+  existing: readonly Pause[],
+  ignoreId?: string,
+): Pause | null {
+  return (
+    existing.find(
+      (p) =>
+        p.id !== ignoreId &&
+        p.habitId === candidate.habitId &&
+        p.start <= candidate.end &&
+        candidate.start <= p.end,
+    ) ?? null
+  );
+}
+
+export type PauseProblem =
+  | { readonly type: 'range'; readonly message: string }
+  | { readonly type: 'overlap'; readonly with: Pause };
+
+/** Primer problema de una pausa candidata frente a las que ya existen, o `null`. */
+export function pauseProblem(
+  candidate: Pick<Pause, 'habitId' | 'start' | 'end'>,
+  existing: readonly Pause[],
+  ignoreId?: string,
+): PauseProblem | null {
+  const range = validatePause(candidate);
+  if (range) return { type: 'range', message: range };
+  const conflict = findPauseConflict(candidate, existing, ignoreId);
+  return conflict ? { type: 'overlap', with: conflict } : null;
 }

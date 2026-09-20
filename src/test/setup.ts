@@ -48,3 +48,10 @@ if (!globalThis.ResizeObserver) {
     disconnect() {}
   };
 }
+
+// Si el elemento con foco se desmonta justo antes de pulsar otro botón, user-event
+// da `document` como `relatedTarget` y Sonner intenta devolverle el foco al
+// desmontarse. En un navegador real eso es `null`; aquí basta con que no falle.
+if (typeof (document as { focus?: unknown }).focus !== 'function') {
+  Object.defineProperty(document, 'focus', { value: () => {}, configurable: true });
+}

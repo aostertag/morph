@@ -2,12 +2,13 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router';
 import { Toaster } from 'sonner';
 import { db } from '@/db/schema';
+import { RemindersRunner } from '@/features/reminders/RemindersRunner';
 import { TodayScreen } from '@/features/today/TodayScreen';
 import { useSettings } from '@/hooks/useData';
 import { applyTheme, type ResolvedTheme, readCachedPreference } from '@/lib/theme';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Layout } from './Layout';
-import { NotFound, Placeholder } from './Placeholder';
+import { NotFound } from './Placeholder';
 
 // La gestión de hábitos (arrastrar, menús, diálogos) se carga bajo demanda: Hoy abre antes.
 const HabitsScreen = lazy(() =>
@@ -25,6 +26,9 @@ const StatsScreen = lazy(() =>
 );
 const ReviewScreen = lazy(() =>
   import('@/features/review/ReviewScreen').then((m) => ({ default: m.ReviewScreen })),
+);
+const SettingsScreen = lazy(() =>
+  import('@/features/settings/SettingsScreen').then((m) => ({ default: m.SettingsScreen })),
 );
 const HabitDetailScreen = lazy(() =>
   import('@/features/habit-detail/HabitDetailScreen').then((m) => ({
@@ -72,6 +76,7 @@ function AppShell() {
           para seguir guardando cambios.
         </div>
       )}
+      <RemindersRunner />
       <Suspense fallback={null}>
         <Routes>
           <Route element={<Layout />}>
@@ -82,7 +87,7 @@ function AppShell() {
             <Route path="habitos/:id/editar" element={<EditHabitScreen />} />
             <Route path="estadisticas" element={<StatsScreen />} />
             <Route path="revision" element={<ReviewScreen />} />
-            <Route path="ajustes" element={<Placeholder title="Ajustes" phase={6} />} />
+            <Route path="ajustes" element={<SettingsScreen />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>

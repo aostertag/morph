@@ -79,7 +79,8 @@ export interface DayLog {
   readonly updatedAt: number;
 }
 
-export type PauseReason = 'vacaciones' | 'enfermedad' | 'otro';
+export const PAUSE_REASONS = ['vacaciones', 'enfermedad', 'otro'] as const;
+export type PauseReason = (typeof PAUSE_REASONS)[number];
 
 export interface Pause {
   readonly id: string;
@@ -124,3 +125,13 @@ export const DEFAULT_SETTINGS: Settings = {
   onboardingDone: false,
   lastReviewOffered: null,
 };
+
+/** Todos los datos del usuario salvo los ajustes. */
+export interface DataSet {
+  readonly categories: readonly Category[];
+  readonly habits: readonly Habit[];
+  readonly entries: readonly Entry[];
+  readonly dayLogs: readonly DayLog[];
+  readonly pauses: readonly Pause[];
+  readonly reviews: readonly WeeklyReview[];
+}
