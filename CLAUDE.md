@@ -32,6 +32,8 @@ Lo que cambió y conviene saber al tocar esas zonas:
 - **Editar «Empieza el»:** `startDateRange()` en `domain/habit.ts` (hasta `retroLimitDays` atrás desde hoy, sin perder la fecha actual si es más antigua, y nunca después del primer registro). `updateHabit` lo comprueba también, dentro de la transacción. Se deshace como el resto de ediciones.
 - **Gráfico «Evolución del período»:** `maxBarSize={32}`.
 
+- **Columna de campos del formulario de hábito** (`HabitForm.tsx`): es un bloque con `space-y-8`, **no** un `flex flex-col gap-8`. En Safari de iOS, el contenedor flex de esa columna quedaba ~156 px más alto que la suma de sus hijos al cargar (hueco vacío bajo «Crear hábito») y no se recalculaba hasta reactivar la página (tocar un campo, salir y volver a Safari). Al pulsar el botón el campo perdía el foco, el hueco desaparecía y el toque caía en «Empieza el». Se descartó la rejilla del formulario (pasarla a flex en móvil no cambió nada) y las unidades de viewport (solo hay `dvh`); WebKit de escritorio no lo reproduce, ni retrasando las fuentes. Alternar `display` desde JavaScript para forzar un recálculo tampoco bastó. Quitar el contenedor flex y separar con margen sí, comprobado en un iPhone real. No lo vuelvas a `flex`/`gap` en esa columna sin probarlo en un iPhone real.
+
 Pruebas intermitentes: `App.test.tsx` puede agotar el tiempo si hay un servidor de desarrollo y un navegador abiertos a la vez; pasa suelto y con la máquina libre.
 
 **Playwright:** el MCP arrancaba con el canal `chrome`, que no está instalado en esta máquina. Se le

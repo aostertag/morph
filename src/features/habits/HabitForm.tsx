@@ -122,7 +122,7 @@ export function HabitForm({
       onSubmit={submit}
       className="grid gap-12 lg:grid-cols-[minmax(0,var(--container-list))_var(--container-panel)] lg:justify-between"
     >
-      <div className="flex min-w-0 flex-col gap-8">
+      <div className="min-w-0 space-y-8">
         <Field label="Nombre" error={errors.name}>
           {(props) => (
             <input
