@@ -38,6 +38,7 @@ function describeContents(summary: BackupSummary): string {
     plural(summary.entries, 'registro', 'registros'),
     plural(summary.pauses, 'pausa', 'pausas'),
     plural(summary.reviews, 'revisión', 'revisiones'),
+    plural(summary.categories, 'categoría', 'categorías'),
   ].join(', ');
 }
 

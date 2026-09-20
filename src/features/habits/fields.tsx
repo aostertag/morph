@@ -1,6 +1,7 @@
 import { CircleSlash } from 'lucide-react';
 import { useState } from 'react';
 import { createCategory } from '@/db/repos/categories';
+import { CATEGORY_NAME_MAX, categoryNameProblem } from '@/domain/categories';
 import type { Weekday } from '@/domain/day';
 import {
   type Category,
@@ -215,8 +216,10 @@ export function CategoryField({
 }) {
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState('');
+  const nameProblem = categoryNameProblem(name, categories);
 
   const add = async () => {
+    if (nameProblem) return;
     try {
       const category = await createCategory(name);
       onChange(category.id);
@@ -256,12 +259,16 @@ export function CategoryField({
       </Field>
       {creating && (
         <div className="flex items-end gap-2">
-          <Field label="Nombre de la categoría" className="flex-1">
+          <Field
+            label="Nombre de la categoría"
+            error={name.trim() ? nameProblem?.message : undefined}
+            className="flex-1"
+          >
             {(props) => (
               <input
                 {...props}
                 value={name}
-                maxLength={40}
+                maxLength={CATEGORY_NAME_MAX}
                 onChange={(e) => setName(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
@@ -273,7 +280,7 @@ export function CategoryField({
               />
             )}
           </Field>
-          <Button onClick={() => void add()} disabled={!name.trim()}>
+          <Button onClick={() => void add()} disabled={nameProblem !== null}>
             Añadir
           </Button>
         </div>

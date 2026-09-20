@@ -3,7 +3,7 @@ import { updateSettings } from '@/db/repos/settings';
 import { DevToolsFooter } from '@/dev/DevTools';
 import type { Weekday } from '@/domain/day';
 import type { Settings, ThemePreference } from '@/domain/types';
-import { useHabits, usePauses, useSettings } from '@/hooks/useData';
+import { useCategories, useHabits, usePauses, useSettings } from '@/hooks/useData';
 import { weekdayLong } from '@/lib/format';
 import { notifyError } from '@/lib/toast';
 import { useShortcutsDialog } from '@/state/shortcutsDialog';
@@ -12,6 +12,7 @@ import { Field, Fieldset, inputClasses } from '@/ui/Field';
 import { ScreenHeader } from '@/ui/ScreenHeader';
 import { Segmented } from '@/ui/Segmented';
 import { version } from '../../../package.json';
+import { CategoriesSection } from './CategoriesSection';
 import { DataSection } from './DataSection';
 import { PausesSection } from './PausesSection';
 import { RemindersSection } from './RemindersSection';
@@ -94,8 +95,9 @@ export function SettingsScreen() {
   const settings = useSettings();
   const habits = useHabits();
   const pauses = usePauses();
+  const categories = useCategories();
 
-  if (!settings || !habits || !pauses) return null;
+  if (!settings || !habits || !pauses || !categories) return null;
 
   return (
     <div className="max-w-list">
@@ -160,6 +162,7 @@ export function SettingsScreen() {
       </section>
 
       <RemindersSection habits={habits} />
+      <CategoriesSection categories={categories} habits={habits} />
       <PausesSection pauses={pauses} habits={habits} />
       <DataSection />
       <DevToolsFooter />

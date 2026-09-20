@@ -34,6 +34,29 @@ Lo que cambió y conviene saber al tocar esas zonas:
 
 - **Columna de campos del formulario de hábito** (`HabitForm.tsx`): es un bloque con `space-y-8`, **no** un `flex flex-col gap-8`. En Safari de iOS, el contenedor flex de esa columna quedaba ~156 px más alto que la suma de sus hijos al cargar (hueco vacío bajo «Crear hábito») y no se recalculaba hasta reactivar la página (tocar un campo, salir y volver a Safari). Al pulsar el botón el campo perdía el foco, el hueco desaparecía y el toque caía en «Empieza el». Se descartó la rejilla del formulario (pasarla a flex en móvil no cambió nada) y las unidades de viewport (solo hay `dvh`); WebKit de escritorio no lo reproduce, ni retrasando las fuentes. Alternar `display` desde JavaScript para forzar un recálculo tampoco bastó. Quitar el contenedor flex y separar con margen sí, comprobado en un iPhone real. No lo vuelvas a `flex`/`gap` en esa columna sin probarlo en un iPhone real.
 
+### Categorías (parte 1 de 2: gestión en Ajustes, hecha)
+
+`CategoriesSection` en Ajustes (entre Recordatorios y Pausas): listar con el número de hábitos, crear,
+renombrar y borrar, todo con «Deshacer». **La parte 2 (agrupar por categoría en Estadísticas) no está
+hecha:** hoy `categoryId` solo se asigna en el formulario del hábito y se gestiona aquí; ninguna
+pantalla agrupa por él, así que el texto «Sirve para agrupar en las estadísticas» de `CategoryField`
+sigue adelantándose a la realidad hasta la parte 2.
+
+- `domain/categories.ts`: `categoryNameProblem()` (vacío, >40, duplicado sin distinguir mayúsculas ni
+  espacios sobrantes; `ignoreId` para renombrar). Lo usan el formulario (validación viva) y el repo
+  (última barrera, dentro de la transacción), como `pauseProblem`.
+- `db/repos/categories.ts`: `deleteCategory` devuelve `{ category, habitIds }` y pone `categoryId: null`
+  solo en esos hábitos (archivados incluidos), en una transacción. `restoreCategory(category, habitIds)`
+  deshace: repone la categoría con su mismo id/orden y reasigna **solo** a los hábitos que existen y
+  siguen sin categoría (no pisa una asignación hecha entretanto). También deshace un renombrado.
+  `renameCategory` devuelve la anterior.
+- `CategoryField` (formulario de hábito) usa la misma validación en vivo.
+- Backup, «Borrar todo» y el generador de ejemplo ya cubrían `categories` y la integridad referencial
+  (`backup.ts` rechaza un hábito con categoría inexistente); solo se añadió «N categorías» al resumen de
+  la importación (al final de la frase).
+- Con el formulario de categoría abierto, la lista pierde su `border-t` (el borde inferior del formulario
+  hace de filete) para no mostrar dos divisorias seguidas. `PauseForm` aún tiene ese doble filete.
+
 Pruebas intermitentes: `App.test.tsx` puede agotar el tiempo si hay un servidor de desarrollo y un navegador abiertos a la vez; pasa suelto y con la máquina libre.
 
 **Playwright:** el MCP arrancaba con el canal `chrome`, que no está instalado en esta máquina. Se le
@@ -82,7 +105,7 @@ UI (`features/`, `ui/`, `charts/`) → datos (`db/`) → dominio (`domain/`). **
   - `schema.ts`: `TrackerDB` y el singleton `db`.
   - `migrations.ts`: lista versionada. **Nunca se edita una versión publicada; se añade otra.**
   - `errors.ts`: `StorageError` (mensaje claro para el usuario) y `ValidationError`.
-  - `repos/*`: todas las escrituras pasan por aquí (`habits`, `entries`, `dayLogs`, `pauses`, `reviews`, `categories`, `settings`, `dataset`). Las mutaciones devuelven el estado anterior para poder deshacer. `categories` solo se usa desde el campo «Categoría» del formulario de hábito (crear al vuelo); no hay pantalla para renombrar ni borrar.
+  - `repos/*`: todas las escrituras pasan por aquí (`habits`, `entries`, `dayLogs`, `pauses`, `reviews`, `categories`, `settings`, `dataset`). Las mutaciones devuelven el estado anterior para poder deshacer. `categories` se crea al vuelo desde el campo «Categoría» del formulario de hábito y se renombra y borra desde Ajustes (`features/settings/CategoriesSection`).
   - `useSettings()` devuelve `undefined` mientras carga; `getSettings()` rellena con `DEFAULT_SETTINGS`, así que un campo nuevo no rompe bases existentes.
 - `src/domain/today.ts`:
   - `analyzeHabit()` evalúa todo el historial; es la parte costosa y se cachea.
