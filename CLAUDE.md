@@ -13,21 +13,30 @@ La especificación completa está en `SPEC.md`; la sección 9 (diseño) prevalec
 | 4 | Estadísticas globales, correlaciones y registro de ánimo/energía | **Hecha** |
 | 5 | Revisión semanal e hitos | **Hecha** |
 | 6 | Ajustes, backup, pausas, recordatorios, PWA, onboarding, atajos, a11y | **Hecha** |
-| 7 | Pulido final | **En curso**: hallazgos esperando aprobación |
+| 7 | Pulido final | **Hecha** |
 
-### Fase 7 en curso: esperando tu aprobación de los hallazgos (paso 5)
+### Fase 7 (pulido final): terminada
 
-El plan acordado con el usuario tiene estos pasos:
+Recorrido completo contra las secciones 9 y 10 de `SPEC.md` (nueve pantallas, móvil 390×844 y escritorio
+1440×900, oscuro y claro), verificación en build de producción de PWA, backup, CSV, notificaciones, atajos
+y onboarding, y corrección de los 12 hallazgos H1–H12 aprobados por el usuario. Todo está en
+`AUDITORIA.md`, cada hallazgo con su captura, su propuesta y su estado `hecho`; las capturas están en
+`auditoria/capturas/` (ignorado por git; las de comprobación de los arreglos empiezan por `fix<lote>-`).
+El servicio de trabajo se hizo en cuatro lotes, con `npm run check` y recaptura de las pantallas afectadas
+en cada uno. El estado actual pasa `npm run check` y `npm run build` (chunk de entrada de 305 kB, sin cambios).
 
-0. **Hecho.** MCP de Playwright instalado (`.mcp.json`, alcance de proyecto) y Chromium descargado. Al arrancar la sesión hay que **aprobar el servidor del proyecto** para que aparezcan las herramientas.
-1. **Hecho.** El límite retroactivo se guarda al terminar de escribir y «Ninguno» es un icono más del selector.
-2. **Hecho.** Verificado en la build de producción: PWA (manifest, service worker, aviso «Recargar» probado publicando una build nueva, sin conexión), backup (exportar, importar válido, cinco tipos de archivo dañado, borrar todo con «Deshacer»), CSV, permiso y disparo de notificaciones, atajos, onboarding y reordenar por teclado. **Todo correcto**; el detalle, con lo que este método no puede comprobar, está en `AUDITORIA.md`. El service worker solo existe en producción: hace falta `npm run build` + `npm run preview`.
-3. **Hecho.** Recorrido completo contra las secciones 9 y 10 de `SPEC.md`, en las nueve pantallas y los cuatro pares de viewport/tema, más estados vacíos, día bloqueado y diálogos. Sin gradientes, blur, sombras de color ni emojis; foco visible en todas las paradas de Tab; sin errores de consola. El orden seguido fue: Hoy, Detalle, Estadísticas, Revisión, Nuevo/Editar hábito, Hábitos, Ajustes, diálogo de atajos, 404, en móvil (390×844) y escritorio (1440×900), oscuro primero y claro después. El foco visible y los tamaños táctiles, que los tests de UI no miden, se comprobaron con scripts propios.
-4. **Hecho.** Los 12 hallazgos (H1–H12) están en `AUDITORIA.md`, cada uno con su captura, propuesta concreta y estado `pendiente`; también lo que se miró y se descartó a propósito. Se escriben **a medida que avanza el recorrido**, con las capturas en `auditoria/capturas/` (ignorado por git; solo se commitea el `.md`). Si la sesión se corta, la siguiente continúa desde ese archivo.
-5. **Aquí estamos.** La lista ya se le presentó al usuario: hay que **esperar su aprobación antes de corregir nada**. H7 (celdas del heatmap de 12×12 px frente a WCAG 2.5.8) y H8 (mover la fecha de inicio al editar) son decisiones suyas, no defectos claros.
-6. Corregir por lotes, recapturar para comprobar cada arreglo, `npm run check` por lote, y cerrar actualizando este archivo.
+Lo que cambió y conviene saber al tocar esas zonas:
 
-El estado actual pasa `npm run check` y `npm run build`.
+- **Icono de hábito en su columna** (`HabitIconSlot` en `ui/HabitMarks.tsx`): entre `ColorBar` y el texto, con ancho fijo aunque no haya icono, para que nombre y segunda línea compartan margen. Vale en Hoy, Hábitos, plantillas y cabecera del detalle. La lista de Hábitos pone la `ColorBar` **antes** del asa de arrastre.
+- **`TemplateRow`** (`features/habits/`): la fila de plantilla, compartida por «Nuevo hábito» y el onboarding.
+- **`DataTable` admite `flushFirst`**: la primera columna pone su propio relleno vertical, para que una `ColorBar` cubra la fila. La clave de fila sale de la del elemento si la primera celda lo es.
+- **`EmptyState standalone`**: en pantallas sin encabezado propio (404, hábito inexistente, hábito que empieza más adelante) el título es el `h1` y no lleva filete.
+- **Barra del día (Hoy):** el segmento vacío es un contorno de `border-strong` (3,3:1 en ambos temas); antes era `sunken`, invisible en oscuro.
+- **Heatmap:** el año se dibuja entero; los días anteriores a la creación son celdas `before` (contorno tenue, sin botón). Celdas de 24 px en móvil (`size-6`) y de 12 px desde `lg`. La columna de días es `sticky`.
+- **Editar «Empieza el»:** `startDateRange()` en `domain/habit.ts` (hasta `retroLimitDays` atrás desde hoy, sin perder la fecha actual si es más antigua, y nunca después del primer registro). `updateHabit` lo comprueba también, dentro de la transacción. Se deshace como el resto de ediciones.
+- **Gráfico «Evolución del período»:** `maxBarSize={32}`.
+
+Pruebas intermitentes: `App.test.tsx` puede agotar el tiempo si hay un servidor de desarrollo y un navegador abiertos a la vez; pasa suelto y con la máquina libre.
 
 **Playwright:** el MCP arrancaba con el canal `chrome`, que no está instalado en esta máquina. Se le
 añadió `--browser chromium` a `.mcp.json` (sin commitear; surte efecto al arrancar la sesión) y se
@@ -143,7 +152,7 @@ UI (`features/`, `ui/`, `charts/`) → datos (`db/`) → dominio (`domain/`). **
 - **Pausas:** una unidad en pausa es neutra aunque tenga registro. Las semanas o meses con días en pausa, creados a mitad o archivados a mitad prorratean la meta: `min(días elegibles, ceil(veces × elegibles / longitud))`. Una semana entera en pausa queda `paused`.
 - **Registro único por hábito y día** (índice único `&[habitId+date]`). Cuantitativo y tiempo acumulan en ese registro. Un valor 0 sin nota elimina el registro. `loggedAt` es el instante real del último cambio.
 - **Hábitos "a evitar":** solo admiten frecuencia diaria o días concretos. Un registro es una recaída.
-- **Retroactivo:** `settings.retroLimitDays` (7 por defecto). No se puede registrar antes de `createdOn` ni después de `archivedOn`. Para rellenar días anteriores, el formulario permitirá adelantar la fecha de inicio.
+- **Retroactivo:** `settings.retroLimitDays` (7 por defecto). No se puede registrar antes de `createdOn` ni después de `archivedOn`. Para rellenar días anteriores se puede adelantar la fecha de inicio, al crear y al editar (al editar, nunca después del primer registro).
 - **Archivar:** `archivedOn: LocalDay` es el último día que cuenta. Es hoy si hoy ya tiene registro; si no, ayer (`archiveDayFor`). Al restaurar se crea una pausa del hábito (nota "Archivado") que cubre el hueco, para que esos días no cuenten como fallados (`unarchiveGap`). Deshacer la restauración borra esa pausa.
 - **Progreso del día (Hoy):**
   - Cuentan los hábitos programados y no pausados.
