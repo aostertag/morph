@@ -39,7 +39,7 @@ Lo que cambió y conviene saber al tocar esas zonas:
 Pruebas intermitentes: `App.test.tsx` puede agotar el tiempo si hay un servidor de desarrollo y un navegador abiertos a la vez; pasa suelto y con la máquina libre.
 
 **Playwright:** el MCP arrancaba con el canal `chrome`, que no está instalado en esta máquina. Se le
-añadió `--browser chromium` a `.mcp.json` (sin commitear; surte efecto al arrancar la sesión) y se
+añadió `--browser chromium` a `.mcp.json` (commiteado; surte efecto al arrancar la sesión) y se
 descargó el Chromium que pide la versión actual (`chromium-1246`). Ojo: con
 `launchPersistentContext`, `CacheStorage` falla en esta máquina y el service worker no llega a
 instalarse; con un contexto normal funciona.
