@@ -15,7 +15,8 @@ export function DayHeader({
   const isToday = day === today;
   return (
     <header className="flex items-start justify-between gap-4">
-      <div className="min-w-0">
+      {/* Al cambiar de día se anuncia la fecha nueva a los lectores de pantalla. */}
+      <div className="min-w-0" aria-live="polite" aria-atomic="true">
         <p className="text-sm text-text-muted">
           {formatWeekday(day)}
           {!isToday && ` · ${formatRelativeDay(day, today)}`}

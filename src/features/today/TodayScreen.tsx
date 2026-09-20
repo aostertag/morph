@@ -2,6 +2,7 @@ import { useSearchParams } from 'react-router';
 import { addDays, isLocalDay, type LocalDay } from '@/domain/day';
 import { canLogOn } from '@/domain/evaluate';
 import { dayProgress, groupByTimeOfDay, viewForDay } from '@/domain/today';
+import { Onboarding } from '@/features/onboarding/Onboarding';
 import { ReviewPrompt } from '@/features/review/ReviewPrompt';
 import { useDayLog, useReviews } from '@/hooks/useData';
 import { useToday } from '@/hooks/useToday';
@@ -13,6 +14,7 @@ import { DayLogPanel } from './DayLogPanel';
 import { DayProgress } from './DayProgress';
 import { HabitRow } from './HabitRow';
 import { SidePanel } from './SidePanel';
+import { TodayShortcuts } from './TodayShortcuts';
 import { useHabitAnalyses } from './useHabitAnalyses';
 
 /** Día seleccionado en la URL (`?dia=YYYY-MM-DD`); hoy si falta o no es válido. */
@@ -36,14 +38,24 @@ export function TodayScreen() {
   if (!data) return null;
 
   const { analyses, settings, hasHabits } = data;
+  if (!settings.onboardingDone && !hasHabits) return <Onboarding />;
   const views = analyses.map((a) => viewForDay(a, day)).filter((v) => v.scheduled);
   const progress = dayProgress(views);
   const groups = groupByTimeOfDay(views);
+  // La numeración de los atajos sigue el orden en que se ven los hábitos.
+  const ordered = groups.flatMap((group) => group.items);
   const tooOld = day < addDays(today, -settings.retroLimitDays);
 
   return (
     <div className="grid gap-12 lg:grid-cols-[minmax(0,var(--container-list))_var(--container-panel)] lg:justify-between">
       <div className="min-w-0">
+        <TodayShortcuts
+          views={ordered}
+          day={day}
+          today={today}
+          retroLimitDays={settings.retroLimitDays}
+          onSelectDay={setDay}
+        />
         <DayHeader day={day} today={today} onChange={setDay} />
 
         {day === today && hasHabits && reviews && (
@@ -103,6 +115,7 @@ export function TodayScreen() {
                         view={view}
                         today={today}
                         locked={canLogOn(view.habit, day, today, settings.retroLimitDays) !== 'ok'}
+                        shortcut={ordered.indexOf(view) + 1}
                       />
                     ))}
                   </ul>

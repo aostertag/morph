@@ -53,6 +53,8 @@ export async function showReminder(habit: Habit): Promise<void> {
   const options: NotificationOptions = {
     body: bodyFor(habit),
     tag: `recordatorio-${habit.id}`,
+    icon: '/pwa-192.png',
+    badge: '/pwa-192.png',
     data: { url: '/' },
   };
   try {

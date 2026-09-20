@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from 'react-router';
 import { Toaster } from 'sonner';
 import { db } from '@/db/schema';
 import { RemindersRunner } from '@/features/reminders/RemindersRunner';
+import { GlobalShortcuts } from '@/features/shortcuts/GlobalShortcuts';
 import { TodayScreen } from '@/features/today/TodayScreen';
 import { useSettings } from '@/hooks/useData';
 import { applyTheme, type ResolvedTheme, readCachedPreference } from '@/lib/theme';
@@ -77,6 +78,7 @@ function AppShell() {
         </div>
       )}
       <RemindersRunner />
+      <GlobalShortcuts />
       <Suspense fallback={null}>
         <Routes>
           <Route element={<Layout />}>

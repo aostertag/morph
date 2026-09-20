@@ -19,6 +19,10 @@ interface NotifyOptions {
   /** Agrupa notificaciones sobre el mismo objeto en un único toast. */
   readonly key?: string;
   readonly undo?: Undo;
+  /** Acción propia (p. ej. "Recargar"); si hay `undo`, manda `undo`. */
+  readonly action?: { readonly label: string; readonly run: () => void };
+  /** El aviso no desaparece solo. */
+  readonly persist?: boolean;
 }
 
 function ToastCard({
@@ -26,17 +30,31 @@ function ToastCard({
   message,
   tone,
   undo,
+  action,
   onSettled,
 }: {
   id: string | number;
   message: string;
   tone: 'neutral' | 'error';
   undo: Undo | undefined;
+  action?: NotifyOptions['action'];
   onSettled: () => void;
 }) {
   return (
     <div className="flex w-[min(22rem,calc(100vw-2rem))] items-center gap-3 rounded-md border border-border bg-surface py-2 pr-2 pl-4 text-md shadow-overlay">
       <p className={tone === 'error' ? 'flex-1 py-1.5 text-danger' : 'flex-1 py-1.5'}>{message}</p>
+      {!undo && action && (
+        <button
+          type="button"
+          className="pressable min-h-touch shrink-0 rounded-md px-3 font-medium text-accent hover:bg-sunken"
+          onClick={() => {
+            toast.dismiss(id);
+            action.run();
+          }}
+        >
+          {action.label}
+        </button>
+      )}
       {undo && (
         <button
           type="button"
@@ -66,10 +84,19 @@ export function notify(message: string, options: NotifyOptions = {}): void {
     if (key) undoAnchors.delete(key);
   };
   toast.custom(
-    (id) => <ToastCard id={id} message={message} tone="neutral" undo={undo} onSettled={settle} />,
+    (id) => (
+      <ToastCard
+        id={id}
+        message={message}
+        tone="neutral"
+        undo={undo}
+        {...(options.action ? { action: options.action } : {})}
+        onSettled={settle}
+      />
+    ),
     {
       ...(key ? { id: key } : {}),
-      duration: undo ? 6000 : 3500,
+      duration: options.persist ? Number.POSITIVE_INFINITY : undo ? 6000 : 3500,
       onDismiss: settle,
       onAutoClose: settle,
     },

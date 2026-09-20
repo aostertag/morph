@@ -14,6 +14,8 @@ interface HabitRowProps {
   readonly locked: boolean;
   /** Vista previa del formulario: sin enlace ni acciones reales. */
   readonly preview?: boolean;
+  /** Número (1–9) de la tecla que marca este hábito; solo se enseña en escritorio. */
+  readonly shortcut?: number;
 }
 
 function RowControl({ view, today, locked }: HabitRowProps) {
@@ -52,11 +54,19 @@ function RowControl({ view, today, locked }: HabitRowProps) {
 }
 
 export function HabitRow(props: HabitRowProps) {
-  const { view, today, preview = false } = props;
+  const { view, today, preview = false, shortcut } = props;
   const { habit } = view;
   return (
     <li className="flex min-h-14 items-stretch gap-3 border-b border-border">
       <ColorBar color={habit.color} />
+      {shortcut !== undefined && (
+        <span
+          aria-hidden="true"
+          className="hidden w-3 shrink-0 self-center text-center text-xs text-text-faint lg:block"
+        >
+          {shortcut <= 9 ? shortcut : null}
+        </span>
+      )}
       <div className="flex min-w-0 flex-1 flex-col justify-center py-2">
         <div className="flex min-w-0 items-center gap-2">
           <HabitIcon name={habit.icon} />

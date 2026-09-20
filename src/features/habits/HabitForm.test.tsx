@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { listHabits } from '@/db/repos/habits';
 import { renderRoute } from '@/test/render';
@@ -63,5 +63,48 @@ describe('crear hábito', () => {
     });
     await user.click(await screen.findByRole('radio', { name: 'A evitar' }));
     expect(screen.getByRole('radio', { name: 'Por semana' })).toBeDisabled();
+  });
+
+  it('guarda un recordatorio con su hora', async () => {
+    const { user } = renderRoute(<NewHabitScreen />, {
+      path: '/habitos/nuevo',
+      url: '/habitos/nuevo?plantilla=blanco',
+    });
+    await user.type(await screen.findByRole('textbox', { name: 'Nombre' }), 'Meditar');
+    expect(screen.queryByLabelText('Hora del aviso')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('radio', { name: 'Con aviso' }));
+    const time = screen.getByLabelText('Hora del aviso');
+    expect(time).toHaveValue('09:00');
+    fireEvent.change(time, { target: { value: '07:30' } });
+    await user.click(screen.getByRole('button', { name: 'Crear hábito' }));
+
+    await screen.findByText('Otra pantalla');
+    const [created] = await listHabits();
+    expect(created?.reminder).toEqual({ time: '07:30', enabled: true });
+  });
+
+  it('sin aviso, el hábito no lleva recordatorio', async () => {
+    const { user } = renderRoute(<NewHabitScreen />, {
+      path: '/habitos/nuevo',
+      url: '/habitos/nuevo?plantilla=blanco',
+    });
+    await user.type(await screen.findByRole('textbox', { name: 'Nombre' }), 'Leer');
+    expect(screen.getByRole('radio', { name: 'Sin aviso' })).toBeChecked();
+    await user.click(screen.getByRole('button', { name: 'Crear hábito' }));
+    await screen.findByText('Otra pantalla');
+    const [created] = await listHabits();
+    expect(created?.reminder).toBeNull();
+  });
+
+  it('los hábitos a evitar no ofrecen recordatorio', async () => {
+    const { user } = renderRoute(<NewHabitScreen />, {
+      path: '/habitos/nuevo',
+      url: '/habitos/nuevo?plantilla=blanco',
+    });
+    await screen.findByRole('textbox', { name: 'Nombre' });
+    expect(screen.getByRole('radio', { name: 'Con aviso' })).toBeInTheDocument();
+    await user.click(screen.getByRole('radio', { name: 'A evitar' }));
+    expect(screen.queryByRole('radio', { name: 'Con aviso' })).not.toBeInTheDocument();
   });
 });

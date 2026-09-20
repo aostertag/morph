@@ -1,6 +1,8 @@
 import { ChartColumn, CircleCheck, ListChecks, Settings } from 'lucide-react';
-import { NavLink, Outlet } from 'react-router';
+import { type RefObject, useEffect, useRef } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router';
 import { cx } from '@/lib/cx';
+import { routeTitle } from './routeTitle';
 
 const NAV = [
   { to: '/', label: 'Hoy', icon: CircleCheck, end: true },
@@ -38,7 +40,28 @@ function NavItems({ orientation }: { orientation: 'bar' | 'rail' }) {
   );
 }
 
+/**
+ * Al cambiar de pantalla: pone el título de la pestaña y lleva el foco al contenido,
+ * para que quien navega con teclado o lector de pantalla no se quede en el menú. Al
+ * cargar la página solo se pone el título; los cambios de día (solo la URL de
+ * búsqueda) no mueven el foco.
+ */
+function useRouteAnnouncement(main: RefObject<HTMLElement | null>): void {
+  const { pathname } = useLocation();
+  const first = useRef(true);
+  useEffect(() => {
+    document.title = routeTitle(pathname);
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    main.current?.focus({ preventScroll: true });
+  }, [pathname, main]);
+}
+
 export function Layout() {
+  const main = useRef<HTMLElement>(null);
+  useRouteAnnouncement(main);
   return (
     <div className="min-h-dvh lg:flex">
       <a
@@ -57,7 +80,9 @@ export function Layout() {
 
       <main
         id="contenido"
-        className="mx-auto w-full max-w-6xl px-gutter pt-6 pb-[calc(3.5rem+env(safe-area-inset-bottom)+2rem)] lg:px-gutter-desktop lg:pt-10 lg:pb-16"
+        ref={main}
+        tabIndex={-1}
+        className="outline-none mx-auto w-full max-w-6xl px-gutter pt-6 pb-[calc(3.5rem+env(safe-area-inset-bottom)+2rem)] lg:px-gutter-desktop lg:pt-10 lg:pb-16"
       >
         <Outlet />
       </main>

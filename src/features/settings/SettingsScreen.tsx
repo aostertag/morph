@@ -6,6 +6,8 @@ import type { Settings, ThemePreference } from '@/domain/types';
 import { useHabits, usePauses, useSettings } from '@/hooks/useData';
 import { weekdayLong } from '@/lib/format';
 import { notifyError } from '@/lib/toast';
+import { useShortcutsDialog } from '@/state/shortcutsDialog';
+import { Button } from '@/ui/Button';
 import { ScreenHeader } from '@/ui/EmptyState';
 import { Field, Fieldset, inputClasses } from '@/ui/Field';
 import { Segmented } from '@/ui/Segmented';
@@ -119,6 +121,19 @@ export function SettingsScreen() {
             )}
           </Field>
           <RetroLimit value={settings.retroLimitDays} />
+        </div>
+      </section>
+
+      <section aria-labelledby="teclado" className="mt-12">
+        <h2 id="teclado" className="label-caps border-b border-border pb-2">
+          Teclado
+        </h2>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+          <p className="max-w-prose text-md text-text-muted">
+            En escritorio, los números marcan hábitos, las flechas cambian de día y N crea uno
+            nuevo. Con ? se abre la lista completa desde cualquier pantalla.
+          </p>
+          <Button onClick={() => useShortcutsDialog.getState().setOpen(true)}>Ver atajos</Button>
         </div>
       </section>
 

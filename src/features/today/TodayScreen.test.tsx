@@ -4,7 +4,7 @@ import { getDayLog, updateDayLog } from '@/db/repos/dayLogs';
 import { getEntry, setEntryValue } from '@/db/repos/entries';
 import { createHabit } from '@/db/repos/habits';
 import { saveReflection } from '@/db/repos/reviews';
-import { getSettings } from '@/db/repos/settings';
+import { getSettings, updateSettings } from '@/db/repos/settings';
 import { addDays } from '@/domain/day';
 import { lastCompleteWeek } from '@/domain/review';
 import { formatWeek } from '@/lib/format';
@@ -13,6 +13,7 @@ import { TodayScreen } from './TodayScreen';
 
 describe('pantalla Hoy', () => {
   it('sin hábitos muestra un estado vacío con acción clara', async () => {
+    await updateSettings({ onboardingDone: true });
     renderRoute(<TodayScreen />);
     expect(await screen.findByText('Todavía no hay hábitos.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Crear hábito' })).toHaveAttribute(

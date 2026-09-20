@@ -12,19 +12,19 @@ La especificación completa está en `SPEC.md`; la sección 9 (diseño) prevalec
 | 3 | Detalle de hábito, heatmap, métricas, generador de datos | **Hecha** |
 | 4 | Estadísticas globales, correlaciones y registro de ánimo/energía | **Hecha** |
 | 5 | Revisión semanal e hitos | **Hecha** |
-| 6 | Ajustes, backup, recordatorios, PWA, onboarding, atajos, a11y | Pendiente |
+| 6 | Ajustes, backup, pausas, recordatorios, PWA, onboarding, atajos, a11y | **Hecha** |
 | 7 | Pulido final | Pendiente |
 
-**Siguiente: la fase 6.** El estado actual pasa `npm run check` (829 tests) y `npm run build`.
+**Siguiente: la fase 7.** El estado actual pasa `npm run check` (1163 tests) y `npm run build`.
 
-**Pendiente para la fase 6:**
-- Ajustes de verdad en `/ajustes` (hoy es un marcador de posición): tema, primer día de la semana, límite retroactivo, recordatorios, exportar/importar y borrar todo.
-- Atajos de teclado (números, ←/→, `N`, `?`) y llevar el botón de datos de ejemplo a Ajustes.
-- Excluir del precache de la PWA los subconjuntos cirílico, griego y vietnamita de la fuente.
+**Pendiente para la fase 7 (además del pulido de la sección 12 de `SPEC.md`):**
+- **Comprobar en un navegador real lo que los tests no pueden:** instalar la PWA, la actualización con aviso "Recargar", el modo sin conexión, el permiso y los avisos de notificaciones (también con la pestaña en segundo plano y desde el service worker) y la descarga/subida de archivos de backup.
+- Revisar cada pantalla contra las secciones 9 y 10 con el navegador delante (contrastes reales de las pantallas nuevas: Ajustes, onboarding y diálogo de atajos).
+- Los tests de UI no miden el foco visible ni los tamaños táctiles: revisarlos a mano.
 
 La navegación sigue con cuatro pestañas: a `/revision` se llega por el aviso de Hoy y por el historial.
 
-**Peso del paquete (comprobado en la build del cierre de la fase 5):** el chunk de entrada (Hoy, con `ReviewPrompt` dentro) solo importa de forma estática el runtime, `HabitMarks` y `Field`. Recharts vive en los chunks de `HabitDetailScreen` y `BarChart`, y el informe de la revisión en `ReviewScreen`, todos `lazy()`. Si Hoy empieza a arrastrar Recharts, es que algo se importó fuera de un `lazy()`.
+**Peso del paquete (comprobado en la build del cierre de la fase 6):** el chunk de entrada (Hoy, con `ReviewPrompt`, `Onboarding`, `RemindersRunner` y `GlobalShortcuts` dentro, ~305 kB) solo importa de forma estática el runtime, `Button` y `HabitMarks`. Recharts vive en los chunks de `HabitDetailScreen` y `BarChart`, el informe de la revisión en `ReviewScreen`, Zod y el backup en `SettingsScreen` y Base UI del diálogo de atajos en `ShortcutsDialog`, todos `lazy()`. Si Hoy empieza a arrastrar alguno de ellos, es que algo se importó fuera de un `lazy()`.
 
 ## Stack (versiones verificadas con `npm view` el 2026-09-19)
 
@@ -101,7 +101,18 @@ UI (`features/`, `ui/`, `charts/`) → datos (`db/`) → dominio (`domain/`). **
 - `src/features/today/DayLogPanel.tsx` y `dayLogActions.ts`: ánimo y energía (escalas 1–5 con radios nativos), nota del día y deshacer. De aquí salen los datos de las correlaciones.
 - `src/charts/ChartFigure.tsx`: marco común de los gráficos (título, controles, alternativa en tabla y nota) y `DataTable`.
 - `src/lib/analysisCache.ts`: la caché de análisis que comparten Hoy, el detalle y las estadísticas, para no recalcular al abrirlos. `cachedHistory()` guarda además la historia día a día por identidad del análisis.
-- `src/dev/`: solo en desarrollo. `sampleData.ts` genera seis meses deterministas —incluidas cuatro reflexiones semanales, que empiezan el día que diga `weekStartsOn` y dejan la última semana cerrada sin escribir para que el aviso de Hoy tenga algo que ofrecer— y `DevTools.tsx` solo renderiza el botón si `import.meta.env.DEV`, así que nada de esto entra en producción. Escribe con `db/repos/dataset.ts` (`replaceAllData`), que la Fase 6 reutilizará al importar un backup.
+- `src/domain/backup.ts`: copia de seguridad completa, pura. `parseBackup(texto)` valida **todo** antes de devolver `ok` y por etapas: JSON, formato y versión, esquema estricto de Zod (campos desconocidos = error, fechas reales), reglas de cada hábito (`validateHabitInput`) e integridad (ids únicos, `[habitId+date]` único, referencias, rangos). Devuelve hasta 10 problemas legibles (`habits[2] («Leer») · frequency: …`) y cuántos más había. Las migraciones de formato viven en `MIGRATIONS` (hoy ninguna: versión 1). Una copia de versión futura se rechaza.
+- `src/domain/csv.ts`: exportación de registros a CSV (RFC 4180, CRLF, neutraliza celdas que empiezan por `=`, `+`, `-`, `@`).
+- `src/domain/reminders.ts`: `planReminders()` decide qué avisar ahora y cuándo volver a mirar (tolerancia de 30 min, sin repetir).
+- `src/domain/pauses.ts` además valida: `findPauseConflict`/`pauseProblem` (rango real y no invertido; solape solo dentro del mismo ámbito).
+- `src/db/repos/dataset.ts`: `readSnapshot()` (lectura coherente), `replaceAllData(data, settings?)` y `restoreSnapshot()`. **Una sola transacción `rw` sobre todas las tablas**: si algo falla, la base queda idéntica. Importar y borrar todo devuelven el estado anterior, y de ahí sale "Deshacer".
+- `src/features/settings/`: `SettingsScreen` (`lazy`; arrastra Zod), `DataSection` + `dataActions.ts` (exportar, importar, borrar), `PausesSection`/`PauseForm`/`pauseActions.ts`, `RemindersSection`.
+- `src/features/reminders/`: `RemindersRunner` (montado en `AppShell`, no pinta nada), `notifications.ts` (permiso, aviso por service worker o API directa, avisos ya enviados en `localStorage` por día).
+- `src/features/onboarding/Onboarding.tsx`: tres pasos saltables; `TodayScreen` lo enseña solo con `!onboardingDone && !hasHabits`.
+- `src/features/shortcuts/`: `GlobalShortcuts` (en el chunk de entrada; `N` y `?`) y `ShortcutsDialog` (`lazy`, arrastra Base UI). Los números y las flechas de Hoy están en `features/today/TodayShortcuts.tsx`. Lógica pura en `lib/shortcuts.ts`; `hooks/useShortcuts.ts` la conecta.
+- `src/lib/pwa.ts` registra el service worker (solo en producción, aviso "Recargar" en vez de recarga automática); `src/lib/download.ts` descarga archivos; `src/app/routeTitle.ts` da el título por ruta.
+- `scripts/generate-icons.mjs` genera los iconos de `public/` (cuadrado plano de tinta azul con una marca blanca, sin dependencias). `public/sw-extra.js` se carga dentro del service worker y enfoca la app al pulsar un recordatorio.
+- `src/dev/`: solo en desarrollo. `sampleData.ts` genera seis meses deterministas —incluidas cuatro reflexiones semanales, que empiezan el día que diga `weekStartsOn` y dejan la última semana cerrada sin escribir para que el aviso de Hoy tenga algo que ofrecer— y `DevTools.tsx` solo renderiza el botón si `import.meta.env.DEV`, así que nada de esto entra en producción. Escribe con `db/repos/dataset.ts` (`replaceAllData`), que también usa la importación de backups.
 - `src/features/habits/`:
   - lista con dnd-kit (puntero y teclado, anuncios en español) y las alternativas "Subir"/"Bajar" en el menú;
   - formulario con vista previa (`HabitRow` en modo `preview`) y selector de plantillas.
@@ -144,6 +155,14 @@ UI (`features/`, `ui/`, `charts/`) → datos (`db/`) → dominio (`domain/`). **
 - **Desfase de un día:** cada hábito se compara con el ánimo y la energía del mismo día y con los del día siguiente. Las dos comparaciones cuentan para la corrección; en la lista se enseña la más marcada de cada pareja, porque las dos suelen ser la misma historia. El texto dice siempre de cuál se trata ("Los días después de cumplir…").
 - **Lenguaje de las correlaciones:** cada frase lleva su muestra y ninguna usa verbos de causa. Al pie van el recuento de lo examinado y la advertencia fija de que es correlación, no causa.
 
+- **Backup (validar antes de tocar, no perder nada):** importar valida el archivo entero en memoria; con un solo problema no se escribe nada y se lista lo que falla ("tus datos siguen como estaban"). Con el archivo válido se pide confirmación diciendo qué entra y qué se sustituye, con un botón para exportar antes lo actual. Se escribe en **una transacción**, se avisa con "Deshacer" y los cronómetros en marcha se descartan. Los ajustes viajan en la copia. Borrar todo pide escribir `BORRAR` y también se puede deshacer.
+- **Pausas (Ajustes):** globales o de un hábito, con fechas reales, rango no invertido y **sin solape dentro del mismo ámbito** (global con global, o mismo hábito); una global y una de un hábito pueden coincidir (el efecto es la unión) y las consecutivas valen. Crear, editar y borrar se deshacen. Las pausas que crea `unarchiveHabit` no pasan por esta validación. Se reflejan en Hoy, heatmap, rachas y estadísticas (`db/pausesEffect.test.ts` lo comprueba de punta a punta).
+- **Recordatorios:** la hora se fija en el formulario del hábito (no en "a evitar"). Solo avisa si ese día el hábito toca, no está en pausa ni hecho; un aviso que llega más de 30 min tarde se descarta; no se repite tras recargar. El permiso se pide desde Ajustes con un botón (nunca solo). Sin servidor push, solo con la app abierta o activa.
+- **Onboarding:** solo si no hay hábitos y no se completó ni saltó. "Borrar todo" lo vuelve a activar (los ajustes se borran).
+- **Atajos:** `1`–`9` sobre el hábito con ese número en el orden visible (booleano marca, cantidad suma un paso, tiempo inicia o detiene el cronómetro de hoy, "a evitar" registra o quita una recaída); `←`/`→` cambian de día; `N` nuevo hábito; `?` ayuda. No actúan al escribir en un campo, con un diálogo o menú abierto, con Ctrl/Alt/Meta ni sobre días bloqueados. Las flechas respetan radios, rangos y la rejilla del heatmap.
+- **Accesibilidad de rutas:** al cambiar de pantalla se pone el título de la pestaña y el foco pasa a `#contenido`; al cambiar de día se anuncia la fecha (`aria-live`).
+- **PWA:** `generateSW` con `registerType: 'prompt'`; el precache excluye los subconjuntos cirílico, griego y vietnamita de la fuente; se sirve `index.html` como respaldo de navegación sin conexión.
+
 ## Diseño (resumen; los valores están en `src/styles/tokens.css`)
 
 - **Tokens:** todos en `src/styles/tokens.css` (`@theme static`). Se borran las escalas por defecto de Tailwind (`--color-*: initial`, etc.). El tema oscuro redefine las variables bajo `:root[data-theme='dark']`. Nunca uses colores o tamaños sueltos.
@@ -179,9 +198,13 @@ UI (`features/`, `ui/`, `charts/`) → datos (`db/`) → dominio (`domain/`). **
 - Colores de hábito en estilos en línea con `habitColorVar(color)`; para todo lo demás, utilidades de los tokens.
 - Comentarios y mensajes de usuario en español; código (identificadores) en inglés.
 - Estilo Biome: 2 espacios, comillas simples y línea de 100 caracteres. Ejecuta `npm run lint:fix` antes de hacer commit.
+- `src/test/setup.ts` también define `Document.prototype.focus`: `user-event` pasa `document` como `relatedTarget` si el elemento con foco se desmonta antes de pulsar otro botón, y Sonner intenta devolverle el foco al desmontarse.
+- Los tests de `db/` que necesitan el resto del dominio (p. ej. `pausesEffect.test.ts`) corren en Node con `fake-indexeddb`; los de UI que comprueban atajos montan `<App />` entera.
 - Para escribir archivos con contenido complejo usa la herramienta Write, no heredocs en bash: en este entorno Windows los heredocs largos fallan.
 
 ## Limitaciones conocidas
 
-- Los recordatorios del navegador solo se disparan con la app abierta o activa, porque no hay servidor push (Fase 6).
-- El paquete de fuentes incluye subconjuntos cirílico, griego y vietnamita. Solo se descargan si se usan (`unicode-range`), pero hay que excluirlos del precache de la PWA en la Fase 6.
+- Los recordatorios del navegador solo se disparan con la app abierta o activa, porque no hay servidor push. Se dice en Ajustes.
+- Los subconjuntos cirílico, griego y vietnamita de la fuente no se precachean: sin conexión, un texto en esos alfabetos usaría la fuente del sistema.
+- Las pausas creadas por `unarchiveHabit` pueden solaparse con una pausa del mismo hábito creada a mano; el análisis las une, pero al editar una de las dos el formulario avisa del solape.
+- El límite retroactivo se guarda mientras se escribe cada valor válido (escribir `14` guarda `1` y luego `14`). Es inocuo, pero conviene saberlo.
