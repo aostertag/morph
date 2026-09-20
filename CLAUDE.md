@@ -54,7 +54,7 @@ renombrar y borrar, todo con «Deshacer».
 **Estadísticas, «Por categoría»** (`features/stats/ByCategorySection.tsx`, en la columna izquierda
 **después** de Consistencia):
 
-- `categoryBreakdown()` y `hasCategorizedHabits()` en `domain/stats.ts`. **No hay lógica de tasas
+- `categoryBreakdown()` y `hasCategoryGroups()` en `domain/stats.ts`. **No hay lógica de tasas
   nueva:** cada categoría es `scoreComparison()` (→ `periodScore`) sobre sus hábitos, así que hereda las
   reglas de muestra (7 días evaluables para ordenar, 7 en ambos períodos para el delta).
 - **Sin categoría:** fila aparte al final, con hueco, **fuera del orden**. Excluirlos descuadraría las
@@ -63,8 +63,14 @@ renombrar y borrar, todo con «Deshacer».
   Una `categoryId` que ya no existe cuenta como sin categoría.
 - **«A evitar»:** excluidos (no puntúan en ningún sitio); una categoría solo con ellos no aparece.
 - Las categorías con menos de 7 días evaluables, **incluido 0** (p. ej. un hábito mensual aún en curso),
-  se apartan en «Sin datos suficientes para ordenarlas: Mente (4 d), Relaciones (0 d)»: ninguna
-  categoría se esfuma sin decirlo. La sección solo aparece si algún hábito que puntúa tiene categoría.
+  se apartan en «Sin datos suficientes para ordenarlas: Relaciones (0 d)»: ninguna categoría viva se
+  esfuma sin decirlo. **Excepción:** una con 0 días y todos sus hábitos archivados no se lista (igual
+  que Consistencia calla los archivados sin días); con días en el rango sí cuenta. La sección solo
+  aparece si `hasCategoryGroups()`: alguna categoría real, ordenada o apartada.
+- Comparte columnas con Consistencia (`stats/barTable.tsx`: `table-fixed` + `colgroup`), así que las
+  barras quedan en la misma posición y con el mismo ancho en móvil y escritorio; la línea «N hábitos ·
+  +8 puntos que…» va en una segunda fila a todo el ancho. **Los anchos van en el `colgroup`, no en las
+  celdas:** con `table-fixed` manda la primera fila (aquí la cabecera oculta, sin anchos).
 - Tabla con barra decorativa `aria-hidden` y las cifras en texto (sin Recharts ni `ChartFigure`): no
   pesa en el chunk. No nombra «mejor» ni «peor» categoría. La comparación usa `previousPeriodLabel()`
   (`stats/describe.ts`, compartido con `ScoreSection`): «+15 puntos que el mes anterior».

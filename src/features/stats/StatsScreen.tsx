@@ -13,7 +13,7 @@ import {
   avoidSummaries,
   categoryBreakdown,
   consistencyRanking,
-  hasCategorizedHabits,
+  hasCategoryGroups,
   momentum,
   scoreComparison,
   weekdayBreakdown,
@@ -132,6 +132,7 @@ export function StatsScreen() {
   }
 
   const report = findCorrelations({ histories, dayLogs, range, today });
+  const byCategory = categoryBreakdown(histories, categories, range, previous);
 
   return (
     <div>
@@ -150,11 +151,8 @@ export function StatsScreen() {
       <div className="lg:grid lg:grid-cols-2 lg:gap-x-12">
         <div className="min-w-0">
           <ConsistencySection ranking={consistencyRanking(histories, range)} />
-          {hasCategorizedHabits(histories, categories) && (
-            <ByCategorySection
-              breakdown={categoryBreakdown(histories, categories, range, previous)}
-              preset={preset}
-            />
+          {hasCategoryGroups(byCategory) && (
+            <ByCategorySection breakdown={byCategory} preset={preset} />
           )}
           <AvoidSection summaries={avoidSummaries(histories, range, previous)} />
         </div>

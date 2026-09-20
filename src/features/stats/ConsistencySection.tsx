@@ -1,7 +1,9 @@
 import { Link } from 'react-router';
 import type { HabitRate, Ranking } from '@/domain/stats';
+import { cx } from '@/lib/cx';
 import { formatNumber, formatPercent } from '@/lib/format';
 import { ColorBar } from '@/ui/HabitMarks';
+import { BAR_TABLE, BarTableColumns, FIGURE_CELL } from './barTable';
 
 function Row({ entry }: { entry: HabitRate }) {
   const { habit, rate } = entry;
@@ -19,7 +21,7 @@ function Row({ entry }: { entry: HabitRate }) {
           </Link>
         </span>
       </th>
-      <td className="w-[35%] py-2">
+      <td className="py-2">
         <span aria-hidden="true" className="relative block h-2 w-full bg-sunken">
           <span
             className="absolute inset-y-0 left-0 bg-text"
@@ -27,7 +29,7 @@ function Row({ entry }: { entry: HabitRate }) {
           />
         </span>
       </td>
-      <td className="w-32 whitespace-nowrap py-2 text-right">
+      <td className={cx(FIGURE_CELL, 'py-2')}>
         {formatPercent(ratio)}{' '}
         <span className="text-text-muted">({formatNumber(rate.days)} d)</span>
       </td>
@@ -51,10 +53,11 @@ export function ConsistencySection({ ranking }: { ranking: Ranking }) {
           Ningún hábito llega a una semana de días evaluables en este período.
         </p>
       ) : (
-        <table className="w-full text-md">
+        <table className={BAR_TABLE}>
           <caption className="sr-only">
             Tasa de cumplimiento de cada hábito en el período, con los días evaluables
           </caption>
+          <BarTableColumns />
           <thead className="sr-only">
             <tr>
               <th scope="col">Hábito</th>

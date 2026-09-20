@@ -2,6 +2,7 @@ import type { RangePreset } from '@/domain/range';
 import type { CategoryBreakdown, CategoryGroup } from '@/domain/stats';
 import { cx } from '@/lib/cx';
 import { formatNumber, formatPercent, formatPoints } from '@/lib/format';
+import { BAR_TABLE, BarTableColumns, FIGURE_CELL } from './barTable';
 import { previousPeriodLabel } from './describe';
 
 function habitsLabel(count: number): string {
@@ -33,27 +34,37 @@ function Row({
   const { current } = group.comparison;
   const ratio = current.ratio ?? 0;
   const uncategorized = group.category === null;
+  // Mismas columnas que Consistencia (`barTable.ts`) para que las barras de las dos secciones
+  // queden alineadas. La línea de hábitos y comparación va debajo, a todo el
+  // ancho, para no estrechar el nombre en móvil.
+  const top = apart ? 'pt-5' : 'pt-2';
   return (
-    <tr className="border-b border-border">
-      <th scope="row" className={cx('pr-3 pb-2 text-left font-normal', apart ? 'pt-5' : 'pt-2')}>
-        <span className={uncategorized ? 'block text-text-muted' : 'block'}>
-          {group.category?.name ?? 'Sin categoría'}
-        </span>
-        <span className="block text-sm text-text-muted">{describeGroup(group, preset)}</span>
-      </th>
-      <td className={cx('w-16 pb-2 sm:w-[30%]', apart ? 'pt-5' : 'pt-2')}>
-        <span aria-hidden="true" className="relative block h-2 w-full bg-sunken">
-          <span
-            className="absolute inset-y-0 left-0 bg-text"
-            style={{ width: `${ratio * 100}%` }}
-          />
-        </span>
-      </td>
-      <td className={cx('w-28 whitespace-nowrap pb-2 text-right', apart ? 'pt-5' : 'pt-2')}>
-        {formatPercent(ratio)}{' '}
-        <span className="text-text-muted">({formatNumber(current.days)} d)</span>
-      </td>
-    </tr>
+    <>
+      <tr>
+        <th scope="row" className={cx('pr-3 text-left font-normal', top)}>
+          <span className={uncategorized ? 'text-text-muted' : undefined}>
+            {group.category?.name ?? 'Sin categoría'}
+          </span>
+        </th>
+        <td className={top}>
+          <span aria-hidden="true" className="relative block h-2 w-full bg-sunken">
+            <span
+              className="absolute inset-y-0 left-0 bg-text"
+              style={{ width: `${ratio * 100}%` }}
+            />
+          </span>
+        </td>
+        <td className={cx(FIGURE_CELL, top)}>
+          {formatPercent(ratio)}{' '}
+          <span className="text-text-muted">({formatNumber(current.days)} d)</span>
+        </td>
+      </tr>
+      <tr className="border-b border-border">
+        <td colSpan={3} className="pb-2 text-sm text-text-muted">
+          {describeGroup(group, preset)}
+        </td>
+      </tr>
+    </>
   );
 }
 
@@ -85,10 +96,11 @@ export function ByCategorySection({
       )}
 
       {(ranked.length > 0 || uncategorized) && (
-        <table className="w-full text-md">
+        <table className={BAR_TABLE}>
           <caption className="sr-only">
             Tasa de cumplimiento de cada categoría en el período, con los días evaluables
           </caption>
+          <BarTableColumns />
           <thead className="sr-only">
             <tr>
               <th scope="col">Categoría</th>

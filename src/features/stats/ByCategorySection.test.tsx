@@ -42,13 +42,15 @@ describe('estadísticas: por categoría', () => {
     show();
 
     const section = await screen.findByRole('region', { name: 'Por categoría' });
-    const rows = within(section).getAllByRole('row');
-    // Cabecera oculta + Mente (100 %) + Salud (50 %) + Sin categoría, siempre la última.
-    const names = rows.slice(1).map((row) => within(row).getByRole('rowheader').textContent);
-    expect(names[0]).toMatch(/^Mente/);
-    expect(names[1]).toMatch(/^Salud/);
-    expect(names[2]).toMatch(/^Sin categoría/);
-    expect(within(rows[2] as HTMLElement).getByText(/\(\d+ d\)/)).toBeInTheDocument();
+    // Cada categoría ocupa una fila con su nombre y otra debajo con sus hábitos y la comparación.
+    const rows = within(section)
+      .getAllByRole('row')
+      .filter((row) => within(row).queryByRole('rowheader') !== null);
+    // Mente (100 %) + Salud (50 %) + Sin categoría, siempre la última.
+    const names = rows.map((row) => within(row).getByRole('rowheader').textContent);
+    expect(names).toEqual(['Mente', 'Salud', 'Sin categoría']);
+    expect(within(rows[1] as HTMLElement).getByText(/\(\d+ d\)/)).toBeInTheDocument();
+    expect(within(section).getAllByText(/^1 hábito/)).toHaveLength(3);
     expect(within(section).getByText(/Los hábitos a evitar van aparte/)).toBeInTheDocument();
   });
 

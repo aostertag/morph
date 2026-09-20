@@ -3,7 +3,7 @@ import { d, days, entriesOn, habit, pause } from '@/test/factories';
 import type { LocalDay } from './day';
 import { buildHistory, type HabitHistory } from './history';
 import type { DayRange } from './range';
-import { categoryBreakdown, hasCategorizedHabits, periodScore } from './stats';
+import { categoryBreakdown, hasCategoryGroups, periodScore } from './stats';
 import { analyzeHabit } from './today';
 import type { Category, Entry, Habit, Pause } from './types';
 
@@ -175,21 +175,73 @@ describe('categoryBreakdown', () => {
   });
 });
 
-describe('hasCategorizedHabits', () => {
+describe('hasCategoryGroups', () => {
   const today = d('2026-01-20');
+  const current = range('2026-01-09', '2026-01-16');
+  const before = range('2026-01-01', '2026-01-08');
   const cats: Category[] = [{ id: 'salud', name: 'Salud', order: 0 }];
+  const breakdown = (hs: HabitHistory[], categories = cats) =>
+    categoryBreakdown(hs, categories, current, before);
 
   it('es falso sin categorías, sin asignaciones o solo con hábitos a evitar', () => {
-    const sin = history(habit({ id: 'a', categoryId: null }), [], today);
-    const evitar = history(habit({ id: 'e', kind: 'avoid', categoryId: 'salud' }), [], today);
-    expect(hasCategorizedHabits([sin], cats)).toBe(false);
-    expect(hasCategorizedHabits([sin], [])).toBe(false);
-    expect(hasCategorizedHabits([evitar], cats)).toBe(false);
+    const sin = history(
+      habit({ id: 'a', categoryId: null, createdOn: d('2026-01-01') }),
+      [],
+      today,
+    );
+    const evitar = history(
+      habit({ id: 'e', kind: 'avoid', categoryId: 'salud', createdOn: d('2026-01-01') }),
+      [],
+      today,
+    );
+    expect(hasCategoryGroups(breakdown([sin]))).toBe(false);
+    expect(hasCategoryGroups(breakdown([sin], []))).toBe(false);
+    expect(hasCategoryGroups(breakdown([evitar]))).toBe(false);
   });
 
   it('es verdadero con un hábito que puntúa en una categoría existente', () => {
-    const con = history(habit({ id: 'a', categoryId: 'salud' }), [], today);
-    expect(hasCategorizedHabits([con], cats)).toBe(true);
-    expect(hasCategorizedHabits([con], [])).toBe(false);
+    const con = history(
+      habit({ id: 'a', categoryId: 'salud', createdOn: d('2026-01-01') }),
+      [],
+      today,
+    );
+    expect(hasCategoryGroups(breakdown([con]))).toBe(true);
+    expect(hasCategoryGroups(breakdown([con], []))).toBe(false);
+  });
+
+  it('una categoría con solo hábitos archivados y sin días en el rango no cuenta', () => {
+    const archivado = habit({
+      id: 'a',
+      categoryId: 'salud',
+      createdOn: d('2026-01-01'),
+      archivedOn: d('2026-01-05'),
+    });
+    const result = breakdown([history(archivado, [], today)]);
+    expect(result.insufficient).toEqual([]);
+    expect(hasCategoryGroups(result)).toBe(false);
+  });
+
+  it('con días en el rango, un hábito archivado sí cuenta; y con uno vivo, aunque sean 0 días', () => {
+    const archivado = habit({
+      id: 'a',
+      categoryId: 'salud',
+      createdOn: d('2026-01-01'),
+      archivedOn: d('2026-01-11'),
+    });
+    const vivoSinDias = habit({
+      id: 'v',
+      categoryId: 'salud',
+      createdOn: d('2026-01-19'),
+    });
+    const conDias = breakdown([history(archivado, [], today)]);
+    expect(conDias.insufficient.map((g) => g.comparison.current.days)).toEqual([3]);
+    expect(hasCategoryGroups(conDias)).toBe(true);
+
+    const mixto = breakdown([history(archivado, [], today), history(vivoSinDias, [], today)]);
+    expect(mixto.insufficient).toHaveLength(1);
+
+    const soloVivo = breakdown([history(vivoSinDias, [], today)]);
+    expect(soloVivo.insufficient.map((g) => g.comparison.current.days)).toEqual([0]);
+    expect(hasCategoryGroups(soloVivo)).toBe(true);
   });
 });

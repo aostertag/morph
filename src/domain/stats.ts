@@ -201,7 +201,8 @@ export interface CategoryBreakdown {
   readonly ranked: readonly CategoryGroup[];
   /**
    * Con menos días (también 0, p. ej. un hábito mensual aún en curso): se apartan en vez de
-   * ordenarse como si fueran las peores, y así ninguna categoría desaparece sin decirlo.
+   * ordenarse como si fueran las peores, y así ninguna categoría viva desaparece sin decirlo.
+   * Las que solo tienen hábitos archivados y 0 días no se listan.
    */
   readonly insufficient: readonly CategoryGroup[];
   /**
@@ -218,13 +219,13 @@ function categoryOf(history: HabitHistory, known: ReadonlyMap<string, Category>)
   return (id !== null && known.get(id)) || null;
 }
 
-/** ¿Hay algún hábito que puntúe (no "a evitar") con categoría? Si no, la sección sobra. */
-export function hasCategorizedHabits(
-  histories: readonly HabitHistory[],
-  categories: readonly Category[],
-): boolean {
-  const known = new Map(categories.map((c) => [c.id, c]));
-  return histories.some((h) => !isAvoid(h) && categoryOf(h, known) !== null);
+/**
+ * ¿Hay algo que decir de alguna categoría real (ordenada o apartada)? Si no, la sección
+ * sobra: quien no usa categorías, o solo las tiene en hábitos "a evitar" o archivados sin
+ * días en el rango, no ve una sección vacía.
+ */
+export function hasCategoryGroups(breakdown: CategoryBreakdown): boolean {
+  return [...breakdown.ranked, ...breakdown.insufficient].some((g) => g.category !== null);
 }
 
 /**
@@ -253,6 +254,9 @@ export function categoryBreakdown(
   let uncategorized: CategoryGroup | null = null;
   for (const [category, list] of groups) {
     const comparison = scoreComparison(list, range, previous);
+    // Sin días y sin ningún hábito vivo (todos archivados): no hay nada que decir de ella,
+    // igual que Consistencia calla los hábitos archivados sin días en el rango.
+    if (comparison.current.days === 0 && list.every((h) => h.habit.archivedOn !== null)) continue;
     const group = { category, comparison };
     if (comparison.current.days < MIN_RANKING_DAYS) insufficient.push(group);
     else if (category === null) uncategorized = group;
