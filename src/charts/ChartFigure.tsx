@@ -1,4 +1,4 @@
-import { type ReactNode, useId, useState } from 'react';
+import { isValidElement, type ReactNode, useId, useState } from 'react';
 import { cx } from '@/lib/cx';
 
 /**
@@ -50,14 +50,22 @@ export function ChartFigure({
 }
 
 /** Tabla compacta de datos: primera columna como encabezado de fila. */
+/** Clave de fila: la del elemento si la primera celda lo es, y si no su texto. */
+function rowKey(cell: ReactNode): string {
+  return isValidElement(cell) ? String(cell.key) : String(cell);
+}
+
 export function DataTable({
   head,
   rows,
   caption,
+  flushFirst = false,
 }: {
   head: readonly string[];
   rows: readonly (readonly ReactNode[])[];
   caption?: string;
+  /** La primera columna pone su propio relleno vertical (para que una `ColorBar` cubra la fila). */
+  flushFirst?: boolean;
 }) {
   return (
     <table className="w-full text-md">
@@ -77,10 +85,14 @@ export function DataTable({
       </thead>
       <tbody>
         {rows.map((row) => (
-          <tr key={String(row[0])} className="border-b border-border">
+          <tr key={rowKey(row[0])} className="border-b border-border">
             {row.map((cell, index) =>
               index === 0 ? (
-                <th key="head" scope="row" className="py-1.5 text-left font-normal">
+                <th
+                  key="head"
+                  scope="row"
+                  className={cx('text-left font-normal', !flushFirst && 'py-1.5')}
+                >
                   {cell}
                 </th>
               ) : (

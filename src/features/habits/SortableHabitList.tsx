@@ -19,11 +19,12 @@ import { GripVertical } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 import type { Habit } from '@/domain/types';
 import { cx } from '@/lib/cx';
+import { ColorBar } from '@/ui/HabitMarks';
 
 interface SortableHabitListProps {
   readonly habits: readonly Habit[];
   readonly onReorder: (ids: string[]) => void;
-  /** Contenido de cada fila, a la derecha del asa de arrastre. */
+  /** Contenido de cada fila, a la derecha del asa de arrastre (que va detrás de la barra de color). */
   readonly renderRow: (habit: Habit, index: number) => ReactNode;
 }
 
@@ -50,6 +51,7 @@ function SortableRow({ habit, children }: { habit: Habit; children: ReactNode })
         isDragging && 'z-10 bg-surface shadow-overlay',
       )}
     >
+      <ColorBar color={habit.color} />
       <button
         type="button"
         ref={setActivatorNodeRef}

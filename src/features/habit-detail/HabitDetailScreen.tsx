@@ -39,12 +39,14 @@ function Header({
     <header className="mb-8">
       <div className="flex items-stretch gap-3">
         <ColorBar color={habit.color} />
+        {habit.icon && (
+          <span className="mt-5 flex w-5 shrink-0 self-start">
+            <HabitIcon name={habit.icon} size={20} />
+          </span>
+        )}
         <div className="min-w-0 flex-1">
           <p className="label-caps">{HABIT_KIND_LABEL[habit.kind]}</p>
-          <div className="flex min-w-0 items-center gap-2">
-            <HabitIcon name={habit.icon} size={20} />
-            <h1 className="truncate text-2xl font-semibold">{habit.name}</h1>
-          </div>
+          <h1 className="truncate text-2xl font-semibold">{habit.name}</h1>
           <p className="mt-1 text-md text-text-muted">
             {describeHabit(habit, weekStartsOn)} · desde el {formatDate(habit.createdOn, today)}
           </p>

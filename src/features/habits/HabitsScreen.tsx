@@ -8,7 +8,7 @@ import { formatDate } from '@/lib/format';
 import { ActionsMenu } from '@/ui/ActionsMenu';
 import { Button, ButtonLink } from '@/ui/Button';
 import { EmptyState, ScreenHeader } from '@/ui/EmptyState';
-import { ColorBar, HabitIcon } from '@/ui/HabitMarks';
+import { ColorBar, HabitIconSlot } from '@/ui/HabitMarks';
 import { DeleteDialog } from './DeleteDialog';
 import { describeHabit } from './describe';
 import { archive, reorder, unarchive } from './habitActions';
@@ -56,17 +56,14 @@ export function HabitsScreen() {
           onReorder={(ids) => void reorder(ids)}
           renderRow={(habit, index) => (
             <>
-              <ColorBar color={habit.color} />
+              <HabitIconSlot name={habit.icon} />
               <div className="flex min-w-0 flex-1 flex-col justify-center py-2 pl-3">
-                <div className="flex min-w-0 items-center gap-2">
-                  <HabitIcon name={habit.icon} />
-                  <Link
-                    to={`/habitos/${habit.id}`}
-                    className="truncate underline-offset-4 hover:underline"
-                  >
-                    {habit.name}
-                  </Link>
-                </div>
+                <Link
+                  to={`/habitos/${habit.id}`}
+                  className="truncate underline-offset-4 hover:underline"
+                >
+                  {habit.name}
+                </Link>
                 <p className="truncate text-sm text-text-muted">
                   {describeHabit(habit, settings.weekStartsOn)}
                 </p>

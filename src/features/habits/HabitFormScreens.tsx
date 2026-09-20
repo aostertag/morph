@@ -17,8 +17,8 @@ import { useToday } from '@/hooks/useToday';
 import { notify, notifyError } from '@/lib/toast';
 import { ButtonLink } from '@/ui/Button';
 import { EmptyState, ScreenHeader } from '@/ui/EmptyState';
-import { ColorBar, HabitIcon } from '@/ui/HabitMarks';
 import { HabitForm } from './HabitForm';
+import { TemplateRow } from './TemplateRow';
 
 /** Primer color de la paleta que ningún hábito activo usa todavía. */
 function freeColor(habits: readonly Habit[]) {
@@ -71,22 +71,11 @@ function TemplatePicker({ returnParam }: { returnParam: string }) {
       <h2 className="label-caps mt-10 mb-2">Plantillas</h2>
       <ul className="border-t border-border">
         {HABIT_TEMPLATES.map((template) => (
-          <li key={template.id} className="border-b border-border">
-            <Link
-              to={`/habitos/nuevo?plantilla=${template.id}${suffix}`}
-              className="flex min-h-14 items-stretch gap-3 hover:bg-sunken"
-            >
-              <ColorBar color={template.input.color} />
-              <span className="flex min-w-0 flex-1 flex-col justify-center py-2">
-                <span className="flex min-w-0 items-center gap-2">
-                  <HabitIcon name={template.input.icon} />
-                  <span className="truncate">{template.input.name}</span>
-                </span>
-                <span className="text-sm text-text-muted">{template.summary}</span>
-              </span>
-              <ChevronRight size={18} aria-hidden="true" className="self-center text-text-faint" />
-            </Link>
-          </li>
+          <TemplateRow
+            key={template.id}
+            template={template}
+            to={`/habitos/nuevo?plantilla=${template.id}${suffix}`}
+          />
         ))}
       </ul>
     </div>

@@ -108,7 +108,7 @@ recordatorios con y sin permiso, y la lista de hábitos mientras se reordena por
   y segunda línea compartan margen; o quitar el icono de la línea del nombre y alinear las dos
   líneas a la izquierda del icono.
 - **Severidad:** media
-- **Estado:** pendiente
+- **Estado:** hecho — Icono en su propia columna (`HabitIconSlot`, ancho fijo aunque no haya icono) entre `ColorBar` y el texto, en Hoy, Hábitos, plantillas y cabecera del detalle.
 
 ### H2 · Detalle — el calendario deja medio año en blanco con sus meses etiquetados
 
@@ -137,7 +137,7 @@ recordatorios con y sin permiso, y la lista de hábitos mientras se reordena por
 - **Propuesta:** mover el relleno vertical del `td` al contenido, como ya se hace en la tabla de
   consistencia.
 - **Severidad:** media
-- **Estado:** pendiente
+- **Estado:** hecho — `DataTable` admite `flushFirst`; el relleno pasa al enlace y la barra cubre 32 de 33 px (el resto es el filete). De paso, la clave de fila ya no se repetía (`[object Object]`).
 
 ### H4 · Estadísticas — con pocos tramos, «Evolución del período» dibuja bloques enormes
 
@@ -232,7 +232,7 @@ recordatorios con y sin permiso, y la lista de hábitos mientras se reordena por
   `habito-nuevo-escritorio-oscuro-completa.png`
 - **Propuesta:** reutilizar la misma fila en los dos sitios.
 - **Severidad:** baja
-- **Estado:** pendiente
+- **Estado:** hecho — Fila compartida `TemplateRow` en el selector y en el onboarding.
 
 ### H11 · Hábitos — el asa de arrastre deja la barra de color fuera del borde de la fila
 
@@ -244,7 +244,7 @@ recordatorios con y sin permiso, y la lista de hábitos mientras se reordena por
 - **Propuesta:** poner la barra delante del asa, o aceptar la diferencia y anotarla en la regla de
   `CLAUDE.md`.
 - **Severidad:** baja
-- **Estado:** pendiente
+- **Estado:** hecho — `ColorBar` delante del asa en `SortableHabitList`.
 
 ### H12 · Detalle en móvil — las etiquetas de día de la semana se van con el scroll
 

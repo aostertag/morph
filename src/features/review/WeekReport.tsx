@@ -73,12 +73,13 @@ function Habits({ summary }: { summary: WeekSummary }) {
       ) : (
         <DataTable
           head={['Hábito', '%', 'Muestra']}
+          flushFirst
           rows={ranked.map((entry) => [
-            <span key="nombre" className="flex items-stretch gap-2">
+            <span key={entry.habit.id} className="flex items-stretch gap-2">
               <ColorBar color={entry.habit.color} />
               <Link
                 to={`/habitos/${entry.habit.id}`}
-                className="min-w-0 flex-1 truncate rounded-sm underline-offset-4 hover:underline"
+                className="min-w-0 flex-1 truncate rounded-sm py-1.5 underline-offset-4 hover:underline"
               >
                 {entry.habit.name}
               </Link>

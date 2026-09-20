@@ -2,7 +2,7 @@ import { Link } from 'react-router';
 import type { LocalDay } from '@/domain/day';
 import type { HabitDayView } from '@/domain/today';
 import { useTimerStore } from '@/state/timer';
-import { ColorBar, HabitIcon } from '@/ui/HabitMarks';
+import { ColorBar, HabitIconSlot } from '@/ui/HabitMarks';
 import { adjustValue, setValue, startTimer, stopTimer, toggleDone, toggleRelapse } from './actions';
 import { DoneCheckbox, QuantityControl, RelapseToggle, TimeControl } from './controls';
 import { describeRowContext } from './describe';
@@ -67,20 +67,15 @@ export function HabitRow(props: HabitRowProps) {
           {shortcut <= 9 ? shortcut : null}
         </span>
       )}
+      <HabitIconSlot name={habit.icon} />
       <div className="flex min-w-0 flex-1 flex-col justify-center py-2">
-        <div className="flex min-w-0 items-center gap-2">
-          <HabitIcon name={habit.icon} />
-          {preview ? (
-            <span className="truncate">{habit.name || 'Sin nombre'}</span>
-          ) : (
-            <Link
-              to={`/habitos/${habit.id}`}
-              className="truncate underline-offset-4 hover:underline"
-            >
-              {habit.name}
-            </Link>
-          )}
-        </div>
+        {preview ? (
+          <span className="truncate">{habit.name || 'Sin nombre'}</span>
+        ) : (
+          <Link to={`/habitos/${habit.id}`} className="truncate underline-offset-4 hover:underline">
+            {habit.name}
+          </Link>
+        )}
         <p className="truncate text-sm text-text-muted">{describeRowContext(view, today)}</p>
       </div>
       <div className="flex shrink-0 items-center" inert={preview}>

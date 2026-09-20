@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { updateSettings } from '@/db/repos/settings';
 import { HABIT_TEMPLATES } from '@/domain/templates';
+import { TemplateRow } from '@/features/habits/TemplateRow';
 import { notifyError } from '@/lib/toast';
 import { Button, ButtonLink } from '@/ui/Button';
 
@@ -99,16 +100,12 @@ export function Onboarding() {
             <p>Elige una plantilla o define el tuyo. Podrás cambiarlo cuando quieras.</p>
             <ul className="mt-5 border-t border-border">
               {SUGGESTED.map((template) => (
-                <li key={template.id} className="border-b border-border">
-                  <Link
-                    to={`/habitos/nuevo?plantilla=${template.id}&volver=hoy`}
-                    onClick={() => void finish()}
-                    className="flex min-h-14 flex-col justify-center py-2 hover:bg-sunken"
-                  >
-                    <span className="font-medium">{template.input.name}</span>
-                    <span className="text-sm text-text-muted">{template.summary}</span>
-                  </Link>
-                </li>
+                <TemplateRow
+                  key={template.id}
+                  template={template}
+                  to={`/habitos/nuevo?plantilla=${template.id}&volver=hoy`}
+                  onClick={() => void finish()}
+                />
               ))}
             </ul>
             <p className="mt-5 text-text-muted">

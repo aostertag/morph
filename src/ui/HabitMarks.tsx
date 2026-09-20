@@ -46,3 +46,12 @@ export function HabitIcon({
     <Icon size={size} aria-hidden="true" className={cx('shrink-0 text-text-muted', className)} />
   );
 }
+
+/** Columna del icono entre la barra de color y el texto; se reserva aunque no haya icono. */
+export function HabitIconSlot({ name }: { name: string | null }) {
+  return (
+    <span className="flex w-4 shrink-0 items-center self-center">
+      <HabitIcon name={name} />
+    </span>
+  );
+}
