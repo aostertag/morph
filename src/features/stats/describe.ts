@@ -1,4 +1,5 @@
 import type { Correlation, CorrelationReport } from '@/domain/correlation';
+import type { RangePreset } from '@/domain/range';
 import type { Habit } from '@/domain/types';
 import { formatNumber, formatPercent, formatScaleValue } from '@/lib/format';
 
@@ -73,4 +74,17 @@ export function describeComparisons(report: CorrelationReport): string {
         : ` Aquí van las ${formatNumber(report.findings.length)} más marcadas, una por pareja.`
       : '';
   return `${compared}; ${tested} y ${found}.${shown}`;
+}
+
+const PREVIOUS_LABEL: Readonly<Record<RangePreset, string>> = {
+  week: 'la semana anterior',
+  month: 'el mes anterior',
+  quarter: 'el trimestre anterior',
+  year: 'el año anterior',
+  custom: 'el período anterior',
+};
+
+/** "el mes anterior" / "el período anterior" (rango personalizado), para las comparaciones. */
+export function previousPeriodLabel(preset: RangePreset): string {
+  return PREVIOUS_LABEL[preset];
 }

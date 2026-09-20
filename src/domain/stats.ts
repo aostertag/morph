@@ -13,7 +13,7 @@ import {
 import type { HabitHistory } from './history';
 import { completionRate, dayCredit, type Rate } from './metrics';
 import type { DayRange } from './range';
-import type { Habit } from './types';
+import type { Category, Habit } from './types';
 
 /*
  * Estadísticas globales: el informe de un período sobre todos los hábitos.
@@ -187,6 +187,93 @@ export function consistencyRanking(
   ranked.sort((a, b) => (b.rate.ratio ?? 0) - (a.rate.ratio ?? 0) || b.rate.days - a.rate.days);
   insufficient.sort((a, b) => b.rate.days - a.rate.days);
   return { ranked, insufficient };
+}
+
+export interface CategoryGroup {
+  /** `null` = los hábitos sin categoría. */
+  readonly category: Category | null;
+  /** Puntuación del grupo (mismo cálculo que la general) y su comparación con el período anterior. */
+  readonly comparison: ScoreComparison;
+}
+
+export interface CategoryBreakdown {
+  /** De más a menos cumplimiento; solo categorías con `MIN_RANKING_DAYS` días evaluables. */
+  readonly ranked: readonly CategoryGroup[];
+  /**
+   * Con menos días (también 0, p. ej. un hábito mensual aún en curso): se apartan en vez de
+   * ordenarse como si fueran las peores, y así ninguna categoría desaparece sin decirlo.
+   */
+  readonly insufficient: readonly CategoryGroup[];
+  /**
+   * Los hábitos sin categoría, aparte y fuera del orden: no son una categoría, y así las
+   * demás siguen cuadrando con la puntuación general. `null` si no llegan a la muestra
+   * (entonces van a `insufficient`) o no hay ninguno.
+   */
+  readonly uncategorized: CategoryGroup | null;
+}
+
+/** Categoría real de un hábito; una `categoryId` que no existe cuenta como sin categoría. */
+function categoryOf(history: HabitHistory, known: ReadonlyMap<string, Category>): Category | null {
+  const id = history.habit.categoryId;
+  return (id !== null && known.get(id)) || null;
+}
+
+/** ¿Hay algún hábito que puntúe (no "a evitar") con categoría? Si no, la sección sobra. */
+export function hasCategorizedHabits(
+  histories: readonly HabitHistory[],
+  categories: readonly Category[],
+): boolean {
+  const known = new Map(categories.map((c) => [c.id, c]));
+  return histories.some((h) => !isAvoid(h) && categoryOf(h, known) !== null);
+}
+
+/**
+ * Cumplimiento por categoría: la misma puntuación del período que la general, calculada
+ * sobre los hábitos de cada categoría (con su comparación y sus reglas de muestra). Los
+ * hábitos "a evitar" no entran, igual que en la puntuación.
+ */
+export function categoryBreakdown(
+  histories: readonly HabitHistory[],
+  categories: readonly Category[],
+  range: DayRange,
+  previous: DayRange,
+): CategoryBreakdown {
+  const known = new Map(categories.map((c) => [c.id, c]));
+  const groups = new Map<Category | null, HabitHistory[]>();
+  for (const history of histories) {
+    if (isAvoid(history)) continue;
+    const category = categoryOf(history, known);
+    const list = groups.get(category);
+    if (list) list.push(history);
+    else groups.set(category, [history]);
+  }
+
+  const ranked: CategoryGroup[] = [];
+  const insufficient: CategoryGroup[] = [];
+  let uncategorized: CategoryGroup | null = null;
+  for (const [category, list] of groups) {
+    const comparison = scoreComparison(list, range, previous);
+    const group = { category, comparison };
+    if (comparison.current.days < MIN_RANKING_DAYS) insufficient.push(group);
+    else if (category === null) uncategorized = group;
+    else ranked.push(group);
+  }
+
+  const name = (g: CategoryGroup) => g.category?.name ?? '';
+  ranked.sort(
+    (a, b) =>
+      (b.comparison.current.ratio ?? 0) - (a.comparison.current.ratio ?? 0) ||
+      b.comparison.current.days - a.comparison.current.days ||
+      name(a).localeCompare(name(b), 'es'),
+  );
+  // Las apartadas: primero las categorías con más días; "sin categoría" al final.
+  insufficient.sort(
+    (a, b) =>
+      Number(a.category === null) - Number(b.category === null) ||
+      b.comparison.current.days - a.comparison.current.days ||
+      name(a).localeCompare(name(b), 'es'),
+  );
+  return { ranked, insufficient, uncategorized };
 }
 
 export interface WeekdayScore {

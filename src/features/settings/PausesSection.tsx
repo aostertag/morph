@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { diffDays, type LocalDay } from '@/domain/day';
 import type { Habit, Pause } from '@/domain/types';
 import { useToday } from '@/hooks/useToday';
+import { cx } from '@/lib/cx';
 import { describeRange, formatNumber } from '@/lib/format';
 import { ActionsMenu } from '@/ui/ActionsMenu';
 import { Button } from '@/ui/Button';
@@ -110,7 +111,8 @@ export function PausesSection({
       {sorted.length === 0 ? (
         <p className="mt-4 text-md text-text-muted">No hay pausas.</p>
       ) : (
-        <ul className="mt-4 border-t border-border">
+        // Con el formulario abierto, su propio borde inferior hace de filete superior.
+        <ul className={cx('mt-4', editing === undefined && 'border-t border-border')}>
           {sorted.map((pause) => (
             <PauseRow
               key={pause.id}

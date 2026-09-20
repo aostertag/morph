@@ -11,7 +11,9 @@ import {
 } from '@/domain/range';
 import {
   avoidSummaries,
+  categoryBreakdown,
   consistencyRanking,
+  hasCategorizedHabits,
   momentum,
   scoreComparison,
   weekdayBreakdown,
@@ -22,6 +24,7 @@ import { ButtonLink } from '@/ui/Button';
 import { EmptyState } from '@/ui/EmptyState';
 import { ScreenHeader } from '@/ui/ScreenHeader';
 import { AvoidSection } from './AvoidSection';
+import { ByCategorySection } from './ByCategorySection';
 import { ConsistencySection } from './ConsistencySection';
 import { CorrelationsSection } from './CorrelationsSection';
 import { MomentumSection } from './MomentumSection';
@@ -89,7 +92,7 @@ export function StatsScreen() {
 
   if (!data) return null;
 
-  const { histories, dayLogs, settings, hasHabits } = data;
+  const { histories, dayLogs, categories, settings, hasHabits } = data;
   const { weekStartsOn } = settings;
   const range = resolveRange(preset, today, weekStartsOn, custom);
   const previous = previousRange(range, preset);
@@ -147,6 +150,12 @@ export function StatsScreen() {
       <div className="lg:grid lg:grid-cols-2 lg:gap-x-12">
         <div className="min-w-0">
           <ConsistencySection ranking={consistencyRanking(histories, range)} />
+          {hasCategorizedHabits(histories, categories) && (
+            <ByCategorySection
+              breakdown={categoryBreakdown(histories, categories, range, previous)}
+              preset={preset}
+            />
+          )}
           <AvoidSection summaries={avoidSummaries(histories, range, previous)} />
         </div>
         <div className="min-w-0">

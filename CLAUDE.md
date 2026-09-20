@@ -34,13 +34,10 @@ Lo que cambió y conviene saber al tocar esas zonas:
 
 - **Columna de campos del formulario de hábito** (`HabitForm.tsx`): es un bloque con `space-y-8`, **no** un `flex flex-col gap-8`. En Safari de iOS, el contenedor flex de esa columna quedaba ~156 px más alto que la suma de sus hijos al cargar (hueco vacío bajo «Crear hábito») y no se recalculaba hasta reactivar la página (tocar un campo, salir y volver a Safari). Al pulsar el botón el campo perdía el foco, el hueco desaparecía y el toque caía en «Empieza el». Se descartó la rejilla del formulario (pasarla a flex en móvil no cambió nada) y las unidades de viewport (solo hay `dvh`); WebKit de escritorio no lo reproduce, ni retrasando las fuentes. Alternar `display` desde JavaScript para forzar un recálculo tampoco bastó. Quitar el contenedor flex y separar con margen sí, comprobado en un iPhone real. No lo vuelvas a `flex`/`gap` en esa columna sin probarlo en un iPhone real.
 
-### Categorías (parte 1 de 2: gestión en Ajustes, hecha)
+### Categorías (hechas: gestión en Ajustes + agrupación en Estadísticas)
 
-`CategoriesSection` en Ajustes (entre Recordatorios y Pausas): listar con el número de hábitos, crear,
-renombrar y borrar, todo con «Deshacer». **La parte 2 (agrupar por categoría en Estadísticas) no está
-hecha:** hoy `categoryId` solo se asigna en el formulario del hábito y se gestiona aquí; ninguna
-pantalla agrupa por él, así que el texto «Sirve para agrupar en las estadísticas» de `CategoryField`
-sigue adelantándose a la realidad hasta la parte 2.
+**Ajustes:** `CategoriesSection` (entre Recordatorios y Pausas): listar con el número de hábitos, crear,
+renombrar y borrar, todo con «Deshacer».
 
 - `domain/categories.ts`: `categoryNameProblem()` (vacío, >40, duplicado sin distinguir mayúsculas ni
   espacios sobrantes; `ignoreId` para renombrar). Lo usan el formulario (validación viva) y el repo
@@ -49,13 +46,31 @@ sigue adelantándose a la realidad hasta la parte 2.
   solo en esos hábitos (archivados incluidos), en una transacción. `restoreCategory(category, habitIds)`
   deshace: repone la categoría con su mismo id/orden y reasigna **solo** a los hábitos que existen y
   siguen sin categoría (no pisa una asignación hecha entretanto). También deshace un renombrado.
-  `renameCategory` devuelve la anterior.
 - `CategoryField` (formulario de hábito) usa la misma validación en vivo.
-- Backup, «Borrar todo» y el generador de ejemplo ya cubrían `categories` y la integridad referencial
-  (`backup.ts` rechaza un hábito con categoría inexistente); solo se añadió «N categorías» al resumen de
-  la importación (al final de la frase).
-- Con el formulario de categoría abierto, la lista pierde su `border-t` (el borde inferior del formulario
-  hace de filete) para no mostrar dos divisorias seguidas. `PauseForm` aún tiene ese doble filete.
+- Backup, «Borrar todo» y el generador de ejemplo ya cubrían `categories` y la integridad referencial.
+- Con un formulario abierto (categoría o pausa), su lista pierde el `border-t` (el borde inferior del
+  formulario hace de filete) para no mostrar dos divisorias seguidas.
+
+**Estadísticas, «Por categoría»** (`features/stats/ByCategorySection.tsx`, en la columna izquierda
+**después** de Consistencia):
+
+- `categoryBreakdown()` y `hasCategorizedHabits()` en `domain/stats.ts`. **No hay lógica de tasas
+  nueva:** cada categoría es `scoreComparison()` (→ `periodScore`) sobre sus hábitos, así que hereda las
+  reglas de muestra (7 días evaluables para ordenar, 7 en ambos períodos para el delta).
+- **Sin categoría:** fila aparte al final, con hueco, **fuera del orden**. Excluirlos descuadraría las
+  categorías respecto a la puntuación general; ordenarlos como un grupo más los haría salir «mejores» o
+  «peores» siendo solo lo que sobra. Si no llegan a la muestra van a la frase de datos insuficientes.
+  Una `categoryId` que ya no existe cuenta como sin categoría.
+- **«A evitar»:** excluidos (no puntúan en ningún sitio); una categoría solo con ellos no aparece.
+- Las categorías con menos de 7 días evaluables, **incluido 0** (p. ej. un hábito mensual aún en curso),
+  se apartan en «Sin datos suficientes para ordenarlas: Mente (4 d), Relaciones (0 d)»: ninguna
+  categoría se esfuma sin decirlo. La sección solo aparece si algún hábito que puntúa tiene categoría.
+- Tabla con barra decorativa `aria-hidden` y las cifras en texto (sin Recharts ni `ChartFigure`): no
+  pesa en el chunk. No nombra «mejor» ni «peor» categoría. La comparación usa `previousPeriodLabel()`
+  (`stats/describe.ts`, compartido con `ScoreSection`): «+15 puntos que el mes anterior».
+- **La categoría en Hábitos y en el detalle** va **al principio** de la línea secundaria
+  (`describeHabit(habit, weekStartsOn, categoryName)`): en móvil la línea se corta por el final y era
+  la categoría lo que se perdía.
 
 Pruebas intermitentes: `App.test.tsx` puede agotar el tiempo si hay un servidor de desarrollo y un navegador abiertos a la vez; pasa suelto y con la máquina libre.
 

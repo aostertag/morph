@@ -26,8 +26,8 @@ import {
   formatPercent,
   formatPoints,
   formatShortDate,
-  RANGE_LABEL,
 } from '@/lib/format';
+import { previousPeriodLabel } from './describe';
 
 interface Point {
   readonly label: string;
@@ -77,8 +77,7 @@ function DeltaLine({ comparison, preset }: { comparison: ScoreComparison; preset
   }
 
   const Icon = delta > 0.005 ? TrendingUp : delta < -0.005 ? TrendingDown : Minus;
-  const previousLabel =
-    preset === 'custom' ? 'el período anterior' : `${RANGE_LABEL[preset].toLowerCase()} anterior`;
+  const previousLabel = previousPeriodLabel(preset);
 
   return (
     <p className="flex items-center gap-2 text-md">

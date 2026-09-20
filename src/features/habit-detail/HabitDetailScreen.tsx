@@ -7,6 +7,7 @@ import type { Habit } from '@/domain/types';
 import { DeleteDialog } from '@/features/habits/DeleteDialog';
 import { describeHabit } from '@/features/habits/describe';
 import { archive, unarchive } from '@/features/habits/habitActions';
+import { useCategories } from '@/hooks/useData';
 import { useToday } from '@/hooks/useToday';
 import { formatDate, HABIT_KIND_LABEL } from '@/lib/format';
 import { ActionsMenu } from '@/ui/ActionsMenu';
@@ -29,11 +30,13 @@ function Header({
   habit,
   today,
   weekStartsOn,
+  categoryName,
   onDelete,
 }: {
   habit: Habit;
   today: LocalDay;
   weekStartsOn: Weekday;
+  categoryName: string | undefined;
   onDelete: () => void;
 }) {
   return (
@@ -66,7 +69,8 @@ function Header({
       }
     >
       <p className="text-md text-text-muted">
-        {describeHabit(habit, weekStartsOn)} · desde el {formatDate(habit.createdOn, today)}
+        {describeHabit(habit, weekStartsOn, categoryName)} · desde el{' '}
+        {formatDate(habit.createdOn, today)}
       </p>
       {habit.description && <p className="mt-2 max-w-prose text-md">{habit.description}</p>}
       {habit.archivedOn && (
@@ -83,6 +87,7 @@ export function HabitDetailScreen() {
   const today = useToday();
   const navigate = useNavigate();
   const detail = useHabitDetail(id, today);
+  const categories = useCategories();
   const [selected, setSelected] = useState<LocalDay | null>(null);
   const [year, setYear] = useState<number | 'rolling'>('rolling');
   const [toDelete, setToDelete] = useState<Habit | null>(null);
@@ -128,6 +133,7 @@ export function HabitDetailScreen() {
         habit={habit}
         today={today}
         weekStartsOn={weekStartsOn}
+        categoryName={categories?.find((c) => c.id === habit.categoryId)?.name}
         onDelete={() => setToDelete(habit)}
       />
 

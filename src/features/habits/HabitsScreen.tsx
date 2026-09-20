@@ -2,7 +2,7 @@ import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import type { Habit } from '@/domain/types';
-import { useHabits, useSettings } from '@/hooks/useData';
+import { useCategories, useHabits, useSettings } from '@/hooks/useData';
 import { useToday } from '@/hooks/useToday';
 import { formatDate } from '@/lib/format';
 import { ActionsMenu } from '@/ui/ActionsMenu';
@@ -18,11 +18,12 @@ import { SortableHabitList } from './SortableHabitList';
 export function HabitsScreen() {
   const habits = useHabits();
   const settings = useSettings();
+  const categories = useCategories();
   const today = useToday();
   const navigate = useNavigate();
   const [toDelete, setToDelete] = useState<Habit | null>(null);
 
-  if (!habits || !settings) return null;
+  if (!habits || !settings || !categories) return null;
 
   const active = habits.filter((h) => h.archivedOn === null);
   const archived = habits.filter((h) => h.archivedOn !== null);
@@ -66,7 +67,11 @@ export function HabitsScreen() {
                   {habit.name}
                 </Link>
                 <p className="truncate text-sm text-text-muted">
-                  {describeHabit(habit, settings.weekStartsOn)}
+                  {describeHabit(
+                    habit,
+                    settings.weekStartsOn,
+                    categories.find((c) => c.id === habit.categoryId)?.name,
+                  )}
                 </p>
               </div>
               <div className="flex items-center">
