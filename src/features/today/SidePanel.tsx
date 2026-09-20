@@ -89,24 +89,27 @@ export function SidePanel({
               <tr>
                 <th scope="col">Hábito</th>
                 <th scope="col">Racha</th>
-                <th scope="col">Comodines</th>
               </tr>
             </thead>
             <tbody>
               {streaks.map(({ habit, streak }) => (
                 <tr key={habit.id} className="border-b border-border">
-                  <th scope="row" className="py-2 text-left font-normal">
-                    <span className="flex items-center gap-2">
-                      <ColorBar color={habit.color} className="h-4 self-center" />
-                      <span className="truncate">{habit.name}</span>
+                  <th scope="row" className="pr-3 text-left font-normal">
+                    <span className="flex items-stretch gap-2">
+                      <ColorBar color={habit.color} />
+                      <span className="flex min-w-0 flex-1 flex-col py-2">
+                        <span className="truncate">{habit.name}</span>
+                        {streak.wildcardsAvailable > 0 && (
+                          <span className="text-sm text-text-muted">
+                            {streak.wildcardsAvailable}{' '}
+                            {streak.wildcardsAvailable === 1 ? 'comodín' : 'comodines'}
+                          </span>
+                        )}
+                      </span>
                     </span>
                   </th>
-                  <td className="py-2 text-right font-medium">
+                  <td className="whitespace-nowrap py-2 text-right align-top font-medium">
                     {streak.current > 0 ? formatStreak(streak.current, streak.unit) : '–'}
-                  </td>
-                  <td className="w-20 py-2 text-right text-text-muted">
-                    {streak.wildcardsAvailable > 0 &&
-                      `${streak.wildcardsAvailable} ${streak.wildcardsAvailable === 1 ? 'comodín' : 'comodines'}`}
                   </td>
                 </tr>
               ))}

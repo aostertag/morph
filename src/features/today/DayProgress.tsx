@@ -10,7 +10,10 @@ export function DayProgress({
   progress: Progress;
   views: readonly HabitDayView[];
 }) {
-  const counted = views.filter((v) => v.countsForProgress);
+  // La barra se llena de izquierda a derecha: los hechos delante, en su orden.
+  const counted = views
+    .filter((v) => v.countsForProgress)
+    .sort((a, b) => Number(b.doneForProgress) - Number(a.doneForProgress));
   if (progress.total === 0) return null;
 
   return (

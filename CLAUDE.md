@@ -159,6 +159,8 @@ UI (`features/`, `ui/`, `charts/`) → datos (`db/`) → dominio (`domain/`). **
 - **Sombras:** solo `shadow-overlay`, para capas superpuestas.
 - **Movimiento:** `--duration-fast|base|slow` (150/180/200 ms) y `--ease-out`. Se animan solo `transform`, `opacity` y color. La utilidad `pressable` da `scale(0.97)` al pulsar. Nada se anima al actuar por teclado. `prefers-reduced-motion` está cubierto en `base.css`.
 - **Gráficos:** Recharts, siempre en tinta sobre cuadrícula mínima, con los colores tomados de los tokens. Cada gráfico tiene su tabla equivalente (`ChartFigure`), que es a la vez la alternativa accesible.
+- **Filas con marca de color (regla única en toda la app):** la fila es un flex con `items-stretch`; `ColorBar` va como primer hijo **sin altura propia**, así que cubre todo el alto del bloque, incluido su relleno vertical; a su lado, una columna con todas las líneas alineadas al mismo margen izquierdo y las cifras a la derecha, `whitespace-nowrap`. Vale igual en `li` (Hoy, hábitos, plantillas, "A evitar", tendencia, rachas del informe) y en celdas de tabla (consistencia, rachas del panel lateral), donde el relleno se mueve del `td`/`th` al contenido para que la barra lo abarque. Nunca `ColorBar` con altura fija.
+- **Barras de progreso:** se llenan siempre de izquierda a derecha. La barra segmentada de Hoy ordena los segmentos poniendo delante los hábitos hechos.
 - **Prohibido:** gradientes, emojis, blur o glassmorphism, sombras de color, ilustraciones, tarjetas idénticas por todas partes y tono motivacional empalagoso.
 
 ## Convenciones

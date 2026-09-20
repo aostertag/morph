@@ -43,6 +43,23 @@ describe('pantalla Hoy', () => {
     expect(await getEntry(habit.id, todayLocal())).toBeUndefined();
   });
 
+  it('la barra de progreso se llena de izquierda a derecha', async () => {
+    await createHabit(habitInput({ name: 'Uno', color: 'rojo' }));
+    await createHabit(habitInput({ name: 'Dos', color: 'verde' }));
+    await createHabit(habitInput({ name: 'Tres', color: 'azul' }));
+    const { user } = renderRoute(<TodayScreen />);
+
+    await user.click(await screen.findByRole('checkbox', { name: 'Tres' }));
+    await screen.findByRole('checkbox', { name: 'Tres', checked: true });
+
+    const segments = [...screen.getByRole('progressbar').children];
+    expect(segments.map((s) => s.getAttribute('style'))).toEqual([
+      'background-color: var(--color-habit-azul);',
+      'background-color: var(--color-sunken);',
+      'background-color: var(--color-sunken);',
+    ]);
+  });
+
   it('agrupa por momento del día', async () => {
     await createHabit(habitInput({ name: 'Meditar', timeOfDay: 'morning' }));
     await createHabit(habitInput({ name: 'Leer', timeOfDay: 'evening' }));

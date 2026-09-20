@@ -74,11 +74,11 @@ function Habits({ summary }: { summary: WeekSummary }) {
         <DataTable
           head={['Hábito', '%', 'Muestra']}
           rows={ranked.map((entry) => [
-            <span key="nombre" className="flex items-center gap-2">
-              <ColorBar color={entry.habit.color} className="h-4 self-center" />
+            <span key="nombre" className="flex items-stretch gap-2">
+              <ColorBar color={entry.habit.color} />
               <Link
                 to={`/habitos/${entry.habit.id}`}
-                className="truncate rounded-sm underline-offset-4 hover:underline"
+                className="min-w-0 flex-1 truncate rounded-sm underline-offset-4 hover:underline"
               >
                 {entry.habit.name}
               </Link>
@@ -136,17 +136,19 @@ function Streaks({ analyses }: { analyses: readonly HabitAnalysis[] }) {
       </h2>
       <ul>
         {alive.map(({ habit, streak }) => (
-          <li key={habit.id} className="flex items-baseline gap-2 border-b border-border py-2">
-            <ColorBar color={habit.color} className="h-4 self-center" />
-            <Link
-              to={`/habitos/${habit.id}`}
-              className="min-w-0 flex-1 truncate rounded-sm text-md underline-offset-4 hover:underline"
-            >
-              {habit.name}
-            </Link>
-            <span className="shrink-0 font-medium">
-              {formatStreak(streak.current, streak.unit)}
-            </span>
+          <li key={habit.id} className="flex items-stretch gap-3 border-b border-border">
+            <ColorBar color={habit.color} />
+            <div className="flex min-w-0 flex-1 items-baseline gap-3 py-2">
+              <Link
+                to={`/habitos/${habit.id}`}
+                className="min-w-0 flex-1 truncate rounded-sm text-md underline-offset-4 hover:underline"
+              >
+                {habit.name}
+              </Link>
+              <span className="shrink-0 whitespace-nowrap font-medium">
+                {formatStreak(streak.current, streak.unit)}
+              </span>
+            </div>
           </li>
         ))}
       </ul>

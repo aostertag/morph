@@ -77,12 +77,12 @@ function TemplatePicker({ returnParam }: { returnParam: string }) {
               className="flex min-h-14 items-stretch gap-3 hover:bg-sunken"
             >
               <ColorBar color={template.input.color} />
-              <span className="flex flex-1 items-center gap-2 py-2">
-                <HabitIcon name={template.input.icon} />
-                <span>
-                  <span className="block">{template.input.name}</span>
-                  <span className="block text-sm text-text-muted">{template.summary}</span>
+              <span className="flex min-w-0 flex-1 flex-col justify-center py-2">
+                <span className="flex min-w-0 items-center gap-2">
+                  <HabitIcon name={template.input.icon} />
+                  <span className="truncate">{template.input.name}</span>
                 </span>
+                <span className="text-sm text-text-muted">{template.summary}</span>
               </span>
               <ChevronRight size={18} aria-hidden="true" className="self-center text-text-faint" />
             </Link>

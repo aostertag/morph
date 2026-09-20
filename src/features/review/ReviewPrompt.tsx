@@ -43,7 +43,7 @@ export function ReviewPrompt({
           {ratio !== null && <> · {formatPercent(ratio)} de cumplimiento</>}
         </p>
         <div className="flex items-center gap-2">
-          <ButtonLink to="/revision" variant="primary">
+          <ButtonLink to="/revision" variant="secondary">
             Ver revisión
           </ButtonLink>
           <Button variant="ghost" onClick={() => void dismissReview(week.from)}>

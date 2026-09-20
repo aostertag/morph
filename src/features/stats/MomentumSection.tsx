@@ -9,19 +9,21 @@ function Item({ entry }: { entry: Momentum }) {
   const { habit, recent, previous, delta } = entry;
   const Icon = delta > 0 ? TrendingUp : TrendingDown;
   return (
-    <li className="flex items-baseline gap-2 border-b border-border py-2 text-md">
-      <Icon size={16} aria-hidden="true" className="shrink-0 self-center text-text-muted" />
-      <ColorBar color={habit.color} className="h-4 self-center" />
-      <Link
-        to={`/habitos/${habit.id}`}
-        className="min-w-0 flex-1 truncate rounded-sm underline-offset-4 hover:underline"
-      >
-        {habit.name}
-      </Link>
-      <span className="shrink-0 font-medium">{formatPoints(delta)}</span>
-      <span className="shrink-0 text-sm text-text-muted">
-        {formatPercent(previous.ratio ?? 0)} → {formatPercent(recent.ratio ?? 0)}
-      </span>
+    <li className="flex items-stretch gap-3 border-b border-border">
+      <ColorBar color={habit.color} />
+      <div className="flex min-w-0 flex-1 items-baseline gap-2 py-2 text-md">
+        <Icon size={16} aria-hidden="true" className="shrink-0 self-center text-text-muted" />
+        <Link
+          to={`/habitos/${habit.id}`}
+          className="min-w-0 flex-1 truncate rounded-sm underline-offset-4 hover:underline"
+        >
+          {habit.name}
+        </Link>
+        <span className="shrink-0 whitespace-nowrap font-medium">{formatPoints(delta)}</span>
+        <span className="shrink-0 whitespace-nowrap text-sm text-text-muted">
+          {formatPercent(previous.ratio ?? 0)} → {formatPercent(recent.ratio ?? 0)}
+        </span>
+      </div>
     </li>
   );
 }

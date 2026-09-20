@@ -8,12 +8,12 @@ function Row({ entry }: { entry: HabitRate }) {
   const ratio = rate.ratio ?? 0;
   return (
     <tr className="border-b border-border">
-      <th scope="row" className="py-2 pr-3 text-left font-normal">
-        <span className="flex items-center gap-2">
-          <ColorBar color={habit.color} className="h-4 self-center" />
+      <th scope="row" className="pr-3 text-left font-normal">
+        <span className="flex items-stretch gap-2">
+          <ColorBar color={habit.color} />
           <Link
             to={`/habitos/${habit.id}`}
-            className="truncate rounded-sm underline-offset-4 hover:underline"
+            className="min-w-0 flex-1 truncate rounded-sm py-2 underline-offset-4 hover:underline"
           >
             {habit.name}
           </Link>
@@ -27,7 +27,7 @@ function Row({ entry }: { entry: HabitRate }) {
           />
         </span>
       </td>
-      <td className="w-32 py-2 text-right">
+      <td className="w-32 whitespace-nowrap py-2 text-right">
         {formatPercent(ratio)}{' '}
         <span className="text-text-muted">({formatNumber(rate.days)} d)</span>
       </td>

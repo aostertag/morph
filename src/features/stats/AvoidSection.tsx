@@ -26,22 +26,26 @@ export function AvoidSection({ summaries }: { summaries: readonly AvoidSummary[]
       </h2>
       <ul>
         {summaries.map((summary) => (
-          <li key={summary.habit.id} className="border-b border-border py-3">
-            <div className="flex items-baseline gap-2">
-              <ColorBar color={summary.habit.color} className="h-4 self-center" />
-              <Link
-                to={`/habitos/${summary.habit.id}`}
-                className="min-w-0 flex-1 truncate rounded-sm text-md underline-offset-4 hover:underline"
-              >
-                {summary.habit.name}
-              </Link>
-              <span className="shrink-0 text-lg font-medium">{relapseText(summary.relapses)}</span>
+          <li key={summary.habit.id} className="flex items-stretch gap-3 border-b border-border">
+            <ColorBar color={summary.habit.color} />
+            <div className="flex min-w-0 flex-1 flex-col justify-center py-3">
+              <div className="flex items-baseline gap-3">
+                <Link
+                  to={`/habitos/${summary.habit.id}`}
+                  className="min-w-0 flex-1 truncate rounded-sm text-md underline-offset-4 hover:underline"
+                >
+                  {summary.habit.name}
+                </Link>
+                <span className="shrink-0 whitespace-nowrap text-lg font-medium">
+                  {relapseText(summary.relapses)}
+                </span>
+              </div>
+              <p className="mt-1 text-sm text-text-muted">
+                {formatNumber(summary.cleanDays)}{' '}
+                {summary.cleanDays === 1 ? 'día limpio' : 'días limpios'} en el período.{' '}
+                {comparison(summary)}
+              </p>
             </div>
-            <p className="mt-1 text-sm text-text-muted">
-              {formatNumber(summary.cleanDays)}{' '}
-              {summary.cleanDays === 1 ? 'día limpio' : 'días limpios'} en el período.{' '}
-              {comparison(summary)}
-            </p>
           </li>
         ))}
       </ul>
