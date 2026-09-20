@@ -229,7 +229,11 @@ export function Heatmap({ history, range, weekStartsOn, selected, onSelect }: He
   return (
     <>
       <div ref={scrollRef} className="-mx-gutter overflow-x-auto pr-gutter pb-1 lg:mx-0 lg:pr-0">
-        <table className="border-separate" style={{ borderSpacing: '3px' }} onKeyDown={onKeyDown}>
+        <table
+          className="border-separate"
+          style={{ borderSpacing: '0.1875rem' }}
+          onKeyDown={onKeyDown}
+        >
           <caption className="sr-only">
             Calendario de {history.habit.name}. Las flechas arriba y abajo mueven un día; las de
             izquierda y derecha, una semana.

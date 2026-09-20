@@ -8,6 +8,16 @@
     scrollbar-gutter: stable;
   }
 
+  /* Pantallas anchas (monitor de escritorio a 1080p o más): la raíz sube de 16 a 17 px y con ella
+     toda la escala tipográfica, el espaciado y los contenedores (todo está en rem). El umbral es
+     de 1600 px CSS: un portátil con escalado de Windows ya llega por debajo. Con un porcentaje se
+     respeta el tamaño de letra elegido en el navegador. */
+  @media (min-width: 1600px) {
+    html {
+      font-size: var(--root-font-size-wide);
+    }
+  }
+
   body {
     min-height: 100dvh;
     font-size: var(--text-base);
@@ -48,6 +58,13 @@
   letter-spacing: var(--tracking-caps);
   text-transform: uppercase;
   color: var(--color-text-muted);
+}
+
+/* Las etiquetas de los gráficos de Recharts llevan `fontSize: 12` en píxeles; con esta regla
+   siguen la escala (12 px, 12,75 px en pantallas anchas) como el resto del texto pequeño. */
+.recharts-cartesian-axis-tick-value,
+.recharts-label {
+  font-size: var(--text-xs);
 }
 
 /* Respuesta al pulsar: confirma que la interfaz escuchó. */

@@ -141,6 +141,7 @@ Lo que sí:
 - Tipografía con carácter: una familia para texto y cifras con números tabulares para que las estadísticas se alineen. Los números grandes (rachas, porcentajes) son protagonistas.
 - Gráficos limpios: cuadrícula mínima, ejes discretos, etiquetas directas sobre los datos en lugar de leyendas cuando sea posible.
 - Mobile-first, pero aprovechando el espacio en escritorio (por ejemplo, panel lateral de estadísticas).
+- Tamaño de letra según pantalla: la escala tipográfica parte de 16 px. En pantallas de 1600 px CSS o más (monitor de escritorio a 1080p) la raíz sube a 17 px y con ella toda la escala, el espaciado y los contenedores, definidos en rem en `tokens.css`. Por debajo de 1600 px no cambia nada. El texto pequeño (12 y 13 px) es el que más se resiente a densidad de píxeles baja, y por eso se escala en bloque en vez de tocar componentes.
 
 Antes de programar la UI, preséntame la dirección estética: paleta con valores hex para ambos temas, tipografías, escala de espaciado y la pantalla Hoy descrita en texto. Espera mi aprobación.
 

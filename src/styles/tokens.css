@@ -70,6 +70,11 @@
   /* Tipografía: una familia; sus cifras son tabulares por diseño */
   --font-sans: "IBM Plex Sans Variable", ui-sans-serif, system-ui, sans-serif;
 
+  /* Tamaño de la raíz en pantallas anchas (≥1600 px, ver base.css): 17 px en vez de 16.
+     Toda la escala, el espaciado y los contenedores están en rem, así que suben juntos.
+     Los valores entre paréntesis de abajo son los de 16 px. */
+  --root-font-size-wide: 106.25%;
+
   --text-xs: 0.75rem; /* 12 */
   --text-xs--line-height: 1rem;
   --text-sm: 0.8125rem; /* 13 */
