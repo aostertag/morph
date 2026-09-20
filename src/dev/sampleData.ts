@@ -1,4 +1,13 @@
-import { addDays, diffDays, eachDay, type LocalDay, toLocalDate, weekdayOf } from '@/domain/day';
+import {
+  addDays,
+  diffDays,
+  eachDay,
+  type LocalDay,
+  startOfWeek,
+  toLocalDate,
+  type Weekday,
+  weekdayOf,
+} from '@/domain/day';
 import { dailyGoal } from '@/domain/evaluate';
 import { isScheduledOn } from '@/domain/frequency';
 import { isPausedOn, pausesFor } from '@/domain/pauses';
@@ -11,6 +20,7 @@ import type {
   Pause,
   Scale,
   TimeOfDay,
+  WeeklyReview,
 } from '@/domain/types';
 
 /*
@@ -30,6 +40,7 @@ export interface SampleData {
   readonly entries: readonly Entry[];
   readonly dayLogs: readonly DayLog[];
   readonly pauses: readonly Pause[];
+  readonly reviews: readonly WeeklyReview[];
 }
 
 export interface SampleOptions {
@@ -37,6 +48,8 @@ export interface SampleOptions {
   readonly seed?: number;
   /** Días de historia, hoy incluido. */
   readonly days?: number;
+  /** Primer día de la semana, para que las revisiones caigan donde la app las busca. */
+  readonly weekStartsOn?: Weekday;
 }
 
 export const SAMPLE_DAYS = 182;
@@ -338,6 +351,40 @@ function valueFor(habit: Profile['habit'], random: Random, success: boolean): nu
   return Math.max(1, Math.round(raw));
 }
 
+/**
+ * Reflexiones de las semanas cerradas, de la más reciente a la más antigua.
+ * La última semana cerrada se queda sin escribir a propósito: es la que el aviso
+ * de Hoy tiene que ofrecer.
+ */
+const REFLECTIONS: readonly string[] = [
+  'La lectura se cayó a mitad de semana. Probar con veinte minutos antes de cenar, no a última hora.',
+  'Meditar ya no cuesta: sale solo al levantarme. Caminar depende de si como fuera.',
+  'Semana irregular por el trabajo. Mantuve el agua y poco más; no merece la pena forzar el resto.',
+  'Los días que dormí antes de las 23:30, la energía del día siguiente se notó.',
+];
+
+/**
+ * Una reflexión por semana cerrada, saltándose la última: cuatro entradas de
+ * historial con las que mirar la pantalla de revisión.
+ */
+function sampleReviews(
+  today: LocalDay,
+  weekStartsOn: Weekday,
+  start: LocalDay,
+  random: Random,
+): WeeklyReview[] {
+  const lastComplete = addDays(startOfWeek(today, weekStartsOn), -7);
+  const reviews: WeeklyReview[] = [];
+  REFLECTIONS.forEach((reflection, index) => {
+    const weekStart = addDays(lastComplete, -7 * (index + 1));
+    if (weekStart < start) return;
+    // Escrita el último día de la semana, por la noche.
+    const at = loggedAt(addDays(weekStart, 6), 'evening', random);
+    reviews.push({ weekStart, reflection, createdAt: at, updatedAt: at });
+  });
+  return reviews;
+}
+
 export function generateSampleData(options: SampleOptions): SampleData {
   const { today } = options;
   const total = options.days ?? SAMPLE_DAYS;
@@ -466,5 +513,7 @@ export function generateSampleData(options: SampleOptions): SampleData {
     sleptEarly = hits.has('dormir');
   }
 
-  return { categories: CATEGORIES, habits, entries, dayLogs, pauses };
+  const reviews = sampleReviews(today, options.weekStartsOn ?? 1, start, random);
+
+  return { categories: CATEGORIES, habits, entries, dayLogs, pauses, reviews };
 }

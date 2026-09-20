@@ -326,7 +326,7 @@ describe('revisiones semanales', () => {
 });
 
 describe('sustituir todos los datos', () => {
-  const sample = { ...generateSampleData({ today: d('2026-09-19') }), reviews: [] };
+  const sample = generateSampleData({ today: d('2026-09-19') });
 
   it('borra lo anterior, escribe lo nuevo y conserva los ajustes', async () => {
     const old = await createHabit(input());
@@ -338,6 +338,7 @@ describe('sustituir todos los datos', () => {
     expect(await db.dayLogs.count()).toBe(sample.dayLogs.length);
     expect(await listPauses()).toHaveLength(sample.pauses.length);
     expect(await listCategories()).toHaveLength(sample.categories.length);
+    expect(await listReviews()).toHaveLength(sample.reviews.length);
     expect((await getSettings()).weekStartsOn).toBe(0);
   });
 

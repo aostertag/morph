@@ -1,9 +1,13 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { getDayLog, updateDayLog } from '@/db/repos/dayLogs';
-import { getEntry } from '@/db/repos/entries';
+import { getEntry, setEntryValue } from '@/db/repos/entries';
 import { createHabit } from '@/db/repos/habits';
+import { saveReflection } from '@/db/repos/reviews';
+import { getSettings } from '@/db/repos/settings';
 import { addDays } from '@/domain/day';
+import { lastCompleteWeek } from '@/domain/review';
+import { formatWeek } from '@/lib/format';
 import { habitInput, renderRoute, todayLocal } from '@/test/render';
 import { TodayScreen } from './TodayScreen';
 
@@ -146,6 +150,55 @@ describe('pantalla Hoy', () => {
       expect(await screen.findByText(/Ánimo: muy bueno/)).toBeInTheDocument();
       expect(screen.getByText('Buen día')).toBeInTheDocument();
       expect(screen.queryByRole('group', { name: 'Ánimo' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('aviso de la revisión semanal', () => {
+    const week = lastCompleteWeek(todayLocal(), 1);
+
+    /** Hábito con historia suficiente para que la semana pasada se pueda evaluar. */
+    async function habitWithLastWeek() {
+      const habit = await createHabit(
+        habitInput({ name: 'Leer', createdOn: addDays(todayLocal(), -20) }),
+      );
+      for (const offset of [0, 1, 3, 5]) {
+        await setEntryValue(habit.id, addDays(week.from, offset), 1);
+      }
+      return habit;
+    }
+
+    it('ofrece la semana pasada y "Ahora no" lo retira', async () => {
+      await habitWithLastWeek();
+      const { user } = renderRoute(<TodayScreen />);
+
+      const prompt = await screen.findByRole('region', { name: 'Revisión de la semana pasada' });
+      expect(
+        within(prompt).getByText(formatWeek(week, todayLocal()), { exact: false }),
+      ).toBeInTheDocument();
+      expect(within(prompt).getByText(/57 % de cumplimiento/)).toBeInTheDocument();
+      expect(within(prompt).getByRole('link', { name: 'Ver revisión' })).toHaveAttribute(
+        'href',
+        '/revision',
+      );
+
+      await user.click(within(prompt).getByRole('button', { name: 'Ahora no' }));
+      await waitFor(() => {
+        expect(
+          screen.queryByRole('region', { name: 'Revisión de la semana pasada' }),
+        ).not.toBeInTheDocument();
+      });
+      expect((await getSettings()).lastReviewOffered).toBe(week.from);
+    });
+
+    it('no lo ofrece si esa semana ya tiene reflexión', async () => {
+      await habitWithLastWeek();
+      await saveReflection(week.from, 'Ya escrita.');
+      renderRoute(<TodayScreen />);
+
+      await screen.findByRole('checkbox', { name: 'Leer' });
+      expect(
+        screen.queryByRole('region', { name: 'Revisión de la semana pasada' }),
+      ).not.toBeInTheDocument();
     });
   });
 });

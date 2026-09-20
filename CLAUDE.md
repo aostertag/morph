@@ -11,20 +11,20 @@ La especificación completa está en `SPEC.md`; la sección 9 (diseño) prevalec
 | 2 | Pantalla Hoy y gestión de hábitos | **Hecha** |
 | 3 | Detalle de hábito, heatmap, métricas, generador de datos | **Hecha** |
 | 4 | Estadísticas globales, correlaciones y registro de ánimo/energía | **Hecha** |
-| 5 | Revisión semanal e hitos | **En curso** (dominio, datos y UI hechos; faltan tests de UI y datos de ejemplo) |
+| 5 | Revisión semanal e hitos | **Hecha** |
 | 6 | Ajustes, backup, recordatorios, PWA, onboarding, atajos, a11y | Pendiente |
 | 7 | Pulido final | Pendiente |
 
-**Siguiente: cerrar la fase 5.** Lo hecho pasa `npm run check` (817 tests). Falta:
-- `src/features/review/ReviewScreen.test.tsx` (proyecto `ui`): pinta el resumen, guarda una reflexión y la relee, el historial enlaza a semanas anteriores, estado sin hábitos.
-- Un caso en `src/features/today/TodayScreen.test.tsx`: el aviso aparece y "Ahora no" lo retira.
-- Reflexiones en el generador: `generateSampleData` aún no devuelve `reviews`, así que `SampleDataButton.tsx:12` y `repos.test.ts` pasan `reviews: []` a mano y el historial nace vacío.
-- Repaso manual (aviso en Hoy, `/revision`, deshacer, hitos con registro retroactivo) y teclado/contraste.
+**Siguiente: la fase 6.** El estado actual pasa `npm run check` (829 tests) y `npm run build`.
 
-**Pendiente para fases posteriores:**
-- Fase 6: atajos de teclado (números, ←/→, `N`, `?`) y llevar el botón de datos de ejemplo a Ajustes.
+**Pendiente para la fase 6:**
+- Ajustes de verdad en `/ajustes` (hoy es un marcador de posición): tema, primer día de la semana, límite retroactivo, recordatorios, exportar/importar y borrar todo.
+- Atajos de teclado (números, ←/→, `N`, `?`) y llevar el botón de datos de ejemplo a Ajustes.
+- Excluir del precache de la PWA los subconjuntos cirílico, griego y vietnamita de la fuente.
 
-Ruta provisional: `/ajustes` muestra un marcador de posición hasta su fase. La navegación sigue con cuatro pestañas: a `/revision` se llega por el aviso de Hoy y por el historial.
+La navegación sigue con cuatro pestañas: a `/revision` se llega por el aviso de Hoy y por el historial.
+
+**Peso del paquete (comprobado en la build del cierre de la fase 5):** el chunk de entrada (Hoy, con `ReviewPrompt` dentro) solo importa de forma estática el runtime, `HabitMarks` y `Field`. Recharts vive en los chunks de `HabitDetailScreen` y `BarChart`, y el informe de la revisión en `ReviewScreen`, todos `lazy()`. Si Hoy empieza a arrastrar Recharts, es que algo se importó fuera de un `lazy()`.
 
 ## Stack (versiones verificadas con `npm view` el 2026-09-19)
 
@@ -101,7 +101,7 @@ UI (`features/`, `ui/`, `charts/`) → datos (`db/`) → dominio (`domain/`). **
 - `src/features/today/DayLogPanel.tsx` y `dayLogActions.ts`: ánimo y energía (escalas 1–5 con radios nativos), nota del día y deshacer. De aquí salen los datos de las correlaciones.
 - `src/charts/ChartFigure.tsx`: marco común de los gráficos (título, controles, alternativa en tabla y nota) y `DataTable`.
 - `src/lib/analysisCache.ts`: la caché de análisis que comparten Hoy, el detalle y las estadísticas, para no recalcular al abrirlos. `cachedHistory()` guarda además la historia día a día por identidad del análisis.
-- `src/dev/`: solo en desarrollo. `sampleData.ts` genera seis meses deterministas y `DevTools.tsx` solo renderiza el botón si `import.meta.env.DEV`, así que nada de esto entra en producción. Escribe con `db/repos/dataset.ts` (`replaceAllData`), que la Fase 6 reutilizará al importar un backup.
+- `src/dev/`: solo en desarrollo. `sampleData.ts` genera seis meses deterministas —incluidas cuatro reflexiones semanales, que empiezan el día que diga `weekStartsOn` y dejan la última semana cerrada sin escribir para que el aviso de Hoy tenga algo que ofrecer— y `DevTools.tsx` solo renderiza el botón si `import.meta.env.DEV`, así que nada de esto entra en producción. Escribe con `db/repos/dataset.ts` (`replaceAllData`), que la Fase 6 reutilizará al importar un backup.
 - `src/features/habits/`:
   - lista con dnd-kit (puntero y teclado, anuncios en español) y las alternativas "Subir"/"Bajar" en el menú;
   - formulario con vista previa (`HabitRow` en modo `preview`) y selector de plantillas.

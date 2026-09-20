@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { findCorrelations } from '@/domain/correlation';
-import { addDays, type LocalDay } from '@/domain/day';
+import { addDays, type LocalDay, weekdayOf } from '@/domain/day';
 import { isScheduledOn } from '@/domain/frequency';
 import { validateHabitInput } from '@/domain/habit';
 import { buildHistory } from '@/domain/history';
 import { completionRate } from '@/domain/metrics';
 import { isPausedOn, pausesFor } from '@/domain/pauses';
+import { lastCompleteWeek } from '@/domain/review';
 import { analyzeHabit } from '@/domain/today';
 import type { DayLog, Habit } from '@/domain/types';
 import { d } from '@/test/factories';
@@ -181,5 +182,32 @@ describe('generateSampleData', () => {
       expect(report.findings.length).toBeGreaterThan(0);
       expect(report.confidence).toBeGreaterThan(0.99);
     });
+  });
+});
+
+describe('revisiones de ejemplo', () => {
+  const last = lastCompleteWeek(today, 1);
+
+  it('escribe cuatro semanas cerradas, todas en lunes', () => {
+    expect(data.reviews).toHaveLength(4);
+    for (const review of data.reviews) {
+      expect(weekdayOf(review.weekStart)).toBe(1);
+      expect(review.weekStart < last.from).toBe(true);
+      expect(review.reflection).not.toBe('');
+    }
+  });
+
+  it('deja sin escribir la última semana cerrada, que es la que ofrece el aviso', () => {
+    expect(data.reviews.some((r) => r.weekStart === last.from)).toBe(false);
+    expect(data.reviews.map((r) => r.weekStart)).toContain(addDays(last.from, -7));
+  });
+
+  it('sigue el primer día de la semana configurado', () => {
+    const sunday = generateSampleData({ today, weekStartsOn: 0 });
+    for (const review of sunday.reviews) expect(weekdayOf(review.weekStart)).toBe(0);
+  });
+
+  it('es determinista', () => {
+    expect(generateSampleData({ today }).reviews).toEqual(data.reviews);
   });
 });
