@@ -27,6 +27,12 @@ import {
   moveWithin,
 } from './heatmapModel';
 
+/**
+ * Lado de la celda: 24 px en móvil (WCAG 2.5.8; la rejilla se desplaza en horizontal) y
+ * compacta, de 12 px, en escritorio, donde el año cabe entero.
+ */
+const CELL = 'size-6 lg:size-3';
+
 /** Relleno de la celda: la escala de intensidad, o la de recaídas en "a evitar". */
 function fillFor(cell: HeatCell): CSSProperties {
   if (cell.kind === 'level') return { backgroundColor: `var(--color-heat-${cell.level})` };
@@ -222,7 +228,7 @@ export function Heatmap({ history, range, weekStartsOn, selected, onSelect }: He
 
   return (
     <>
-      <div ref={scrollRef} className="-mx-gutter overflow-x-auto px-gutter pb-1 lg:mx-0 lg:px-0">
+      <div ref={scrollRef} className="-mx-gutter overflow-x-auto pr-gutter pb-1 lg:mx-0 lg:pr-0">
         <table className="border-separate" style={{ borderSpacing: '3px' }} onKeyDown={onKeyDown}>
           <caption className="sr-only">
             Calendario de {history.habit.name}. Las flechas arriba y abajo mueven un día; las de
@@ -230,13 +236,17 @@ export function Heatmap({ history, range, weekStartsOn, selected, onSelect }: He
           </caption>
           <thead>
             <tr>
-              <th scope="col">
+              <th scope="col" className="sticky left-0 z-10 bg-bg pl-gutter lg:pl-0">
                 <span className="sr-only">Día de la semana</span>
               </th>
               {model.weeks.map((week, index) => {
                 const label = model.months.find((m) => m.week === index)?.label;
                 return (
-                  <th key={week.start} scope="col" className="relative size-3 p-0 align-bottom">
+                  <th
+                    key={week.start}
+                    scope="col"
+                    className={cx(CELL, 'relative p-0 align-bottom')}
+                  >
                     {label && (
                       <span
                         aria-hidden="true"
@@ -254,7 +264,10 @@ export function Heatmap({ history, range, weekStartsOn, selected, onSelect }: He
           <tbody>
             {model.weekdays.map((weekday, row) => (
               <tr key={weekday}>
-                <th scope="row" className="pr-1 text-right align-middle text-xs text-text-faint">
+                <th
+                  scope="row"
+                  className="sticky left-0 z-10 bg-bg pr-1 pl-gutter text-right lg:pl-0 align-middle text-xs text-text-faint"
+                >
                   <span aria-hidden="true">{row % 2 === 1 ? weekdayLetter(weekday) : ''}</span>
                   <span className="sr-only">{weekdayLong(weekday)}</span>
                 </th>
@@ -262,10 +275,20 @@ export function Heatmap({ history, range, weekStartsOn, selected, onSelect }: He
                   const cell = week.cells[row];
                   if (!cell) return null;
                   if (cell.kind === 'outside') {
-                    return <td key={week.start} className="size-3 p-0" />;
+                    return <td key={week.start} className={cx(CELL, 'p-0')} />;
+                  }
+                  if (cell.kind === 'before') {
+                    return (
+                      <td key={week.start} className={cx(CELL, 'p-0')}>
+                        <span
+                          aria-hidden="true"
+                          className="block size-full rounded-sm border border-border opacity-60"
+                        />
+                      </td>
+                    );
                   }
                   return (
-                    <td key={week.start} className="size-3 p-0">
+                    <td key={week.start} className={cx(CELL, 'p-0')}>
                       <button
                         type="button"
                         data-day={cell.day}
@@ -283,7 +306,8 @@ export function Heatmap({ history, range, weekStartsOn, selected, onSelect }: He
                         }}
                         style={fillFor(cell)}
                         className={cx(
-                          'flex size-3 items-center justify-center rounded-sm',
+                          CELL,
+                          'flex items-center justify-center rounded-sm',
                           cell.kind === 'offSchedule' || cell.kind === 'paused'
                             ? 'bg-transparent'
                             : undefined,

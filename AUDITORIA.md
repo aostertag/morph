@@ -123,7 +123,7 @@ recordatorios con y sin permiso, y la lista de hábitos mientras se reordena por
 - **Propuesta:** o pintar esas semanas como celdas vacías (y que el año se lea como un año), o
   recortar el calendario a la vida del hábito y no dibujar los meses que no existen.
 - **Severidad:** media
-- **Estado:** pendiente
+- **Estado:** hecho — Se mantiene el año completo; las celdas anteriores a la creación (`before` en `heatmapModel.ts`) se dibujan como un contorno tenue, sin botón, distinto de «fallado» (relleno) y de «no toca» (punto).
 
 ### H3 · Revisión — las barras de color de la tabla «Hábitos» no cubren la fila
 
@@ -194,7 +194,7 @@ recordatorios con y sin permiso, y la lista de hábitos mientras se reordena por
   está es lo que hace cualquier calendario de este tipo y la alternativa accesible ya existe. Una
   vía intermedia: agrandar solo en móvil, donde la rejilla ya se desplaza.
 - **Severidad:** a decidir
-- **Estado:** pendiente
+- **Estado:** hecho — Celda de 24 px en móvil (`size-6 lg:size-3`, paso de 27 px), donde la rejilla ya se desplaza anclada en hoy; compacta de 12 px en escritorio.
 
 ### H8 · Editar hábito — no se puede mover la fecha de inicio
 
@@ -256,7 +256,7 @@ recordatorios con y sin permiso, y la lista de hábitos mientras se reordena por
 - **Captura:** `detalle-movil-oscuro.png`
 - **Propuesta:** dejar la columna de días `sticky` a la izquierda del área que se desplaza.
 - **Severidad:** baja
-- **Estado:** pendiente
+- **Estado:** hecho — Columna de días `sticky` a la izquierda, con el margen incluido para que no asomen celdas por debajo.
 
 ### Cosas que miré y decidí no anotar
 

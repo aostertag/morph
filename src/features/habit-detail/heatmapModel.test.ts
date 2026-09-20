@@ -60,6 +60,19 @@ describe('buildHeatmap', () => {
     expect(cells.get(d('2026-03-10'))).toMatchObject({ kind: 'outside' });
   });
 
+  it('los días anteriores a la creación son «before» y los posteriores a hoy, «outside»', () => {
+    const model = buildHeatmap(
+      history(h, [], '2026-03-05'),
+      { from: d('2026-02-23'), to: d('2026-03-08') },
+      1,
+    );
+    const cells = new Map(model.weeks.flatMap((w) => w.cells).map((cell) => [cell.day, cell]));
+    expect(cells.get(d('2026-02-25'))).toMatchObject({ kind: 'before', record: null });
+    expect(cells.get(d('2026-03-01'))).toMatchObject({ kind: 'before' });
+    expect(cells.get(d('2026-03-02'))).toMatchObject({ kind: 'level' });
+    expect(cells.get(d('2026-03-07'))).toMatchObject({ kind: 'outside' });
+  });
+
   it('en "a evitar" las recaídas tienen su propia escala', () => {
     const avoid = habit({ kind: 'avoid', createdOn: d('2026-03-02') });
     const model = buildHeatmap(

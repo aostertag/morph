@@ -25,8 +25,10 @@ import {
  */
 
 export type CellKind =
-  /** Fuera de la vida del hábito o en el futuro. */
+  /** Posterior a hoy o al último día del hábito, o relleno de la rejilla. */
   | 'outside'
+  /** Anterior a la creación del hábito: se dibuja como un hueco tenue, sin interacción. */
+  | 'before'
   /** No toca ese día según la frecuencia. */
   | 'offSchedule'
   | 'paused'
@@ -112,7 +114,9 @@ function cellFor(history: HabitHistory, day: LocalDay): HeatCell {
   const record = recordOn(history, day);
   const today = day === history.today;
   if (!record || day > history.today) {
-    return { day, kind: 'outside', level: 0, wildcard: false, today, record: null };
+    const before = day < (history.days[0]?.day ?? day) && day <= history.today;
+    const kind = before ? 'before' : 'outside';
+    return { day, kind, level: 0, wildcard: false, today, record: null };
   }
   const base = { day, wildcard: record.wildcard, today, record };
   if (record.paused) return { ...base, kind: 'paused', level: 0 };
