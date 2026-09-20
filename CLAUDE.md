@@ -13,21 +13,27 @@ La especificación completa está en `SPEC.md`; la sección 9 (diseño) prevalec
 | 4 | Estadísticas globales, correlaciones y registro de ánimo/energía | **Hecha** |
 | 5 | Revisión semanal e hitos | **Hecha** |
 | 6 | Ajustes, backup, pausas, recordatorios, PWA, onboarding, atajos, a11y | **Hecha** |
-| 7 | Pulido final | **En curso** |
+| 7 | Pulido final | **En curso**: hallazgos esperando aprobación |
 
-### Fase 7 en curso: continuar desde el paso 2
+### Fase 7 en curso: esperando tu aprobación de los hallazgos (paso 5)
 
 El plan acordado con el usuario tiene estos pasos:
 
 0. **Hecho.** MCP de Playwright instalado (`.mcp.json`, alcance de proyecto) y Chromium descargado. Al arrancar la sesión hay que **aprobar el servidor del proyecto** para que aparezcan las herramientas.
 1. **Hecho.** El límite retroactivo se guarda al terminar de escribir y «Ninguno» es un icono más del selector.
-2. **Aquí seguimos.** Verificar con Playwright lo que en la fase 6 solo estaba cubierto por tests: PWA (manifest, service worker, aviso "Recargar", sin conexión), backup (descarga, archivo válido, archivo dañado), CSV, permiso y disparo de notificaciones, atajos, onboarding y reordenar por teclado. El service worker solo existe en producción: hace falta `npm run build` + `npm run preview`. El usuario ya probó todo esto a mano en un navegador real y funciona.
-3. Recorrido completo contra las secciones 9 y 10 de `SPEC.md`, **en este orden de prioridad**: Hoy, Detalle, Estadísticas, Revisión, Nuevo/Editar hábito, Hábitos, Ajustes, diálogo de atajos, 404. **Primero cada pantalla en móvil (390×844) y escritorio (1440×900) con tema oscuro; el tema claro se revisa después en todas.** Estados vacíos, de carga, bloqueados y de foco incluidos. Los tests de UI no miden el foco visible ni los tamaños táctiles: se revisan aquí.
-4. Los hallazgos se escriben en `AUDITORIA.md` **a medida que avanza el recorrido**, con las capturas en `auditoria/capturas/` (ignorado por git; solo se commitea el `.md`). Si la sesión se corta, la siguiente continúa desde ese archivo.
-5. Presentar la lista al usuario y **esperar su aprobación antes de corregir nada** del recorrido.
+2. **Hecho.** Verificado en la build de producción: PWA (manifest, service worker, aviso «Recargar» probado publicando una build nueva, sin conexión), backup (exportar, importar válido, cinco tipos de archivo dañado, borrar todo con «Deshacer»), CSV, permiso y disparo de notificaciones, atajos, onboarding y reordenar por teclado. **Todo correcto**; el detalle, con lo que este método no puede comprobar, está en `AUDITORIA.md`. El service worker solo existe en producción: hace falta `npm run build` + `npm run preview`.
+3. **Hecho.** Recorrido completo contra las secciones 9 y 10 de `SPEC.md`, en las nueve pantallas y los cuatro pares de viewport/tema, más estados vacíos, día bloqueado y diálogos. Sin gradientes, blur, sombras de color ni emojis; foco visible en todas las paradas de Tab; sin errores de consola. El orden seguido fue: Hoy, Detalle, Estadísticas, Revisión, Nuevo/Editar hábito, Hábitos, Ajustes, diálogo de atajos, 404, en móvil (390×844) y escritorio (1440×900), oscuro primero y claro después. El foco visible y los tamaños táctiles, que los tests de UI no miden, se comprobaron con scripts propios.
+4. **Hecho.** Los 12 hallazgos (H1–H12) están en `AUDITORIA.md`, cada uno con su captura, propuesta concreta y estado `pendiente`; también lo que se miró y se descartó a propósito. Se escriben **a medida que avanza el recorrido**, con las capturas en `auditoria/capturas/` (ignorado por git; solo se commitea el `.md`). Si la sesión se corta, la siguiente continúa desde ese archivo.
+5. **Aquí estamos.** La lista ya se le presentó al usuario: hay que **esperar su aprobación antes de corregir nada**. H7 (celdas del heatmap de 12×12 px frente a WCAG 2.5.8) y H8 (mover la fecha de inicio al editar) son decisiones suyas, no defectos claros.
 6. Corregir por lotes, recapturar para comprobar cada arreglo, `npm run check` por lote, y cerrar actualizando este archivo.
 
 El estado actual pasa `npm run check` y `npm run build`.
+
+**Playwright:** el MCP arrancaba con el canal `chrome`, que no está instalado en esta máquina. Se le
+añadió `--browser chromium` a `.mcp.json` (sin commitear; surte efecto al arrancar la sesión) y se
+descargó el Chromium que pide la versión actual (`chromium-1246`). Ojo: con
+`launchPersistentContext`, `CacheStorage` falla en esta máquina y el service worker no llega a
+instalarse; con un contexto normal funciona.
 
 La navegación sigue con cuatro pestañas: a `/revision` se llega por el aviso de Hoy y por el historial.
 
