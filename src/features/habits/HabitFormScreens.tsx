@@ -17,7 +17,8 @@ import { useCategories, useHabits, useSettings } from '@/hooks/useData';
 import { useToday } from '@/hooks/useToday';
 import { notify, notifyError } from '@/lib/toast';
 import { ButtonLink } from '@/ui/Button';
-import { EmptyState, ScreenHeader } from '@/ui/EmptyState';
+import { EmptyState } from '@/ui/EmptyState';
+import { ScreenHeader } from '@/ui/ScreenHeader';
 import { HabitForm } from './HabitForm';
 import { TemplateRow } from './TemplateRow';
 

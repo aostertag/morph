@@ -5,6 +5,7 @@
     font-family: var(--font-sans);
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+    scrollbar-gutter: stable;
   }
 
   body {

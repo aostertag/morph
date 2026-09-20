@@ -19,7 +19,8 @@ import {
 import { useToday } from '@/hooks/useToday';
 import { describeRange } from '@/lib/format';
 import { ButtonLink } from '@/ui/Button';
-import { EmptyState, ScreenHeader } from '@/ui/EmptyState';
+import { EmptyState } from '@/ui/EmptyState';
+import { ScreenHeader } from '@/ui/ScreenHeader';
 import { AvoidSection } from './AvoidSection';
 import { ConsistencySection } from './ConsistencySection';
 import { CorrelationsSection } from './CorrelationsSection';
@@ -117,7 +118,11 @@ export function StatsScreen() {
         <EmptyState
           title="Todavía no hay nada que medir."
           text="Crea un hábito y en unos días esta pantalla empezará a decir algo."
-          actions={<ButtonLink to="/habitos/nuevo">Crear hábito</ButtonLink>}
+          actions={
+            <ButtonLink to="/habitos/nuevo" variant="primary">
+              Crear hábito
+            </ButtonLink>
+          }
         />
       </div>
     );

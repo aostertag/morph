@@ -5,7 +5,8 @@ import { lastCompleteWeek, weekOf, weekSummary } from '@/domain/review';
 import { useToday } from '@/hooks/useToday';
 import { formatWeek } from '@/lib/format';
 import { ButtonLink } from '@/ui/Button';
-import { EmptyState, ScreenHeader } from '@/ui/EmptyState';
+import { EmptyState } from '@/ui/EmptyState';
+import { ScreenHeader } from '@/ui/ScreenHeader';
 import { ReflectionForm } from './ReflectionForm';
 import { ReviewHistory } from './ReviewHistory';
 import { dismissReview } from './reviewActions';
@@ -50,7 +51,11 @@ export function ReviewScreen() {
         <EmptyState
           title="Todavía no hay nada que revisar."
           text="Crea un hábito y el lunes que viene esta pantalla tendrá algo que contar."
-          actions={<ButtonLink to="/habitos/nuevo">Crear hábito</ButtonLink>}
+          actions={
+            <ButtonLink to="/habitos/nuevo" variant="primary">
+              Crear hábito
+            </ButtonLink>
+          }
         />
       </div>
     );

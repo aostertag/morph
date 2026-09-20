@@ -13,6 +13,7 @@ import { ActionsMenu } from '@/ui/ActionsMenu';
 import { ButtonLink } from '@/ui/Button';
 import { EmptyState } from '@/ui/EmptyState';
 import { ColorBar, HabitIcon } from '@/ui/HabitMarks';
+import { ScreenHeader } from '@/ui/ScreenHeader';
 import { DayPanel } from './DayPanel';
 import { Heatmap, MonthTable } from './Heatmap';
 import { HistoryList } from './HistoryList';
@@ -36,28 +37,21 @@ function Header({
   onDelete: () => void;
 }) {
   return (
-    <header className="mb-8">
-      <div className="flex items-stretch gap-3">
-        <ColorBar color={habit.color} />
-        {habit.icon && (
-          <span className="mt-5 flex w-5 shrink-0 self-start">
-            <HabitIcon name={habit.icon} size={20} />
-          </span>
-        )}
-        <div className="min-w-0 flex-1">
-          <p className="label-caps">{HABIT_KIND_LABEL[habit.kind]}</p>
-          <h1 className="truncate text-2xl font-semibold">{habit.name}</h1>
-          <p className="mt-1 text-md text-text-muted">
-            {describeHabit(habit, weekStartsOn)} · desde el {formatDate(habit.createdOn, today)}
-          </p>
-          {habit.description && <p className="mt-2 max-w-prose text-md">{habit.description}</p>}
-          {habit.archivedOn && (
-            <p className="mt-2 text-md text-text-muted">
-              Archivado: cuenta hasta el {formatDate(habit.archivedOn, today)}.
-            </p>
+    <ScreenHeader
+      title={habit.name}
+      eyebrow={HABIT_KIND_LABEL[habit.kind]}
+      mark={
+        <>
+          <ColorBar color={habit.color} />
+          {habit.icon && (
+            <span className="mt-7 flex w-5 shrink-0 self-start">
+              <HabitIcon name={habit.icon} size={20} />
+            </span>
           )}
-        </div>
-        <div className="flex items-start gap-1">
+        </>
+      }
+      actions={
+        <>
           <ButtonLink to={`/habitos/${habit.id}/editar`}>Editar</ButtonLink>
           <ActionsMenu
             label={`Acciones de ${habit.name}`}
@@ -68,9 +62,19 @@ function Header({
               { label: 'Eliminar…', onSelect: onDelete, destructive: true },
             ]}
           />
-        </div>
-      </div>
-    </header>
+        </>
+      }
+    >
+      <p className="text-md text-text-muted">
+        {describeHabit(habit, weekStartsOn)} · desde el {formatDate(habit.createdOn, today)}
+      </p>
+      {habit.description && <p className="mt-2 max-w-prose text-md">{habit.description}</p>}
+      {habit.archivedOn && (
+        <p className="mt-2 text-md text-text-muted">
+          Archivado: cuenta hasta el {formatDate(habit.archivedOn, today)}.
+        </p>
+      )}
+    </ScreenHeader>
   );
 }
 

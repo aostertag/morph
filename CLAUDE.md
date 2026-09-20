@@ -141,7 +141,7 @@ UI (`features/`, `ui/`, `charts/`) → datos (`db/`) → dominio (`domain/`). **
   - formulario con vista previa (`HabitRow` en modo `preview`) y selector de plantillas.
   - Estas rutas se cargan con `lazy()`, para que Hoy no cargue dnd-kit ni Base UI.
 - `src/ui/`:
-  - primitivas: `Button`/`ButtonLink`/`IconButton`, `Field`/`Fieldset` (ARIA conectado vía render prop), `Segmented` (radios nativos), `ConfirmDialog` (Base UI AlertDialog), `ActionsMenu` (Base UI Menu), `ColorBar`/`HabitIcon`, `EmptyState`/`ScreenHeader`;
+  - primitivas: `Button`/`ButtonLink`/`IconButton`, `Field`/`Fieldset` (ARIA conectado vía render prop), `Segmented` (radios nativos), `ConfirmDialog` (Base UI AlertDialog), `ActionsMenu` (Base UI Menu), `ColorBar`/`HabitIcon`, `EmptyState`; `ScreenHeader` (encabezado único de todas las pantallas: sobretítulo reservado de 16 px, título `text-2xl` en fila de `min-h-touch`, acciones alineadas con esa fila, `mark` opcional para la barra del hábito; Hoy lo usa con el día de la semana como sobretítulo, sin excepción; `html` lleva `scrollbar-gutter: stable` para que el margen izquierdo no dependa de si hay barra de desplazamiento);
   - `ui/icons.ts` es la lista curada de iconos Lucide, importados uno a uno.
 - `src/test/factories.ts`: fábricas para los tests (`habit()`, `entry()`, `entriesOn()`, `dayLog()`, `pause()`, `days()`, `d()`).
 
