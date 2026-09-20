@@ -79,21 +79,21 @@ export function PausesSection({
 
   return (
     <section aria-labelledby="pausas" className="mt-12">
-      <div className="flex items-end justify-between gap-4 border-b border-border pb-2">
-        <h2 id="pausas" className="label-caps">
-          Pausas
-        </h2>
-        {editing === undefined && (
-          <Button onClick={() => setEditing(null)}>
-            <Plus size={18} aria-hidden="true" />
-            Añadir pausa
-          </Button>
-        )}
-      </div>
+      <h2 id="pausas" className="label-caps border-b border-border pb-2">
+        Pausas
+      </h2>
       <p className="mt-3 max-w-prose text-md text-text-muted">
         Los días en pausa no cuentan ni a favor ni en contra: no rompen rachas, no bajan los
         porcentajes y no aparecen como pendientes en Hoy.
       </p>
+      {editing === undefined && (
+        <div className="mt-4">
+          <Button onClick={() => setEditing(null)}>
+            <Plus size={18} aria-hidden="true" />
+            Añadir pausa
+          </Button>
+        </div>
+      )}
 
       {editing !== undefined && (
         <PauseForm
