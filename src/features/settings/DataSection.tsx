@@ -88,11 +88,13 @@ export function DataSection() {
       <h2 id="datos" className="label-caps border-b border-border pb-2">
         Datos
       </h2>
-      <p className="max-w-prose border-b border-border py-4 text-sm text-text-muted">
-        Tus datos viven solo en este navegador: no hay cuenta ni servidor. Si borras los datos del
-        sitio o cambias de dispositivo, se pierden. Instala la app desde el menú del navegador y
-        exporta una copia de vez en cuando.
-      </p>
+      <div className="border-b border-border py-4">
+        <p className="max-w-prose text-sm text-text-muted">
+          Tus datos viven solo en este navegador: no hay cuenta ni servidor. Si borras los datos del
+          sitio o cambias de dispositivo, se pierden. Instala la app desde el menú del navegador y
+          exporta una copia de vez en cuando.
+        </p>
+      </div>
       <ul>
         <Row
           title="Copia de seguridad"
