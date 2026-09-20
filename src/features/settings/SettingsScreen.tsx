@@ -11,6 +11,7 @@ import { Button } from '@/ui/Button';
 import { ScreenHeader } from '@/ui/EmptyState';
 import { Field, Fieldset, inputClasses } from '@/ui/Field';
 import { Segmented } from '@/ui/Segmented';
+import { version } from '../../../package.json';
 import { DataSection } from './DataSection';
 import { PausesSection } from './PausesSection';
 import { RemindersSection } from './RemindersSection';
@@ -162,6 +163,11 @@ export function SettingsScreen() {
       <PausesSection pauses={pauses} habits={habits} />
       <DataSection />
       <DevToolsFooter />
+
+      <footer className="mt-16 text-sm text-text-muted">
+        <p>Hecho por Agustín Ostertag</p>
+        <p>Versión {version}</p>
+      </footer>
     </div>
   );
 }
