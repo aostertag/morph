@@ -1,3 +1,17 @@
+<div align="center">
+    <img src="public/pwa-512.png"
+        title="Morph" alt="Morph logo" width="120" />
+    <h1>Morph</h1>
+    <p>
+        El habit tracker diseñado para las personas, hecho con cariño.
+        <br>
+        Ultraligero, rápido y sin registro obligatorio.
+    </p>
+    <a href="https://habit-tracker-c6c.pages.dev/">
+        Morph
+    </a>
+</div>
+
 # Morph
 
 Aplicación web para seguir hábitos: registro diario, rachas, heatmap, estadísticas, revisión semanal y ajustes. Interfaz en español, instalable como PWA y con funcionamiento sin conexión.
