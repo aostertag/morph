@@ -3,20 +3,13 @@ import { useState } from 'react';
 import { createCategory } from '@/db/repos/categories';
 import { CATEGORY_NAME_MAX, categoryNameProblem } from '@/domain/categories';
 import type { Weekday } from '@/domain/day';
-import {
-  type Category,
-  type Frequency,
-  HABIT_COLORS,
-  type HabitColor,
-  type HabitKind,
-  type Reminder,
-} from '@/domain/types';
+import type { Category, Frequency, HabitColor, HabitKind, Reminder } from '@/domain/types';
 import { cx } from '@/lib/cx';
 import { orderedWeekdays, weekdayLetter, weekdayLong } from '@/lib/format';
 import { notifyError } from '@/lib/toast';
 import { Button } from '@/ui/Button';
 import { Field, Fieldset, inputClasses } from '@/ui/Field';
-import { HABIT_COLOR_LABEL, habitColorVar } from '@/ui/HabitMarks';
+import { HABIT_COLOR_DISPLAY_ORDER, HABIT_COLOR_LABEL, habitColorVar } from '@/ui/HabitMarks';
 import { HABIT_ICON_NAMES, HABIT_ICONS } from '@/ui/icons';
 import { Segmented } from '@/ui/Segmented';
 
@@ -134,7 +127,7 @@ export function ColorField({
   return (
     <Fieldset legend="Color">
       <div className="flex flex-wrap">
-        {HABIT_COLORS.map((color) => (
+        {HABIT_COLOR_DISPLAY_ORDER.map((color) => (
           <label
             key={color}
             className="group flex size-touch cursor-pointer items-center justify-center rounded-md hover:bg-sunken has-focus-visible:outline-2 has-focus-visible:outline-accent"

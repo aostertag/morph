@@ -23,7 +23,7 @@ El estado actual pasa `npm run check` y `npm run build` (chunk de entrada de ~30
 
 Lo que cambió y conviene saber al tocar esas zonas:
 
-- **Selector de color:** `flex flex-wrap` de celdas de 44 px sin `gap`: con 13 colores caben en una fila en escritorio y 7+6 en móvil de 360 y 375 px (con `gap-1` a 360 salía 6+6+1; a 320 sigue siendo 6+6+1). Si añades colores, vuelve a medirlo.
+- **Selector de color:** se presenta en `HABIT_COLOR_DISPLAY_ORDER` (`ui/HabitMarks.tsx`, por tono y el gris al final), **no** en el orden de `HABIT_COLORS`, que fija el color por defecto de un hábito nuevo (`palette.test.ts` comprueba que es una permutación). `flex flex-wrap` de celdas de 44 px sin `gap`: con 13 colores caben en una fila en escritorio y 7+6 en móvil de 360 y 375 px (con `gap-1` a 360 salía 6+6+1; a 320 sigue siendo 6+6+1). Si añades colores, vuelve a medirlo.
 - **Icono de hábito en su columna** (`HabitIconSlot` en `ui/HabitMarks.tsx`): entre `ColorBar` y el texto, con ancho fijo aunque no haya icono, para que nombre y segunda línea compartan margen. Vale en Hoy, Hábitos, plantillas y cabecera del detalle. La lista de Hábitos pone la `ColorBar` **antes** del asa de arrastre.
 - **`TemplateRow`** (`features/habits/`): la fila de plantilla, compartida por «Nuevo hábito» y el onboarding.
 - **`DataTable` admite `flushFirst`**: la primera columna pone su propio relleno vertical, para que una `ColorBar` cubra la fila. La clave de fila sale de la del elemento si la primera celda lo es.

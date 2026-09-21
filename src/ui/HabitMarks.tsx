@@ -23,6 +23,26 @@ export const HABIT_COLOR_LABEL: Readonly<Record<HabitColor, string>> = {
   petroleo: 'Petróleo',
 };
 
+/**
+ * Orden en que el selector presenta los colores: por tono (arcoíris) y el gris al final.
+ * Solo es de presentación: `HABIT_COLORS` conserva su orden, del que sale el color por defecto.
+ */
+export const HABIT_COLOR_DISPLAY_ORDER: readonly HabitColor[] = [
+  'rojo',
+  'naranja',
+  'ocre',
+  'oliva',
+  'verde',
+  'turquesa',
+  'petroleo',
+  'azul',
+  'marino',
+  'violeta',
+  'ciruela',
+  'magenta',
+  'grafito',
+];
+
 /** Barra vertical de 3px con el color del hábito; sin color (`null`) es un gris neutro. */
 export function ColorBar({ color, className }: { color: HabitColor | null; className?: string }) {
   return (

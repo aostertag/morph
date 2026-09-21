@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { HABIT_COLORS } from '@/domain/types';
-import { HABIT_COLOR_LABEL } from '@/ui/HabitMarks';
+import { HABIT_COLOR_DISPLAY_ORDER, HABIT_COLOR_LABEL } from '@/ui/HabitMarks';
 
 const css = readFileSync(new URL('../styles/tokens.css', import.meta.url), 'utf8');
 const darkStart = css.indexOf(':root[data-theme="dark"] {');
@@ -43,5 +43,16 @@ describe('paleta de hábitos', () => {
       'magenta',
       'grafito',
     ]);
+  });
+});
+
+describe('orden de presentación del selector', () => {
+  it('es una permutación de HABIT_COLORS: ningún color falta ni se repite', () => {
+    expect([...HABIT_COLOR_DISPLAY_ORDER].sort()).toEqual([...HABIT_COLORS].sort());
+  });
+
+  it('ordena por tono, con el gris al final', () => {
+    expect(HABIT_COLOR_DISPLAY_ORDER.at(-1)).toBe('grafito');
+    expect(HABIT_COLOR_DISPLAY_ORDER.slice(0, 3)).toEqual(['rojo', 'naranja', 'ocre']);
   });
 });
