@@ -102,7 +102,7 @@ renombrar y borrar, todo con «Deshacer».
   (`describeHabit(habit, weekStartsOn, categoryName)`): en móvil la línea se corta por el final y era
   la categoría lo que se perdía.
 
-Pruebas intermitentes: `App.test.tsx` puede agotar el tiempo si hay un servidor de desarrollo y un navegador abiertos a la vez; pasa suelto y con la máquina libre.
+Pruebas intermitentes: `App.test.tsx` puede agotar el tiempo si hay un servidor de desarrollo y un navegador abiertos a la vez; pasa suelto y con la máquina libre. Confirmado el 2026-09-21: «arranca en Hoy y navega a Hábitos» falló una vez dentro de `npm run check` (no encuentra el `heading` «Hábitos») y pasó 3 de 3 veces suelto con `npx vitest run --project ui src/app/App.test.tsx`. La causa exacta no se ha aislado; solo se ha visto con la suite completa en marcha.
 
 **Playwright:** el MCP arrancaba con el canal `chrome`, que no está instalado en esta máquina. Se le
 añadió `--browser chromium` a `.mcp.json` (commiteado; surte efecto al arrancar la sesión) y se
