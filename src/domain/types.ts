@@ -11,6 +11,9 @@ export const HABIT_COLORS = [
   'violeta',
   'magenta',
   'grafito',
+  'marino',
+  'ciruela',
+  'petroleo',
 ] as const;
 export type HabitColor = (typeof HABIT_COLORS)[number];
 

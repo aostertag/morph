@@ -133,7 +133,7 @@ export function ColorField({
 }) {
   return (
     <Fieldset legend="Color">
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-wrap">
         {HABIT_COLORS.map((color) => (
           <label
             key={color}

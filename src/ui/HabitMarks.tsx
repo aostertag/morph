@@ -18,6 +18,9 @@ export const HABIT_COLOR_LABEL: Readonly<Record<HabitColor, string>> = {
   violeta: 'Violeta',
   magenta: 'Magenta',
   grafito: 'Grafito',
+  marino: 'Marino',
+  ciruela: 'Ciruela',
+  petroleo: 'Petróleo',
 };
 
 /** Barra vertical de 3px con el color del hábito; sin color (`null`) es un gris neutro. */

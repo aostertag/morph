@@ -61,6 +61,9 @@
   --color-habit-violeta: #7e4cc2;
   --color-habit-magenta: #b03a78;
   --color-habit-grafito: #5b6573;
+  --color-habit-marino: #0b2785;
+  --color-habit-ciruela: #690c76;
+  --color-habit-petroleo: #05515f;
   /* Texto o icono sobre un color de hábito */
   --color-on-habit: #ffffff;
 
@@ -169,6 +172,9 @@
   --color-habit-violeta: #b596f0;
   --color-habit-magenta: #ee82b8;
   --color-habit-grafito: #a3aebc;
+  --color-habit-marino: #8699ff;
+  --color-habit-ciruela: #e372f4;
+  --color-habit-petroleo: #30c0f8;
   --color-on-habit: #131312;
   --color-scrim: rgb(0 0 0 / 0.6);
 

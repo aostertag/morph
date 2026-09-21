@@ -23,6 +23,7 @@ El estado actual pasa `npm run check` y `npm run build` (chunk de entrada de ~30
 
 Lo que cambió y conviene saber al tocar esas zonas:
 
+- **Selector de color:** `flex flex-wrap` de celdas de 44 px sin `gap`: con 13 colores caben en una fila en escritorio y 7+6 en móvil de 360 y 375 px (con `gap-1` a 360 salía 6+6+1; a 320 sigue siendo 6+6+1). Si añades colores, vuelve a medirlo.
 - **Icono de hábito en su columna** (`HabitIconSlot` en `ui/HabitMarks.tsx`): entre `ColorBar` y el texto, con ancho fijo aunque no haya icono, para que nombre y segunda línea compartan margen. Vale en Hoy, Hábitos, plantillas y cabecera del detalle. La lista de Hábitos pone la `ColorBar` **antes** del asa de arrastre.
 - **`TemplateRow`** (`features/habits/`): la fila de plantilla, compartida por «Nuevo hábito» y el onboarding.
 - **`DataTable` admite `flushFirst`**: la primera columna pone su propio relleno vertical, para que una `ColorBar` cubra la fila. La clave de fila sale de la del elemento si la primera celda lo es.
@@ -310,10 +311,11 @@ Tras cualquiera: `npm run check`. Si tocas una pantalla, mírala también con `n
 ## Diseño (resumen; los valores están en `src/styles/tokens.css`)
 
 - **Tokens:** todos en `src/styles/tokens.css` (`@theme static`). Se borran las escalas por defecto de Tailwind (`--color-*: initial`, etc.). El tema oscuro redefine las variables bajo `:root[data-theme='dark']`. Nunca uses colores o tamaños sueltos.
-- **Paleta:** neutros cálidos de papel y tinta, acento tinta azul (`#2B50C8` en claro y `#8CA3FF` en oscuro), 10 colores de hábito (`--color-habit-<clave>`, claves en `HABIT_COLORS`), una escala de heatmap `heat-0…4` y una escala de recaídas `relapse-1…3`. Texto sobre un color: `on-accent` y `on-habit`. Velo de diálogos: `scrim`.
+- **Paleta:** neutros cálidos de papel y tinta, acento tinta azul (`#2B50C8` en claro y `#8CA3FF` en oscuro), 13 colores de hábito (`--color-habit-<clave>`, claves en `HABIT_COLORS`; **nunca renombres ni reordenes las existentes**: los hábitos y las copias guardan la clave, solo se añaden al final), una escala de heatmap `heat-0…4` y una escala de recaídas `relapse-1…3`. Texto sobre un color: `on-accent` y `on-habit`. Velo de diálogos: `scrim`.
 - **Contrastes medidos:**
   - texto 15,9/15,5; muted 6,4/7,3; faint 4,9/5,5; border-strong 3,3/3,3; accent 6,2/7,8;
-  - hábitos ≥4,5 en claro y ≥7 en oscuro;
+  - hábitos ≥4,5 en claro y ≥7 en oscuro (contra `on-habit`); marino 12,8/7,09, ciruela 11,0/7,06, petróleo 8,9/8,87;
+  - los tres profundos (`marino`, `ciruela`, `petroleo`) aportan profundidad solo en claro (L≈33–40 frente a ≈53 de los demás): en oscuro el mínimo de 7 obliga a L≥~71, así que se separan por tono y saturación (ΔE OKLab ≥5,4 al vecino más cercano). Se descartaron `carmesi` (5,3 del magenta en oscuro), `bosque` y `marron` (casi iguales a verde y naranja en oscuro);
   - los pasos bajos del heatmap están por debajo de 3:1, compensados con marcas, tabla alternativa y tooltips;
   - los tres pasos de recaída superan 3:1 sobre la celda vacía y sobre el fondo en ambos temas.
 - **Tamaño de la raíz por ancho:** desde 1600 px CSS, `html` pasa de 16 a 17 px (`--root-font-size-wide`, 106,25 %, en `tokens.css`; la media query está en `base.css`). Como escala, espaciado, contenedores y objetivos táctiles están en `rem`, suben juntos; los breakpoints de Tailwind (`lg` = 64rem) **no** se mueven, porque las media queries en `rem` se resuelven contra los 16 px del navegador. Por debajo de 1600 px no cambia nada. Nació de comparar el 100 % con el 110 % de zoom de Chrome en un monitor de 24″ a 1080p: el texto de 12–13 px se quedaba pequeño. Lo que sigue en píxeles a propósito: bordes (1 px), focos (2 px), radios, sombras, la barra de color (`w-0.75`, en rem, sí escala) y los iconos Lucide (`size={16|18|20}`, dentro de cajas de `size-touch` que sí escalan). Las etiquetas de Recharts llevan `fontSize: 12` en píxeles y se igualan con una regla en `base.css` (`.recharts-cartesian-axis-tick-value`, `.recharts-label` → `--text-xs`); las alturas de los gráficos (160–200 px) y los anchos del eje Y (44/48 px) siguen fijos. No hay segundo escalón para 2560 px: no se ha podido probar. Si el zoom de Chrome está al 110 % el efecto se suma (el viewport sigue por encima de 1600).
