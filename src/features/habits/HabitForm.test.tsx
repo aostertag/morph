@@ -11,14 +11,16 @@ describe('crear hábito', () => {
     renderRoute(<NewHabitScreen />, { path: '/habitos/nuevo', url: '/habitos/nuevo' });
     const blank = await screen.findByRole('link', { name: /Empezar en blanco/ });
     expect(screen.getByRole('link', { name: /Beber agua/ })).toBeInTheDocument();
-    // Una fila más de la lista de plantillas, la última, con la misma maqueta.
-    const list = blank.closest('ul');
-    const rows = list?.querySelectorAll(':scope > li');
-    expect(rows?.item(rows.length - 1)).toBe(blank.closest('li'));
+    // Bloque propio antes del título «Plantillas», fuera de su lista y sin barra de color.
+    const templates = screen.getByRole('heading', { name: 'Plantillas' }).nextElementSibling;
+    expect(templates?.contains(blank)).toBe(false);
+    expect(
+      blank.compareDocumentPosition(screen.getByRole('heading', { name: 'Plantillas' })) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     const template = screen.getByRole('link', { name: /Beber agua/ });
     expect(blank.className).toBe(template.className);
     expect(blank.children.length).toBe(template.children.length);
-    expect(screen.queryByRole('heading', { name: 'Empezar en blanco' })).not.toBeInTheDocument();
   });
 
   it('permite empezar en el futuro, hasta un año, y lo explica', async () => {

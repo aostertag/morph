@@ -32,12 +32,16 @@ describe('onboarding', () => {
       'href',
       '/habitos/nuevo?plantilla=agua&volver=hoy',
     );
-    // «Empezar en blanco» es una fila más de la lista, después de las plantillas.
-    const rows = within(screen.getByRole('list')).getAllByRole('link');
+    // «Empezar en blanco» va aparte, antes de las plantillas y fuera de su lista.
     const blank = screen.getByRole('link', { name: /Empezar en blanco/ });
     expect(blank).toHaveAttribute('href', '/habitos/nuevo?plantilla=blanco&volver=hoy');
-    expect(rows.at(-1)).toBe(blank);
-    expect(rows).toHaveLength(5);
+    const templates = screen.getByRole('heading', { name: 'Plantillas' }).nextElementSibling;
+    expect(templates?.contains(blank)).toBe(false);
+    expect(within(templates as HTMLElement).getAllByRole('link')).toHaveLength(4);
+    expect(
+      blank.compareDocumentPosition(screen.getByRole('heading', { name: 'Plantillas' })) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
 
     await user.click(screen.getByRole('button', { name: 'Atrás' }));
     expect(

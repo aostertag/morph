@@ -45,7 +45,7 @@ Lo que cambió y conviene saber al tocar esas zonas:
 - **Límite en el repo:** `createHabit`/`updateHabit` reciben `today` (por defecto el del reloj) y comprueban el límite futuro; al editar solo si la fecha cambia, para no invalidar un inicio ya guardado.
 - **Copia de seguridad:** sin cambios; no aplica el límite de 365 días al importar (una copia antigua puede traer fechas que ya son pasado).
 - **Generador:** añade «Estudiar italiano» (empieza en 5 días) **fuera de `PROFILES`**, para no consumir números aleatorios y dejar el resto de los datos idénticos.
-- **Filas de «Nuevo hábito» y onboarding:** `PickerRow` (privada en `features/habits/TemplateRow.tsx`) es la única maqueta; `TemplateRow` y `BlankRow` la usan. «Empezar en blanco» es la última fila de la lista, con barra neutra y un `Plus` en la columna del icono (`HabitIconSlot` admite `children`) para que el texto quede alineado.
+- **Filas de «Nuevo hábito» y onboarding:** `PickerRow` (privada en `features/habits/TemplateRow.tsx`) es la única maqueta; `TemplateRow` y `BlankRow` la usan. «Empezar en blanco» va **aparte, encima** de «Plantillas» (no es una plantilla), sin barra de color (`BarGap` reserva su hueco) y con un `Plus` en la columna del icono (`HabitIconSlot` admite `children`): icono y texto coinciden en X con los de las plantillas (medido en móvil y escritorio, claro y oscuro).
 
 ### Categorías (hechas: gestión en Ajustes + agrupación en Estadísticas)
 

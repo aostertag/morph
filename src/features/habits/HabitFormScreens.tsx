@@ -55,7 +55,10 @@ function TemplatePicker({ returnParam }: { returnParam: string }) {
   return (
     <div className="max-w-list">
       <ScreenHeader title="Nuevo hábito" />
-      <h2 className="label-caps mb-2">Plantillas</h2>
+      <ul className="border-t border-border">
+        <BlankRow to={`/habitos/nuevo?plantilla=blanco${suffix}`} />
+      </ul>
+      <h2 className="label-caps mt-10 mb-2">Plantillas</h2>
       <ul className="border-t border-border">
         {HABIT_TEMPLATES.map((template) => (
           <TemplateRow
@@ -64,7 +67,6 @@ function TemplatePicker({ returnParam }: { returnParam: string }) {
             to={`/habitos/nuevo?plantilla=${template.id}${suffix}`}
           />
         ))}
-        <BlankRow to={`/habitos/nuevo?plantilla=blanco${suffix}`} />
       </ul>
     </div>
   );

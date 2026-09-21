@@ -99,6 +99,13 @@ export function Onboarding() {
           <>
             <p>Elige una plantilla o crea el tuyo. Podrás cambiarlo cuando quieras.</p>
             <ul className="mt-5 border-t border-border">
+              <BlankRow
+                to="/habitos/nuevo?plantilla=blanco&volver=hoy"
+                onClick={() => void finish()}
+              />
+            </ul>
+            <h2 className="label-caps mt-8 mb-2">Plantillas</h2>
+            <ul className="border-t border-border">
               {SUGGESTED.map((template) => (
                 <TemplateRow
                   key={template.id}
@@ -107,10 +114,6 @@ export function Onboarding() {
                   onClick={() => void finish()}
                 />
               ))}
-              <BlankRow
-                to="/habitos/nuevo?plantilla=blanco&volver=hoy"
-                onClick={() => void finish()}
-              />
             </ul>
             <p className="mt-5 text-text-muted">
               ¿Vienes de otro dispositivo? Restaura tu copia desde{' '}
