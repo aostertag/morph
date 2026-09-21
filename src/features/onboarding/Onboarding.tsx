@@ -83,11 +83,15 @@ export function Onboarding() {
         </Button>
       </div>
 
+      {step === 0 ? (
+        <p className="mt-6 text-md font-medium text-text-muted">Bienvenido a Morph</p>
+      ) : null}
+
       <h1
         id="onboarding-titulo"
         ref={heading}
         tabIndex={-1}
-        className="mt-6 text-3xl font-semibold outline-none"
+        className={`${step === 0 ? 'mt-1' : 'mt-6'} text-3xl font-semibold outline-none`}
       >
         {current ? current.title : 'Empieza con un hábito.'}
       </h1>
