@@ -13,5 +13,5 @@ export function routeTitle(pathname: string): string {
   else if (path === '/revision') section = 'Revisión semanal';
   else if (path === '/ajustes') section = 'Ajustes';
   else section = 'Página no encontrada';
-  return section === APP_NAME ? APP_NAME : `${section} · ${APP_NAME}`;
+  return section === APP_NAME ? APP_NAME : `${section} / ${APP_NAME}`;
 }

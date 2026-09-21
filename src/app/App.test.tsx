@@ -26,13 +26,13 @@ describe('app', () => {
     const user = userEvent.setup();
     render(<App />);
     await screen.findByText('Todavía no hay hábitos.');
-    expect(document.title).toBe('Hoy · Morph');
+    expect(document.title).toBe('Hoy / Morph');
 
     const [nav] = screen.getAllByRole('navigation', { name: 'Principal' });
     if (!nav) throw new Error('falta la navegación');
     await user.click(within(nav).getByRole('link', { name: 'Ajustes' }));
     await screen.findByRole('heading', { name: 'Ajustes', level: 1 });
-    expect(document.title).toBe('Ajustes · Morph');
+    expect(document.title).toBe('Ajustes / Morph');
     expect(document.getElementById('contenido')).toHaveFocus();
   });
 });

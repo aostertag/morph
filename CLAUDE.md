@@ -17,7 +17,7 @@ La especificación completa está en `SPEC.md`; la sección 9 (diseño) prevalec
 
 ### Marca: Morph
 
-La app se llama **Morph** (título «Hoy · Morph» vía `APP_NAME` en `app/routeTitle.ts`, manifest, `apple-mobile-web-app-title`, README, SPEC).
+La app se llama **Morph** (título «Hoy / Morph» vía `APP_NAME` en `app/routeTitle.ts`, manifest, `apple-mobile-web-app-title`, README, SPEC).
 
 - **Icono:** el original es `brand/morph-icon-source.png` (1024×1024, no se modifica). `node scripts/generate-icons.mjs` lo lee (PNG sin dependencias), lo reduce por promedio de área y escribe `public/pwa-192.png`, `pwa-512.png`, `pwa-maskable-512.png` (el mismo archivo que el normal), `apple-touch-icon.png` (180) y `favicon.svg` (SVG que incrusta un PNG de 64 px, **recortado alrededor de la «m» para que ocupe el 70 % del lado**: `FAVICON_FILL` en el script). Con la fuente entera (proporción de los iconos grandes) la «m» era un manchón a 16 px; al 80 % quedaba pesada y casi tocando los bordes. El 70 % se eligió mirando la pestaña real de Chrome (captura de pantalla con `CopyFromScreen`, tema claro y oscuro), no un ampliado sintético. El script falla si la marca sale del círculo seguro del 80 % (hoy queda a 31,5 % del lado del centro, límite 40 %). Si cambia el icono, vuelve a ejecutarlo y revisa los PNG.
 - **Excepción consciente:** el icono es un activo de marca externo a los tokens. Hoy no lleva nada prohibido por la sección 9 del SPEC (azul plano ≈ `accent`, sin gradientes); si uno futuro los llevara, la excepción vale solo para el icono, nunca para la interfaz.
