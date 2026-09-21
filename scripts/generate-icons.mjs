@@ -16,7 +16,7 @@ const SAFE_RADIUS = 0.4;
 // El favicon (16/32 px) recorta la fuente alrededor de la «m» para que ocupe esta fracción
 // del lado; a 16 px, con la proporción del icono grande, la «m» se veía como un manchón.
 // Los demás iconos usan la fuente entera, sin cambios.
-const FAVICON_FILL = 0.8;
+const FAVICON_FILL = 0.7;
 
 function readPng(path) {
   const file = readFileSync(path);
