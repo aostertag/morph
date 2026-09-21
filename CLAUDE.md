@@ -1,4 +1,4 @@
-# CLAUDE.md — Habit Tracker
+# CLAUDE.md — Morph
 
 Memoria del proyecto entre sesiones. Léelo entero antes de trabajar y actualízalo al cerrar cada fase.
 La especificación completa está en `SPEC.md`; la sección 9 (diseño) prevalece sobre cualquier guía, incluidas las skills.
@@ -14,6 +14,15 @@ La especificación completa está en `SPEC.md`; la sección 9 (diseño) prevalec
 | 5 | Revisión semanal e hitos | **Hecha** |
 | 6 | Ajustes, backup, pausas, recordatorios, PWA, onboarding, atajos, a11y | **Hecha** |
 | 7 | Pulido final | **Hecha** |
+
+### Marca: Morph
+
+La app se llama **Morph** (título «Hoy · Morph» vía `APP_NAME` en `app/routeTitle.ts`, manifest, `apple-mobile-web-app-title`, README, SPEC).
+
+- **Icono:** el original es `brand/morph-icon-source.png` (1024×1024, no se modifica). `node scripts/generate-icons.mjs` lo lee (PNG sin dependencias), lo reduce por promedio de área y escribe `public/pwa-192.png`, `pwa-512.png`, `pwa-maskable-512.png` (el mismo archivo que el normal), `apple-touch-icon.png` (180) y `favicon.svg` (SVG que incrusta un PNG de 64 px). El script falla si la marca sale del círculo seguro del 80 % (hoy queda a 31,5 % del lado del centro, límite 40 %). Si cambia el icono, vuelve a ejecutarlo y revisa los PNG.
+- **Excepción consciente:** el icono es un activo de marca externo a los tokens. Hoy no lleva nada prohibido por la sección 9 del SPEC (azul plano ≈ `accent`, sin gradientes); si uno futuro los llevara, la excepción vale solo para el icono, nunca para la interfaz.
+- **`theme_color` y `background_color`** del manifest siguen en `#f6f5f1` (papel): es el fondo real de la app y el de la pantalla de arranque; las variantes claro/oscuro van en las metas de `index.html`.
+- **Identificadores heredados, NO renombrar:** `DB_NAME = 'habit-tracker'` (`db/schema.ts`), `BACKUP_FORMAT = 'habit-tracker-backup'` (`domain/backup.ts`) y las claves `tracker:*` de `localStorage`. Cambiarlos dejaría sin datos a las instalaciones existentes o invalidaría las copias ya exportadas. Los archivos exportados siguen llamándose `habitos-*`.
 
 ### Fase 7 (pulido final): terminada
 
@@ -349,6 +358,13 @@ Tras cualquiera: `npm run check`. Si tocas una pantalla, mírala también con `n
 - `src/test/setup.ts` también define `Document.prototype.focus`: `user-event` pasa `document` como `relatedTarget` si el elemento con foco se desmonta antes de pulsar otro botón, y Sonner intenta devolverle el foco al desmontarse.
 - Los tests de `db/` que necesitan el resto del dominio (p. ej. `pausesEffect.test.ts`) corren en Node con `fake-indexeddb`; los de UI que comprueban atajos montan `<App />` entera.
 - Para escribir archivos con contenido complejo usa la herramienta Write, no heredocs en bash: en este entorno Windows los heredocs largos fallan.
+
+## Pendiente (para su propia sesión)
+
+- **`StatsScreen.test.tsx` › «no señala el mejor día de la semana sin muestra en todos» falla los lunes.** Causa exacta: el test usa el reloj real (`todayLocal()` de `src/test/render.tsx` = `toLocalDay(new Date())`, y la pantalla, `useToday()`), sin fijar la fecha, y pide `rango=semana` esperando el texto «Hacen falta al menos dos semanas…». `rango=semana` es la semana natural en curso recortada a hoy y hoy nunca cuenta, así que un lunes no hay ningún día evaluable: `WeekdaySection` (`hasData === false`) enseña «Sin días evaluables en este período.» y el texto esperado no existe. De martes a domingo pasa. Verificado con el DOM de la ejecución fallida; falla igual sin cambios de código (comprobado con `git stash`).
+  - **No viola la regla de dominio:** `weekdayBreakdown` (`domain/stats.ts`) es pura y recibe rango y longitud como argumentos. La dependencia del reloj está solo en el test (y en `useToday`, que es el borde permitido).
+  - **Arreglo previsto:** fijar el día en el test (`vi.useFakeTimers` + `vi.setSystemTime`, como `RemindersRunner.test.tsx`) o usar un rango que no dependa del día (p. ej. `rango=mes` con historial de ≥ 10 días, o uno personalizado de < 14 días).
+- **Mismo riesgo en otros 9 archivos de test de UI** (varios tests cada uno): usan `todayLocal()` con el reloj real y sin fecha fija: `habit-detail/HabitDetailScreen`, `habits/HabitForm`, `habits/HabitsScreen`, `reminders/RemindersRunner`, `review/ReviewScreen`, `settings/SettingsScreen`, `shortcuts/shortcuts`, `stats/ByCategorySection` y `today/TodayScreen` (todos `*.test.tsx`). Hoy pasan, pero **solo por casualidad de calendario**: no se ha comprobado que pasen cualquier día de la semana ni en cambios de mes o de año, y cada día que toca un caso límite (lunes, fin de mes, 1 de enero…) puede romper el CI sin que haya cambiado nada. Revisarlos en su propia sesión, por ejemplo con una fecha fija común en `src/test/setup.ts` o en `render.tsx`, y ejecutar la suite con varias fechas simuladas antes de darlos por buenos.
 
 ## Limitaciones conocidas
 

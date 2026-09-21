@@ -17,8 +17,8 @@ export default defineConfig({
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         id: '/',
-        name: 'Hábitos',
-        short_name: 'Hábitos',
+        name: 'Morph',
+        short_name: 'Morph',
         description: 'Registro de hábitos local, sin conexión, con estadísticas de tu progreso.',
         lang: 'es',
         start_url: '/',

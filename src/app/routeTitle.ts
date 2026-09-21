@@ -1,4 +1,4 @@
-export const APP_NAME = 'Hábitos';
+export const APP_NAME = 'Morph';
 
 /** Título de la pestaña y de la página según la ruta. */
 export function routeTitle(pathname: string): string {

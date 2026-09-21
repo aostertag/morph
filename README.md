@@ -1,4 +1,4 @@
-# Hábitos
+# Morph
 
 Aplicación web para seguir hábitos: registro diario, rachas, heatmap, estadísticas, revisión semanal y ajustes. Interfaz en español, instalable como PWA y con funcionamiento sin conexión.
 

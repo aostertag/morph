@@ -1,4 +1,4 @@
-# SPEC: Habit Tracker
+# SPEC: Morph
 
 ## 0. Cómo trabajar este proyecto
 
@@ -134,6 +134,8 @@ Restricciones que no se negocian:
 - No convertir todo en tarjetas idénticas con la misma sombra y radio. La jerarquía se construye con tipografía, espaciado y alineación; los contenedores solo cuando agrupan algo de verdad.
 - Nada de mensajes motivacionales empalagosos. Tono sobrio, directo y respetuoso.
 - Animaciones mínimas y funcionales (confirmar una acción, transición entre vistas), entre 150 y 200 ms, nunca decorativas. Respetar `prefers-reduced-motion`.
+
+Marca: la app se llama **Morph**. Su icono (`brand/morph-icon-source.png`: una «m» blanca sobre azul plano, idéntico al acento salvo 1/255) es un activo de marca externo a la interfaz y no sale de los tokens; no infringe ninguna de estas restricciones (sin gradientes, brillos ni sombras). Si un icono futuro los llevara, sería una excepción consciente solo para el icono, nunca para la interfaz.
 
 Lo que sí:
 - Estética de herramienta bien diseñada, como un instrumento de medición o un cuaderno de registro: precisa, calmada, con alta densidad de información bien ordenada.
