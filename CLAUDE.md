@@ -23,6 +23,7 @@ La app se llama **Morph** (título «Hoy · Morph» vía `APP_NAME` en `app/rout
 - **Excepción consciente:** el icono es un activo de marca externo a los tokens. Hoy no lleva nada prohibido por la sección 9 del SPEC (azul plano ≈ `accent`, sin gradientes); si uno futuro los llevara, la excepción vale solo para el icono, nunca para la interfaz.
 - **`theme_color` y `background_color`** del manifest siguen en `#f6f5f1` (papel): es el fondo real de la app y el de la pantalla de arranque; las variantes claro/oscuro van en las metas de `index.html`.
 - **Identificadores heredados, NO renombrar:** `DB_NAME = 'habit-tracker'` (`db/schema.ts`), `BACKUP_FORMAT = 'habit-tracker-backup'` (`domain/backup.ts`) y las claves `tracker:*` de `localStorage`. Cambiarlos dejaría sin datos a las instalaciones existentes o invalidaría las copias ya exportadas. Los archivos exportados siguen llamándose `habitos-*`.
+- **Repositorio de GitHub:** `aostertag/morph` (antes `habit-tracker`, renombrado el 2026-09-21; `origin` ya apunta a la URL nueva). No hay workflows ni referencias por texto al nombre viejo. El proyecto de Cloudflare Pages (`habit-tracker-c6c.pages.dev`) conserva su nombre y dominio; su dashboard sigue mostrando «habit-tracker» como nombre del repo, y el cambio de dominio queda para otra sesión.
 
 ### Fase 7 (pulido final): terminada
 
