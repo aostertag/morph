@@ -1,5 +1,5 @@
 import { type FormEvent, useState } from 'react';
-import { addDays, isLocalDay, type LocalDay, type Weekday } from '@/domain/day';
+import { isLocalDay, type LocalDay, type Weekday } from '@/domain/day';
 import { type HabitInput, startDateRange, validateHabitInput } from '@/domain/habit';
 import { buildDayView } from '@/domain/today';
 import type { Category, HabitKind, TimeOfDay } from '@/domain/types';
@@ -23,12 +23,23 @@ function startDescription(
   firstEntry: LocalDay | null,
   min: LocalDay,
   max: LocalDay,
+  start: LocalDay,
   today: LocalDay,
 ): string | undefined {
+  // Un inicio futuro se explica solo: el hábito no aparece hasta esa fecha.
+  const planned =
+    start > today
+      ? `No aparecerá en Hoy hasta el ${formatDate(start, today)}, y hasta entonces no cuenta como fallado.`
+      : null;
+  const join = (...parts: (string | null | undefined)[]) =>
+    parts.filter(Boolean).join(' ') || undefined;
+
   if (mode === 'create') {
-    return retroLimitDays > 0
-      ? `Puedes empezar hasta ${retroLimitDays} ${retroLimitDays === 1 ? 'día' : 'días'} atrás para registrar días anteriores.`
-      : undefined;
+    const back =
+      retroLimitDays > 0
+        ? `Puedes empezar hasta ${retroLimitDays} ${retroLimitDays === 1 ? 'día' : 'días'} atrás para registrar días anteriores, o hasta el ${formatDate(max, today)} para planificarlo.`
+        : `Puedes empezar hasta el ${formatDate(max, today)} para planificarlo.`;
+    return join(back, planned);
   }
   if (min === max) {
     return firstEntry
@@ -36,9 +47,16 @@ function startDescription(
       : 'La fecha no se puede mover.';
   }
   const limit = `Puedes adelantarla hasta el ${formatDate(min, today)}`;
-  return firstEntry
-    ? `${limit}. No puede pasar de tu primer registro (${formatDate(firstEntry, today)}).`
-    : `${limit}, según el límite para registrar días anteriores.`;
+  if (firstEntry) {
+    return join(
+      `${limit}. No puede pasar de tu primer registro (${formatDate(firstEntry, today)}).`,
+      planned,
+    );
+  }
+  return join(
+    `${limit}, según el límite para registrar días anteriores, o retrasarla hasta el ${formatDate(max, today)}.`,
+    planned,
+  );
 }
 
 interface HabitFormProps {
@@ -105,10 +123,7 @@ export function HabitForm({
     }
   };
 
-  const startRange =
-    mode === 'create'
-      ? { min: addDays(today, -retroLimitDays), max: today }
-      : startDateRange(today, retroLimitDays, initial.createdOn, firstEntry);
+  const startRange = startDateRange(today, retroLimitDays, initial.createdOn, firstEntry);
   const preview = buildDayView(
     { ...draft, id: 'vista-previa', order: 0, archivedOn: null, createdOn: today },
     [],
@@ -263,6 +278,7 @@ export function HabitForm({
             firstEntry,
             startRange.min,
             startRange.max,
+            draft.createdOn,
             today,
           )}
         >

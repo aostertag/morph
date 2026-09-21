@@ -70,6 +70,15 @@ describe('copia de seguridad: lo que se acepta', () => {
     }
   });
 
+  it('acepta un hábito que aún no ha empezado y lo devuelve idéntico', () => {
+    const data = dataset();
+    const planned = habit({ id: 'h4', name: 'Correr', order: 3, createdOn: d('2027-06-01') });
+    const withFuture: DataSet = { ...data, habits: [...data.habits, planned] };
+    const result = parseBackup(serializeBackup(backup(withFuture)));
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.backup.data.habits).toContainEqual(planned);
+  });
+
   it('acepta una base vacía', () => {
     const empty: DataSet = {
       categories: [],

@@ -1,6 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { ChevronRight } from 'lucide-react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { firstEntryDate } from '@/db/repos/entries';
 import {
   createHabit,
@@ -20,7 +19,7 @@ import { ButtonLink } from '@/ui/Button';
 import { EmptyState } from '@/ui/EmptyState';
 import { ScreenHeader } from '@/ui/ScreenHeader';
 import { HabitForm } from './HabitForm';
-import { TemplateRow } from './TemplateRow';
+import { BlankRow, TemplateRow } from './TemplateRow';
 
 /** Primer color de la paleta que ningún hábito activo usa todavía. */
 function freeColor(habits: readonly Habit[]) {
@@ -56,21 +55,7 @@ function TemplatePicker({ returnParam }: { returnParam: string }) {
   return (
     <div className="max-w-list">
       <ScreenHeader title="Nuevo hábito" />
-      <ul className="border-t border-border">
-        <li className="border-b border-border">
-          <Link
-            to={`/habitos/nuevo?plantilla=blanco${suffix}`}
-            className="flex min-h-14 items-center gap-3 py-2 hover:bg-sunken"
-          >
-            <span className="flex-1">
-              <span className="block font-medium">Empezar en blanco</span>
-              <span className="block text-sm text-text-muted">Define tú cada detalle.</span>
-            </span>
-            <ChevronRight size={18} aria-hidden="true" className="text-text-faint" />
-          </Link>
-        </li>
-      </ul>
-      <h2 className="label-caps mt-10 mb-2">Plantillas</h2>
+      <h2 className="label-caps mb-2">Plantillas</h2>
       <ul className="border-t border-border">
         {HABIT_TEMPLATES.map((template) => (
           <TemplateRow
@@ -79,6 +64,7 @@ function TemplatePicker({ returnParam }: { returnParam: string }) {
             to={`/habitos/nuevo?plantilla=${template.id}${suffix}`}
           />
         ))}
+        <BlankRow to={`/habitos/nuevo?plantilla=blanco${suffix}`} />
       </ul>
     </div>
   );
@@ -102,7 +88,7 @@ export function NewHabitScreen() {
 
   const submit = async (input: HabitInput) => {
     try {
-      const habit = await createHabit(input);
+      const habit = await createHabit(input, today);
       notify(`Hábito creado: ${habit.name}`, {
         undo: async () => {
           await deleteHabit(habit.id);
@@ -157,7 +143,7 @@ export function EditHabitScreen() {
 
   const submit = async (input: HabitInput) => {
     try {
-      await updateHabit(habit.id, input);
+      await updateHabit(habit.id, input, today);
       notify('Cambios guardados', { undo: () => restoreHabitRecord(habit) });
       navigate('/habitos');
     } catch (error) {

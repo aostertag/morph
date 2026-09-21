@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { HabitColor } from '@/domain/types';
 import { cx } from '@/lib/cx';
 import { HABIT_ICONS } from './icons';
@@ -48,10 +49,17 @@ export function HabitIcon({
 }
 
 /** Columna del icono entre la barra de color y el texto; se reserva aunque no haya icono. */
-export function HabitIconSlot({ name }: { name: string | null }) {
+export function HabitIconSlot({
+  name = null,
+  children,
+}: {
+  name?: string | null;
+  /** Otro icono en la misma columna (p. ej. el «+» de crear uno propio). */
+  children?: ReactNode;
+}) {
   return (
     <span className="flex w-4 shrink-0 items-center self-center">
-      <HabitIcon name={name} />
+      {children ?? <HabitIcon name={name} />}
     </span>
   );
 }

@@ -2,9 +2,9 @@ import { useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { updateSettings } from '@/db/repos/settings';
 import { HABIT_TEMPLATES } from '@/domain/templates';
-import { TemplateRow } from '@/features/habits/TemplateRow';
+import { BlankRow, TemplateRow } from '@/features/habits/TemplateRow';
 import { notifyError } from '@/lib/toast';
-import { Button, ButtonLink } from '@/ui/Button';
+import { Button } from '@/ui/Button';
 
 /*
  * Introducción de tres pasos, la primera vez y solo si aún no hay hábitos. Es
@@ -97,7 +97,7 @@ export function Onboarding() {
           current.body
         ) : (
           <>
-            <p>Elige una plantilla o define el tuyo. Podrás cambiarlo cuando quieras.</p>
+            <p>Elige una plantilla o crea el tuyo. Podrás cambiarlo cuando quieras.</p>
             <ul className="mt-5 border-t border-border">
               {SUGGESTED.map((template) => (
                 <TemplateRow
@@ -107,6 +107,10 @@ export function Onboarding() {
                   onClick={() => void finish()}
                 />
               ))}
+              <BlankRow
+                to="/habitos/nuevo?plantilla=blanco&volver=hoy"
+                onClick={() => void finish()}
+              />
             </ul>
             <p className="mt-5 text-text-muted">
               ¿Vienes de otro dispositivo? Restaura tu copia desde{' '}
@@ -125,15 +129,7 @@ export function Onboarding() {
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-3">
         {step > 0 ? <Button onClick={() => goTo(step - 1)}>Atrás</Button> : <span />}
-        {isLast ? (
-          <ButtonLink
-            to="/habitos/nuevo?plantilla=blanco&volver=hoy"
-            variant="primary"
-            onClick={() => void finish()}
-          >
-            Empezar en blanco
-          </ButtonLink>
-        ) : (
+        {isLast ? null : (
           <Button variant="primary" onClick={() => goTo(step + 1)}>
             Siguiente
           </Button>

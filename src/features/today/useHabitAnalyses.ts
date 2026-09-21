@@ -1,7 +1,8 @@
 import type { LocalDay } from '@/domain/day';
 import type { EvaluationContext } from '@/domain/evaluate';
+import { hasNotStarted } from '@/domain/habit';
 import type { HabitAnalysis } from '@/domain/today';
-import type { Entry, Pause, Settings } from '@/domain/types';
+import type { Entry, Habit, Pause, Settings } from '@/domain/types';
 import { useEntriesByHabit, useHabits, usePauses, useSettings } from '@/hooks/useData';
 import { cachedAnalysis, contextKey } from '@/lib/analysisCache';
 
@@ -15,13 +16,15 @@ export interface HabitAnalyses {
   readonly analyses: readonly HabitAnalysis[];
   /** Hay al menos un hábito (activo o archivado). */
   readonly hasHabits: boolean;
+  /** Hábitos que aún no han empezado, por fecha de inicio: no tienen análisis ni salen en Hoy. */
+  readonly upcoming: readonly Habit[];
 }
 
 export function useHabitAnalyses(today: LocalDay): HabitAnalyses | undefined {
   const habits = useHabits();
   const pauses = usePauses();
   const settings = useSettings();
-  const relevant = (habits ?? []).filter((h) => h.createdOn <= today);
+  const relevant = (habits ?? []).filter((h) => !hasNotStarted(h, today));
   const entries = useEntriesByHabit(relevant.map((h) => h.id));
 
   if (!habits || !pauses || !settings || !entries) return undefined;
@@ -34,5 +37,8 @@ export function useHabitAnalyses(today: LocalDay): HabitAnalyses | undefined {
     ctx,
     analyses: relevant.map((h) => cachedAnalysis(h, entries.get(h.id) ?? EMPTY, ctx, key)),
     hasHabits: habits.length > 0,
+    upcoming: habits
+      .filter((h) => hasNotStarted(h, today))
+      .sort((a, b) => a.createdOn.localeCompare(b.createdOn)),
   };
 }

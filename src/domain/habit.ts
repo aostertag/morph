@@ -118,11 +118,20 @@ export function unarchiveGap(
   return start <= end ? { start, end } : null;
 }
 
+/** Cuánto se puede adelantar el inicio de un hábito para planificarlo (un año). */
+export const FUTURE_LIMIT_DAYS = 365;
+
+/** Último día que se puede elegir como inicio de un hábito nuevo o movido. */
+export function latestStart(today: LocalDay): LocalDay {
+  return addDays(today, FUTURE_LIMIT_DAYS);
+}
+
 /**
- * Fechas de inicio que se pueden elegir al editar un hábito. Como al crear, hasta
- * `retroLimitDays` días atrás (nunca más lejos que el inicio actual, para poder
- * deshacer un cambio), y nunca después del primer registro: quedarían días fallados
- * que ya no se pueden registrar.
+ * Fechas de inicio que se pueden elegir, al crear (`currentStart` = hoy) y al editar.
+ * Hacia atrás, hasta `retroLimitDays` días (nunca más lejos que el inicio actual, para
+ * poder deshacer un cambio). Hacia delante, hasta `FUTURE_LIMIT_DAYS` (sin perder el
+ * inicio actual si fuera más lejano) y nunca después del primer registro: quedarían
+ * días fallados que ya no se pueden registrar.
  */
 export function startDateRange(
   today: LocalDay,
@@ -132,6 +141,11 @@ export function startDateRange(
 ): { min: LocalDay; max: LocalDay } {
   return {
     min: minDay(addDays(today, -retroLimitDays), currentStart),
-    max: firstEntry ?? maxDay(today, currentStart),
+    max: firstEntry ?? maxDay(latestStart(today), currentStart),
   };
+}
+
+/** ¿Empieza el hábito en una fecha que aún no ha llegado? */
+export function hasNotStarted(habit: Pick<Habit, 'createdOn'>, today: LocalDay): boolean {
+  return habit.createdOn > today;
 }

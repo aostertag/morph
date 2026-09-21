@@ -73,6 +73,15 @@ describe('generateSampleData', () => {
     );
   });
 
+  it('incluye un hábito planificado que aún no ha empezado, sin registros', () => {
+    const planned = data.habits.filter((h) => h.createdOn > today);
+    expect(planned).toHaveLength(1);
+    expect(data.entries.some((e) => e.habitId === planned[0]?.id)).toBe(false);
+    // No deja rastro en su historia.
+    const history = histories.find((h) => h.habit.id === planned[0]?.id);
+    expect(history?.days).toEqual([]);
+  });
+
   it('los registros respetan vida, frecuencia y pausas, y son únicos por día', () => {
     const habits = new Map(data.habits.map((h) => [h.id, h]));
     const keys = new Set<string>();

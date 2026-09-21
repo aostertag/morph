@@ -1,7 +1,9 @@
-import type { LocalDay } from '@/domain/day';
+import { type LocalDay, maxDay, toLocalDay } from '@/domain/day';
 import {
   archiveDayFor,
   type HabitInput,
+  hasNotStarted,
+  latestStart,
   normalizeHabitInput,
   unarchiveGap,
   validateHabitInput,
@@ -26,8 +28,18 @@ export function getHabit(id: string): Promise<Habit | undefined> {
   return withStorage(() => db.habits.get(id));
 }
 
-export async function createHabit(input: HabitInput): Promise<Habit> {
+function assertStartWithinLimit(createdOn: LocalDay, today: LocalDay): void {
+  if (createdOn > latestStart(today)) {
+    throw new ValidationError('El hábito no puede empezar dentro de más de un año.');
+  }
+}
+
+export async function createHabit(
+  input: HabitInput,
+  today: LocalDay = toLocalDay(new Date()),
+): Promise<Habit> {
   const data = assertValid(input);
+  assertStartWithinLimit(data.createdOn, today);
   return withStorage(() =>
     db.transaction('rw', db.habits, async () => {
       const last = await db.habits.orderBy('order').last();
@@ -43,13 +55,18 @@ export async function createHabit(input: HabitInput): Promise<Habit> {
   );
 }
 
-export async function updateHabit(id: string, input: HabitInput): Promise<Habit> {
+export async function updateHabit(
+  id: string,
+  input: HabitInput,
+  today: LocalDay = toLocalDay(new Date()),
+): Promise<Habit> {
   const data = assertValid(input);
   return withStorage(() =>
     db.transaction('rw', db.habits, db.entries, async () => {
       const current = await db.habits.get(id);
       if (!current) throw new ValidationError('El hábito ya no existe.');
       if (data.createdOn !== current.createdOn) {
+        assertStartWithinLimit(data.createdOn, today);
         // Un inicio posterior al primer registro dejaría registros fuera del hábito.
         const first = await db.entries
           .where('[habitId+date]')
@@ -90,9 +107,17 @@ export function archiveHabit(id: string, today: LocalDay): Promise<Habit> {
   return withStorage(() =>
     db.transaction('rw', db.habits, db.entries, async () => {
       const previous = await requireHabit(id);
+      if (hasNotStarted(previous, today)) {
+        throw new ValidationError(
+          'Un hábito que aún no ha empezado no se archiva: edítalo o elimínalo.',
+        );
+      }
       const hasEntryToday =
         (await db.entries.where('[habitId+date]').equals([id, today]).count()) > 0;
-      await db.habits.update(id, { archivedOn: archiveDayFor(today, hasEntryToday) });
+      // Nunca antes de su inicio: un hábito creado hoy y sin registro archivaría «ayer», y la
+      // copia de seguridad rechaza un archivado anterior a la creación.
+      const archivedOn = maxDay(archiveDayFor(today, hasEntryToday), previous.createdOn);
+      await db.habits.update(id, { archivedOn });
       return previous;
     }),
   );

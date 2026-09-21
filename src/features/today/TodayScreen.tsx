@@ -6,7 +6,7 @@ import { Onboarding } from '@/features/onboarding/Onboarding';
 import { ReviewPrompt } from '@/features/review/ReviewPrompt';
 import { useDayLog, useReviews } from '@/hooks/useData';
 import { useToday } from '@/hooks/useToday';
-import { formatRelativeDay, TIME_OF_DAY_LABEL } from '@/lib/format';
+import { formatDate, formatRelativeDay, TIME_OF_DAY_LABEL } from '@/lib/format';
 import { ButtonLink } from '@/ui/Button';
 import { EmptyState } from '@/ui/EmptyState';
 import { DayHeader } from './DayHeader';
@@ -37,7 +37,7 @@ export function TodayScreen() {
 
   if (!data) return null;
 
-  const { analyses, settings, hasHabits } = data;
+  const { analyses, settings, hasHabits, upcoming } = data;
   if (!settings.onboardingDone && !hasHabits) return <Onboarding />;
   const views = analyses.map((a) => viewForDay(a, day)).filter((v) => v.scheduled);
   const progress = dayProgress(views);
@@ -79,6 +79,14 @@ export function TodayScreen() {
                   Crear hábito
                 </ButtonLink>
               }
+            />
+          </div>
+        ) : analyses.length === 0 && upcoming.length > 0 ? (
+          <div className="mt-8">
+            <EmptyState
+              title="Tus hábitos empiezan más adelante."
+              text={`${upcoming.length === 1 ? 'Empieza' : 'El primero empieza'} el ${formatDate(upcoming[0]?.createdOn ?? day, today)}. Hasta entonces no aparecen aquí ni cuentan como fallados.`}
+              actions={<ButtonLink to="/habitos">Ver hábitos</ButtonLink>}
             />
           </div>
         ) : views.length === 0 ? (

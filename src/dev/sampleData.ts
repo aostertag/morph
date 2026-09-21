@@ -423,6 +423,23 @@ export function generateSampleData(options: SampleOptions): SampleData {
     archivedOn: p.archivedDaysAgo === null ? null : addDays(today, -p.archivedDaysAgo),
     order,
   }));
+  // Un hábito planificado que aún no ha empezado. Va fuera de PROFILES a propósito: no
+  // consume números aleatorios, así que el resto de los datos sigue siendo el mismo.
+  habits.push({
+    ...base,
+    id: 'demo-h-italiano',
+    name: 'Estudiar italiano',
+    ...kindFields('time', 20),
+    unit: 'min',
+    color: 'violeta',
+    icon: 'book-open',
+    categoryId: 'demo-c-mente',
+    frequency: { type: 'perWeek', times: 3 },
+    timeOfDay: 'evening',
+    createdOn: addDays(today, 5),
+    archivedOn: null,
+    order: habits.length,
+  });
 
   const entries: Entry[] = [];
   const dayLogs: DayLog[] = [];

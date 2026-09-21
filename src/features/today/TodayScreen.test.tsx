@@ -22,6 +22,27 @@ describe('pantalla Hoy', () => {
     );
   });
 
+  it('un hábito que aún no ha empezado no sale ni cuenta en el progreso', async () => {
+    await createHabit(habitInput({ name: 'Leer' }));
+    await createHabit(habitInput({ name: 'Correr', createdOn: addDays(todayLocal(), 3) }));
+    renderRoute(<TodayScreen />);
+
+    expect(await screen.findByRole('checkbox', { name: 'Leer' })).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: 'Correr' })).not.toBeInTheDocument();
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuetext', '0 de 1');
+  });
+
+  it('con solo hábitos futuros lo dice en vez de «nada programado»', async () => {
+    await updateSettings({ onboardingDone: true });
+    await createHabit(habitInput({ name: 'Correr', createdOn: addDays(todayLocal(), 3) }));
+    renderRoute(<TodayScreen />);
+
+    expect(await screen.findByText('Tus hábitos empiezan más adelante.')).toBeInTheDocument();
+    expect(screen.queryByText(/Nada programado/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Todavía no hay hábitos.')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ver hábitos' })).toHaveAttribute('href', '/habitos');
+  });
+
   it('marca un hábito con un toque, actualiza el progreso y permite deshacer', async () => {
     const habit = await createHabit(habitInput({ name: 'Leer' }));
     await createHabit(habitInput({ name: 'Correr' }));

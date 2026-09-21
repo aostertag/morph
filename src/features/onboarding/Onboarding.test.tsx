@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { createHabit } from '@/db/repos/habits';
 import { getSettings, updateSettings } from '@/db/repos/settings';
@@ -32,10 +32,12 @@ describe('onboarding', () => {
       'href',
       '/habitos/nuevo?plantilla=agua&volver=hoy',
     );
-    expect(screen.getByRole('link', { name: 'Empezar en blanco' })).toHaveAttribute(
-      'href',
-      '/habitos/nuevo?plantilla=blanco&volver=hoy',
-    );
+    // «Empezar en blanco» es una fila más de la lista, después de las plantillas.
+    const rows = within(screen.getByRole('list')).getAllByRole('link');
+    const blank = screen.getByRole('link', { name: /Empezar en blanco/ });
+    expect(blank).toHaveAttribute('href', '/habitos/nuevo?plantilla=blanco&volver=hoy');
+    expect(rows.at(-1)).toBe(blank);
+    expect(rows).toHaveLength(5);
 
     await user.click(screen.getByRole('button', { name: 'Atrás' }));
     expect(

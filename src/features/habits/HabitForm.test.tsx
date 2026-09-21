@@ -9,8 +9,41 @@ import { EditHabitScreen, NewHabitScreen } from './HabitFormScreens';
 describe('crear hábito', () => {
   it('ofrece plantillas y la opción en blanco', async () => {
     renderRoute(<NewHabitScreen />, { path: '/habitos/nuevo', url: '/habitos/nuevo' });
-    expect(await screen.findByRole('link', { name: /Empezar en blanco/ })).toBeInTheDocument();
+    const blank = await screen.findByRole('link', { name: /Empezar en blanco/ });
     expect(screen.getByRole('link', { name: /Beber agua/ })).toBeInTheDocument();
+    // Una fila más de la lista de plantillas, la última, con la misma maqueta.
+    const list = blank.closest('ul');
+    const rows = list?.querySelectorAll(':scope > li');
+    expect(rows?.item(rows.length - 1)).toBe(blank.closest('li'));
+    const template = screen.getByRole('link', { name: /Beber agua/ });
+    expect(blank.className).toBe(template.className);
+    expect(blank.children.length).toBe(template.children.length);
+    expect(screen.queryByRole('heading', { name: 'Empezar en blanco' })).not.toBeInTheDocument();
+  });
+
+  it('permite empezar en el futuro, hasta un año, y lo explica', async () => {
+    const today = todayLocal();
+    const { user } = renderRoute(<NewHabitScreen />, {
+      path: '/habitos/nuevo',
+      url: '/habitos/nuevo?plantilla=blanco',
+    });
+    const start = await screen.findByLabelText('Empieza el');
+    expect(start).toHaveAttribute('max', addDays(today, 365));
+    const wanted = addDays(today, 4);
+    fireEvent.change(start, { target: { value: wanted } });
+    expect(start).toHaveValue(wanted);
+    expect(start).toHaveAccessibleDescription(
+      /No aparecerá en Hoy hasta el .*no cuenta como fallado/,
+    );
+
+    // Más allá del año, el cambio se ignora.
+    fireEvent.change(start, { target: { value: addDays(today, 366) } });
+    expect(start).toHaveValue(wanted);
+
+    await user.type(screen.getByRole('textbox', { name: 'Nombre' }), 'Correr');
+    await user.click(screen.getByRole('button', { name: 'Crear hábito' }));
+    await screen.findByText('Otra pantalla');
+    expect((await listHabits())[0]?.createdOn).toBe(wanted);
   });
 
   it('valida antes de guardar y marca el campo con error', async () => {

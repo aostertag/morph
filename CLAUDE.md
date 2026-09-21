@@ -34,6 +34,19 @@ Lo que cambió y conviene saber al tocar esas zonas:
 
 - **Columna de campos del formulario de hábito** (`HabitForm.tsx`): es un bloque con `space-y-8`, **no** un `flex flex-col gap-8`. En Safari de iOS, el contenedor flex de esa columna quedaba ~156 px más alto que la suma de sus hijos al cargar (hueco vacío bajo «Crear hábito») y no se recalculaba hasta reactivar la página (tocar un campo, salir y volver a Safari). Al pulsar el botón el campo perdía el foco, el hueco desaparecía y el toque caía en «Empieza el». Se descartó la rejilla del formulario (pasarla a flex en móvil no cambió nada) y las unidades de viewport (solo hay `dvh`); WebKit de escritorio no lo reproduce, ni retrasando las fuentes. Alternar `display` desde JavaScript para forzar un recálculo tampoco bastó. Quitar el contenedor flex y separar con margen sí, comprobado en un iPhone real. No lo vuelvas a `flex`/`gap` en esa columna sin probarlo en un iPhone real.
 
+### Hábitos que empiezan en el futuro (hecho)
+
+`createdOn` puede ser posterior a hoy, hasta `FUTURE_LIMIT_DAYS` (365) días (`latestStart()`, `startDateRange()` y `hasNotStarted()` en `domain/habit.ts`).
+
+- **No dejan rastro:** `useHabitAnalyses` los aparta (`upcoming`), así que no salen en Hoy, Estadísticas, revisión, recordatorios ni atajos; `evaluateHabit` no devuelve unidades antes de `createdOn` (sin fallos, rachas, hitos ni peso en la puntuación). Empiezan a contar solos al llegar su fecha (`useToday`). Cubierto en `domain/futureStart.test.ts`.
+- **Hoy con solo hábitos futuros:** estado propio («Tus hábitos empiezan más adelante»), no «Nada programado».
+- **Lista de Hábitos:** siguen en la lista activa (orden y arrastre intactos) pero con nombre atenuado, barra de color al 50 % y «Empieza el …» en negrita al principio de la línea secundaria.
+- **No se archivan:** el menú no ofrece «Archivar» y `archiveHabit` lo rechaza. Un archivado anterior a `createdOn` haría que la copia de seguridad se rechazase al importar; por eso `archiveHabit` tampoco deja `archivedOn` antes de `createdOn` (hábito creado hoy y archivado sin registro).
+- **Límite en el repo:** `createHabit`/`updateHabit` reciben `today` (por defecto el del reloj) y comprueban el límite futuro; al editar solo si la fecha cambia, para no invalidar un inicio ya guardado.
+- **Copia de seguridad:** sin cambios; no aplica el límite de 365 días al importar (una copia antigua puede traer fechas que ya son pasado).
+- **Generador:** añade «Estudiar italiano» (empieza en 5 días) **fuera de `PROFILES`**, para no consumir números aleatorios y dejar el resto de los datos idénticos.
+- **Filas de «Nuevo hábito» y onboarding:** `PickerRow` (privada en `features/habits/TemplateRow.tsx`) es la única maqueta; `TemplateRow` y `BlankRow` la usan. «Empezar en blanco» es la última fila de la lista, con barra neutra y un `Plus` en la columna del icono (`HabitIconSlot` admite `children`) para que el texto quede alineado.
+
 ### Categorías (hechas: gestión en Ajustes + agrupación en Estadísticas)
 
 **Ajustes:** `CategoriesSection` (entre Recordatorios y Pausas): listar con el número de hábitos, crear,

@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { d, habit } from '@/test/factories';
 import {
   archiveDayFor,
+  FUTURE_LIMIT_DAYS,
   type HabitInput,
+  hasNotStarted,
+  latestStart,
   normalizeHabitInput,
   quantityStep,
   startDateRange,
@@ -92,11 +95,16 @@ describe('archivado', () => {
 describe('startDateRange', () => {
   const today = d('2026-09-20');
 
-  it('permite adelantar hasta el límite retroactivo y llega como mucho a hoy', () => {
+  it('permite adelantar hasta el límite retroactivo y retrasar hasta un año', () => {
     expect(startDateRange(today, 7, d('2026-09-20'), null)).toEqual({
       min: d('2026-09-13'),
-      max: today,
+      max: d('2027-09-20'),
     });
+  });
+
+  it('el límite futuro es de 365 días', () => {
+    expect(FUTURE_LIMIT_DAYS).toBe(365);
+    expect(latestStart(today)).toBe(d('2027-09-20'));
   });
 
   it('nunca pasa del primer registro', () => {
@@ -110,7 +118,26 @@ describe('startDateRange', () => {
     expect(startDateRange(today, 7, d('2026-03-23'), null).min).toBe(d('2026-03-23'));
   });
 
-  it('un hábito que empieza más adelante puede conservar su fecha', () => {
-    expect(startDateRange(today, 7, d('2026-09-25'), null).max).toBe(d('2026-09-25'));
+  it('un hábito que empieza más adelante se puede mover hasta el límite futuro', () => {
+    const range = startDateRange(today, 7, d('2026-09-25'), null);
+    expect(range.min).toBe(d('2026-09-13'));
+    expect(range.max).toBe(d('2027-09-20'));
+  });
+
+  it('conserva un inicio más lejano que el límite (no se pierde la fecha actual)', () => {
+    expect(startDateRange(today, 7, d('2027-12-01'), null).max).toBe(d('2027-12-01'));
+  });
+
+  it('con registros, nunca pasa del primero', () => {
+    expect(startDateRange(today, 7, d('2026-09-10'), d('2026-09-12')).max).toBe(d('2026-09-12'));
+  });
+});
+
+describe('hasNotStarted', () => {
+  it('solo es cierto si el inicio es posterior a hoy', () => {
+    const today = d('2026-09-20');
+    expect(hasNotStarted({ createdOn: d('2026-09-21') }, today)).toBe(true);
+    expect(hasNotStarted({ createdOn: today }, today)).toBe(false);
+    expect(hasNotStarted({ createdOn: d('2026-09-19') }, today)).toBe(false);
   });
 });

@@ -26,9 +26,19 @@ interface SortableHabitListProps {
   readonly onReorder: (ids: string[]) => void;
   /** Contenido de cada fila, a la derecha del asa de arrastre (que va detrás de la barra de color). */
   readonly renderRow: (habit: Habit, index: number) => ReactNode;
+  /** Filas con la barra de color atenuada (hábitos que aún no han empezado). */
+  readonly isDimmed?: (habit: Habit) => boolean;
 }
 
-function SortableRow({ habit, children }: { habit: Habit; children: ReactNode }) {
+function SortableRow({
+  habit,
+  dimmed,
+  children,
+}: {
+  habit: Habit;
+  dimmed: boolean;
+  children: ReactNode;
+}) {
   const {
     attributes,
     listeners,
@@ -51,7 +61,7 @@ function SortableRow({ habit, children }: { habit: Habit; children: ReactNode })
         isDragging && 'z-10 bg-surface shadow-overlay',
       )}
     >
-      <ColorBar color={habit.color} />
+      <ColorBar color={habit.color} className={cx(dimmed && 'opacity-50')} />
       <button
         type="button"
         ref={setActivatorNodeRef}
@@ -67,7 +77,12 @@ function SortableRow({ habit, children }: { habit: Habit; children: ReactNode })
   );
 }
 
-export function SortableHabitList({ habits, onReorder, renderRow }: SortableHabitListProps) {
+export function SortableHabitList({
+  habits,
+  onReorder,
+  renderRow,
+  isDimmed,
+}: SortableHabitListProps) {
   // Orden optimista mientras la base de datos confirma el cambio (evita un salto visual).
   // Solo se usa mientras la lista de la base de datos siga siendo la de antes del arrastre.
   const [pending, setPending] = useState<{ base: string; next: string[] } | null>(null);
@@ -120,7 +135,7 @@ export function SortableHabitList({ habits, onReorder, renderRow }: SortableHabi
       <SortableContext items={order} strategy={verticalListSortingStrategy}>
         <ul className="border-t border-border">
           {ordered.map((habit, index) => (
-            <SortableRow key={habit.id} habit={habit}>
+            <SortableRow key={habit.id} habit={habit} dimmed={isDimmed?.(habit) ?? false}>
               {renderRow(habit, index)}
             </SortableRow>
           ))}

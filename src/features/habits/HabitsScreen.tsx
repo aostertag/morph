@@ -1,9 +1,11 @@
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
+import { hasNotStarted } from '@/domain/habit';
 import type { Habit } from '@/domain/types';
 import { useCategories, useHabits, useSettings } from '@/hooks/useData';
 import { useToday } from '@/hooks/useToday';
+import { cx } from '@/lib/cx';
 import { formatDate } from '@/lib/format';
 import { ActionsMenu } from '@/ui/ActionsMenu';
 import { Button, ButtonLink } from '@/ui/Button';
@@ -56,17 +58,26 @@ export function HabitsScreen() {
         <SortableHabitList
           habits={active}
           onReorder={(ids) => void reorder(ids)}
+          isDimmed={(habit) => hasNotStarted(habit, today)}
           renderRow={(habit, index) => (
             <>
               <HabitIconSlot name={habit.icon} />
               <div className="flex min-w-0 flex-1 flex-col justify-center py-2 pl-3">
                 <Link
                   to={`/habitos/${habit.id}`}
-                  className="truncate underline-offset-4 hover:underline"
+                  className={cx(
+                    'truncate underline-offset-4 hover:underline',
+                    hasNotStarted(habit, today) && 'text-text-muted',
+                  )}
                 >
                   {habit.name}
                 </Link>
                 <p className="truncate text-sm text-text-muted">
+                  {hasNotStarted(habit, today) && (
+                    <span className="font-medium text-text">
+                      Empieza el {formatDate(habit.createdOn, today)} ·{' '}
+                    </span>
+                  )}
                   {describeHabit(
                     habit,
                     settings.weekStartsOn,
@@ -85,7 +96,10 @@ export function HabitsScreen() {
                       onSelect: () => move(index, 1),
                       disabled: index === active.length - 1,
                     },
-                    { label: 'Archivar', onSelect: () => void archive(habit, today) },
+                    // Sin historia que conservar: un hábito que no ha empezado solo se elimina.
+                    ...(hasNotStarted(habit, today)
+                      ? []
+                      : [{ label: 'Archivar', onSelect: () => void archive(habit, today) }]),
                     { label: 'Eliminar…', onSelect: () => setToDelete(habit), destructive: true },
                   ]}
                 />

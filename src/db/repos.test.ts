@@ -75,6 +75,46 @@ describe('hábitos', () => {
     expect((await listHabits())[0]?.createdOn).toBe('2026-01-10');
   });
 
+  it('permite empezar en el futuro hasta 365 días y no más', async () => {
+    const today = d('2026-09-20');
+    const planned = await createHabit(input({ createdOn: d('2026-09-24') }), today);
+    expect(planned.createdOn).toBe('2026-09-24');
+    const limit = await createHabit(input({ createdOn: d('2027-09-20') }), today);
+    expect(limit.createdOn).toBe('2027-09-20');
+    await expect(createHabit(input({ createdOn: d('2027-09-21') }), today)).rejects.toBeInstanceOf(
+      ValidationError,
+    );
+    expect(await listHabits()).toHaveLength(2);
+  });
+
+  it('mover el inicio al futuro respeta el límite y el primer registro', async () => {
+    const today = d('2026-09-20');
+    const planned = await createHabit(input({ createdOn: d('2026-09-24') }), today);
+    const moved = await updateHabit(planned.id, input({ createdOn: d('2026-12-01') }), today);
+    expect(moved.createdOn).toBe('2026-12-01');
+    await expect(
+      updateHabit(planned.id, input({ createdOn: d('2027-09-21') }), today),
+    ).rejects.toBeInstanceOf(ValidationError);
+    expect((await listHabits())[0]?.createdOn).toBe('2026-12-01');
+
+    const started = await createHabit(input({ createdOn: d('2026-09-10') }), today);
+    await setEntryValue(started.id, d('2026-09-12'), 1);
+    await expect(
+      updateHabit(started.id, input({ createdOn: d('2026-09-25') }), today),
+    ).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it('editar otros campos de un hábito con inicio lejano no revalida la fecha', async () => {
+    const created = await createHabit(input({ createdOn: d('2027-09-20') }), d('2026-09-20'));
+    // Con «hoy» más atrás, ese inicio quedaría fuera del límite; si no cambia, no se revalida.
+    const renamed = await updateHabit(
+      created.id,
+      input({ name: 'Otro', createdOn: d('2027-09-20') }),
+      d('2026-01-01'),
+    );
+    expect(renamed.name).toBe('Otro');
+  });
+
   it('actualizar un hábito inexistente da un error de validación', async () => {
     await expect(updateHabit('nope', input())).rejects.toBeInstanceOf(ValidationError);
   });
@@ -252,6 +292,16 @@ describe('archivar y restaurar', () => {
     const previous = await archiveHabit(h.id, d('2026-01-20'));
     expect(previous.archivedOn).toBeNull();
     expect((await getHabit(h.id))?.archivedOn).toBe('2026-01-19');
+  });
+
+  it('un hábito que aún no ha empezado no se archiva', async () => {
+    const h = await createHabit(input({ createdOn: d('2026-01-25') }), d('2026-01-20'));
+    await expect(archiveHabit(h.id, d('2026-01-20'))).rejects.toBeInstanceOf(ValidationError);
+    expect((await getHabit(h.id))?.archivedOn).toBeNull();
+    // El día que llega su fecha ya se puede archivar, y nunca queda antes de su inicio
+    // (la copia de seguridad lo rechazaría).
+    await archiveHabit(h.id, d('2026-01-25'));
+    expect((await getHabit(h.id))?.archivedOn).toBe('2026-01-25');
   });
 
   it('archivar con registro hoy conserva hoy', async () => {
