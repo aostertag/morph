@@ -12,9 +12,12 @@ const today = todayLocal();
 const back = (n: number): LocalDay => addDays(today, -n);
 
 function show() {
+  // Personalizado con los 60 días exactos que crea `habit()`, no `rango=trimestre`:
+  // el trimestre en curso puede tener menos días (p. ej. el 1 de enero) y dejar
+  // categorías con menos días evaluables de los que el historial realmente tiene.
   return renderRoute(<StatsScreen />, {
     path: '/estadisticas',
-    url: '/estadisticas?rango=trimestre',
+    url: `/estadisticas?rango=personalizado&desde=${back(60)}&hasta=${back(1)}`,
   });
 }
 

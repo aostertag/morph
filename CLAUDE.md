@@ -368,11 +368,66 @@ Tras cualquiera: `npm run check`. Si tocas una pantalla, mírala también con `n
 
 ## Pendiente (para su propia sesión)
 
-- **`App.test.tsx` puede agotar el tiempo si hay un servidor de desarrollo y un navegador abiertos a la vez;** pasa suelto y con la máquina libre. Confirmado el 2026-09-21: «arranca en Hoy y navega a Hábitos» falló una vez dentro de `npm run check` (no encuentra el `heading` «Hábitos») y pasó 3 de 3 veces suelto con `npx vitest run --project ui src/app/App.test.tsx`. La causa exacta no se ha aislado; solo se ha visto con la suite completa en marcha.
-- **`StatsScreen.test.tsx` › «no señala el mejor día de la semana sin muestra en todos» falla los lunes.** Causa exacta: el test usa el reloj real (`todayLocal()` de `src/test/render.tsx` = `toLocalDay(new Date())`, y la pantalla, `useToday()`), sin fijar la fecha, y pide `rango=semana` esperando el texto «Hacen falta al menos dos semanas…». `rango=semana` es la semana natural en curso recortada a hoy y hoy nunca cuenta, así que un lunes no hay ningún día evaluable: `WeekdaySection` (`hasData === false`) enseña «Sin días evaluables en este período.» y el texto esperado no existe. De martes a domingo pasa. Verificado con el DOM de la ejecución fallida; falla igual sin cambios de código (comprobado con `git stash`).
-  - **No viola la regla de dominio:** `weekdayBreakdown` (`domain/stats.ts`) es pura y recibe rango y longitud como argumentos. La dependencia del reloj está solo en el test (y en `useToday`, que es el borde permitido).
-  - **Arreglo previsto:** fijar el día en el test (`vi.useFakeTimers` + `vi.setSystemTime`, como `RemindersRunner.test.tsx`) o usar un rango que no dependa del día (p. ej. `rango=mes` con historial de ≥ 10 días, o uno personalizado de < 14 días).
-- **Mismo riesgo en otros 9 archivos de test de UI** (varios tests cada uno): usan `todayLocal()` con el reloj real y sin fecha fija: `habit-detail/HabitDetailScreen`, `habits/HabitForm`, `habits/HabitsScreen`, `reminders/RemindersRunner`, `review/ReviewScreen`, `settings/SettingsScreen`, `shortcuts/shortcuts`, `stats/ByCategorySection` y `today/TodayScreen` (todos `*.test.tsx`). Hoy pasan, pero **solo por casualidad de calendario**: no se ha comprobado que pasen cualquier día de la semana ni en cambios de mes o de año, y cada día que toca un caso límite (lunes, fin de mes, 1 de enero…) puede romper el CI sin que haya cambiado nada. Revisarlos en su propia sesión, por ejemplo con una fecha fija común en `src/test/setup.ts` o en `render.tsx`, y ejecutar la suite con varias fechas simuladas antes de darlos por buenos.
+### Los tests de UI ya no dependen del calendario (hecho, 2026-09-22)
+
+`src/test/setup.ts` fija `Date` (`vi.useFakeTimers({ toFake: ['Date'] })`, no el resto de temporizadores) a
+un miércoles a mitad de mes (`new Date(2026, 2, 18, 12, 0, 0)`, construido en hora local a mediodía, nunca
+con un string: `new Date('YYYY-MM-DD')` se interpreta en UTC y en `America/Santiago`/`America/New_York` cae
+en el día anterior). Se fija en el **nivel superior** del archivo, no en un `beforeEach`: varios tests hacen
+`const today = todayLocal()` al cargarse el módulo, antes de que corra ningún `beforeEach`. Se puede
+sobrescribir con `TEST_TODAY=YYYY-MM-DD` (mismo criterio de hora local a mediodía) para simular otra fecha.
+
+- **Aislamiento entre archivos, comprobado:** `isolate: true` es el valor por defecto de Vitest (no hay
+  override en `vitest.config.ts`) y se verificó también en vivo, con dos archivos de sonda forzados al mismo
+  worker (`--maxWorkers=1 --sequence.shuffle=false`): uno deja `vi.setSystemTime` en 2099 sin restaurarlo, y
+  el siguiente sigue viendo el reloj real. Por eso el `vi.useRealTimers()` del `afterEach` de
+  `RemindersRunner.test.tsx` (que ya fijaba su propia fecha explícita por test, sin tocar) no puede filtrarse
+  a otros archivos.
+- **`toFake: ['Date']` no rompió nada:** ningún test de los afectados usa `Date.now()` para orden de
+  `loggedAt`, duraciones o cronómetro (`useNow`) — se comprobó con grep antes de tocar nada y con la suite
+  completa después (1341/1341).
+- **`StatsScreen.test.tsx` › «no señala el mejor día de la semana sin muestra en todos»** (el que fallaba
+  todos los lunes): pasó de `rango=semana` a un personalizado de 9 días terminado ayer, que no depende de
+  qué día de la semana sea "hoy" (con `rango=semana`, si hoy es el primer día de la semana configurada no
+  hay ningún día evaluable todavía, y el mensaje correcto pasa a ser otro). Se añadió un test aparte, con su
+  propio `vi.setSystemTime` a un lunes real, que cubre justamente ese caso («Sin días evaluables en este
+  período.»).
+- **Segundo bug de calendario, encontrado al simular las cinco fechas límite (no estaba documentado
+  antes):** `StatsScreen.test.tsx` y `ByCategorySection.test.tsx` usaban `rango=trimestre` (o `rango=mes`)
+  como rango por defecto en 7 tests. Esos presets son períodos naturales en curso, así que su longitud varía
+  con el día: el 1 de enero el trimestre en curso tiene 1 día (colapsa la muestra de correlaciones y
+  consistencia), y el 30 de abril tiene 29 días evaluables, un número impar que rompe una aserción de
+  «exactamente 50 %» sobre un patrón alterno. Arreglo: los 7 tests pasan a `rango=personalizado` con la
+  longitud exacta del historial que cada uno crea (ya no depende de en qué punto del trimestre/mes caiga
+  "hoy"). El comportamiento de los presets (`week`/`month`/`quarter`/`year`/`custom`) sigue cubierto aparte,
+  de forma pura y sin depender del reloj real, en `domain/range.test.ts` (`resolveRange` y `previousRange`
+  para los cinco, con casos límite: 29 de febrero, marzo→febrero más corto, trimestres de distinta duración).
+- **Las cinco fechas límite, con el arreglo completo, dan 119/119** en el proyecto `ui` (13 archivos): un
+  lunes, un domingo, el 30 de abril, el 1 de enero y un 29 de febrero (`TEST_TODAY=2026-06-15` /
+  `2026-06-21` / `2026-04-30` / `2026-01-01` / `2028-02-29`). Un `FAIL` suelto en `SettingsScreen.test.tsx`
+  durante una de las tandas no se repitió en dos reintentos con la misma fecha (ni en solitario ni dentro de
+  la suite completa): es el mismo tipo de intermitencia de la suite completa que ya afecta a `App.test.tsx`
+  (ver abajo), no algo ligado al calendario.
+
+### `App.test.tsx`: intermitente, no reproducido esta sesión (para su propia sesión)
+
+Confirmado el 2026-09-21: «arranca en Hoy y navega a Hábitos» falló una vez dentro de `npm run check`. El
+2026-09-22 se intentó reproducir a propósito, sin tocar código de producción:
+
+- 5 veces `App.test.tsx` suelto: 5/5 bien.
+- 5 veces la suite completa sin servidor de desarrollo: 5/5 bien (1341/1341 cada vez).
+- 5 veces la suite completa con `npm run dev` en marcha: 5/5 bien.
+- 10 veces la suite completa con `npm run dev` **y** una pestaña de Chrome abierta en `localhost:5173`
+  (la condición exacta de la nota anterior, vía el MCP de Playwright): 9/10 bien. La que falló no fue
+  `App.test.tsx`, sino `shortcuts.test.tsx` › «los números marcan los hábitos en el orden en que se ven»
+  (`AssertionError: expected { …(6) } to be undefined`), y no se repitió al día siguiente con la misma
+  condición.
+
+20 ejecuciones de la suite completa (más 5 sueltas de `App.test.tsx`) y un solo fallo, en un archivo
+distinto al documentado. Esto apunta a una intermitencia general de baja frecuencia bajo carga (contención
+de recursos al correr muchos archivos de UI a la vez), no a una causa propia de `App.test.tsx` ni a nada
+relacionado con el calendario. Queda sin aislar; si vuelve a verse, anotar aquí qué test fue y con qué
+condiciones, para ir acumulando evidencia.
 
 ## Limitaciones conocidas
 
