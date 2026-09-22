@@ -5,14 +5,14 @@
     <p>
         El habit tracker diseñado para las personas, hecho con cariño.
         <br>
-        Ultraligero, rápido y sin registro obligatorio.
+        Ligero, rápido y sin registro obligatorio.
     </p>
     <a href="https://habit-tracker-c6c.pages.dev/">
         Morph
     </a>
 </div>
 
-Aplicación web para seguir hábitos: registro diario, rachas, heatmap, estadísticas, revisión semanal y ajustes. Interfaz en español, instalable como PWA y con funcionamiento sin conexión.
+
 
 ## Datos y privacidad
 
