@@ -102,19 +102,6 @@ renombrar y borrar, todo con «Deshacer».
   (`describeHabit(habit, weekStartsOn, categoryName)`): en móvil la línea se corta por el final y era
   la categoría lo que se perdía.
 
-Pruebas intermitentes: `App.test.tsx` puede agotar el tiempo si hay un servidor de desarrollo y un navegador abiertos a la vez; pasa suelto y con la máquina libre. Confirmado el 2026-09-21: «arranca en Hoy y navega a Hábitos» falló una vez dentro de `npm run check` (no encuentra el `heading` «Hábitos») y pasó 3 de 3 veces suelto con `npx vitest run --project ui src/app/App.test.tsx`. La causa exacta no se ha aislado; solo se ha visto con la suite completa en marcha.
-
-**Playwright:** el MCP arrancaba con el canal `chrome`, que no está instalado en esta máquina. Se le
-añadió `--browser chromium` a `.mcp.json` (commiteado; surte efecto al arrancar la sesión) y se
-descargó el Chromium que pide la versión actual (`chromium-1246`). Ojo: con
-`launchPersistentContext`, `CacheStorage` falla en esta máquina y el service worker no llega a
-instalarse; con un contexto normal funciona.
-
-La navegación tiene cuatro pestañas (Hoy, Estadísticas, Hábitos, Ajustes; `NAV` en `app/Layout.tsx`): a
-`/revision` se llega por el aviso de Hoy y por el historial.
-
-**Peso del paquete (comprobado en la build del cierre de la fase 6):** el chunk de entrada (Hoy, con `ReviewPrompt`, `Onboarding`, `RemindersRunner` y `GlobalShortcuts` dentro, ~305 kB) solo importa de forma estática el runtime, `Button` y `HabitMarks`. Recharts vive en los chunks de `HabitDetailScreen` y `BarChart`, el informe de la revisión en `ReviewScreen`, Zod y el backup en `SettingsScreen` y Base UI del diálogo de atajos en `ShortcutsDialog`, todos `lazy()`. Si Hoy empieza a arrastrar alguno de ellos, es que algo se importó fuera de un `lazy()`.
-
 ## Entorno
 
 El proyecto se trabaja desde dos máquinas, cada una con su propia copia del repo:
@@ -125,7 +112,7 @@ El proyecto se trabaja desde dos máquinas, cada una con su propia copia del rep
 **Antes de empezar en cualquiera de las dos: `git pull`.** Son checkouts independientes; nada sincroniza el árbol de trabajo entre ellas salvo git.
 
 - **Las notas específicas de Windows solo valen en Windows.** Hoy hay una en Convenciones (los heredocs largos fallan en ese entorno; usa la herramienta Write). Si aparecen más peculiaridades de shell o de sistema operativo (comandos que no existen como `pkill`, reglas de cortafuegos, rutas con `\`…), documéntalas igual de acotadas: no asumas en Ubuntu algo que se descubrió en PowerShell, ni al revés.
-- **Playwright en una máquina nueva:** `npm install` no basta. El MCP (`@playwright/mcp@latest --browser chromium`, fijado en `.mcp.json`) espera el Chromium del canal `chrome-for-testing` en la versión que pida esa build (comprobado el 2026-09-21: `chromium-1246`); `npx playwright install chromium` a secas puede traer otra build (trajo `chromium-1243`) y el MCP seguirá sin arrancar. El comando correcto es el que da el propio error: `npx @playwright/mcp install-browser chrome-for-testing`. Verificado en Ubuntu; si en Windows hace falta algo más (dependencias del sistema, permisos), anótalo ahí cuando se compruebe.
+- **Playwright en una máquina nueva:** `npm install` no basta. El MCP (`@playwright/mcp@latest --browser chromium`, fijado en `.mcp.json`) espera el Chromium del canal `chrome-for-testing` en la versión que pida esa build (comprobado el 2026-09-21: `chromium-1246`); `npx playwright install chromium` a secas puede traer otra build (trajo `chromium-1243`) y el MCP seguirá sin arrancar. El comando correcto es el que da el propio error: `npx @playwright/mcp install-browser chrome-for-testing`. Verificado en Ubuntu; si en Windows hace falta algo más (dependencias del sistema, permisos), anótalo ahí cuando se compruebe. En el PC con Windows (donde se hizo la fase 7, antes de usar la laptop con Ubuntu), el MCP arrancaba con el canal `chrome`, que no estaba instalado allí; de eso viene el `--browser chromium` fijado en `.mcp.json`. También allí: con `launchPersistentContext`, `CacheStorage` fallaba y el service worker no llegaba a instalarse; con un contexto normal funcionaba.
 - **Node:** el mínimo es 22.12 (`engines` en `package.json`); verificado en Ubuntu con v24.21.0 el 2026-09-21.
 
 ## Stack (versiones verificadas con `npm view` el 2026-09-19)
@@ -225,6 +212,11 @@ UI (`features/`, `ui/`, `charts/`) → datos (`db/`) → dominio (`domain/`). **
   - primitivas: `Button`/`ButtonLink`/`IconButton`, `Field`/`Fieldset` (ARIA conectado vía render prop), `Segmented` (radios nativos), `ConfirmDialog` (Base UI AlertDialog), `ActionsMenu` (Base UI Menu), `ColorBar`/`HabitIcon`, `EmptyState`; `ScreenHeader` (encabezado único de todas las pantallas: sobretítulo reservado de 16 px, título `text-2xl` en fila de `min-h-touch`, acciones alineadas con esa fila, `mark` opcional para la barra del hábito; Hoy lo usa con el día de la semana como sobretítulo, sin excepción; `html` lleva `scrollbar-gutter: stable` para que el margen izquierdo no dependa de si hay barra de desplazamiento);
   - `ui/icons.ts` es la lista curada de iconos Lucide, importados uno a uno.
 - `src/test/factories.ts`: fábricas para los tests (`habit()`, `entry()`, `entriesOn()`, `dayLog()`, `pause()`, `days()`, `d()`).
+
+La navegación tiene cuatro pestañas (Hoy, Estadísticas, Hábitos, Ajustes; `NAV` en `app/Layout.tsx`): a
+`/revision` se llega por el aviso de Hoy y por el historial.
+
+**Peso del paquete (comprobado en la build del cierre de la fase 6):** el chunk de entrada (Hoy, con `ReviewPrompt`, `Onboarding`, `RemindersRunner` y `GlobalShortcuts` dentro, ~305 kB) solo importa de forma estática el runtime, `Button` y `HabitMarks`. Recharts vive en los chunks de `HabitDetailScreen` y `BarChart`, el informe de la revisión en `ReviewScreen`, Zod y el backup en `SettingsScreen` y Base UI del diálogo de atajos en `ShortcutsDialog`, todos `lazy()`. Si Hoy empieza a arrastrar alguno de ellos, es que algo se importó fuera de un `lazy()`.
 
 ## Mapa del proyecto
 
@@ -369,12 +361,14 @@ Tras cualquiera: `npm run check`. Si tocas una pantalla, mírala también con `n
 - Colores de hábito en estilos en línea con `habitColorVar(color)`; para todo lo demás, utilidades de los tokens.
 - Comentarios y mensajes de usuario en español; código (identificadores) en inglés.
 - Estilo Biome: 2 espacios, comillas simples y línea de 100 caracteres. Ejecuta `npm run lint:fix` antes de hacer commit.
+- Ejecuta `npm run check` solo, sin pipes (`| tail`, `| Select-Object`…), y mira su código de salida. Si no es 0, no hagas commit ni push, aunque el fallo parezca ajeno al cambio o ya esté anotado: investígalo o detente y explícalo en el informe.
 - `src/test/setup.ts` también define `Document.prototype.focus`: `user-event` pasa `document` como `relatedTarget` si el elemento con foco se desmonta antes de pulsar otro botón, y Sonner intenta devolverle el foco al desmontarse.
 - Los tests de `db/` que necesitan el resto del dominio (p. ej. `pausesEffect.test.ts`) corren en Node con `fake-indexeddb`; los de UI que comprueban atajos montan `<App />` entera.
 - Para escribir archivos con contenido complejo usa la herramienta Write, no heredocs en bash: en este entorno Windows los heredocs largos fallan.
 
 ## Pendiente (para su propia sesión)
 
+- **`App.test.tsx` puede agotar el tiempo si hay un servidor de desarrollo y un navegador abiertos a la vez;** pasa suelto y con la máquina libre. Confirmado el 2026-09-21: «arranca en Hoy y navega a Hábitos» falló una vez dentro de `npm run check` (no encuentra el `heading` «Hábitos») y pasó 3 de 3 veces suelto con `npx vitest run --project ui src/app/App.test.tsx`. La causa exacta no se ha aislado; solo se ha visto con la suite completa en marcha.
 - **`StatsScreen.test.tsx` › «no señala el mejor día de la semana sin muestra en todos» falla los lunes.** Causa exacta: el test usa el reloj real (`todayLocal()` de `src/test/render.tsx` = `toLocalDay(new Date())`, y la pantalla, `useToday()`), sin fijar la fecha, y pide `rango=semana` esperando el texto «Hacen falta al menos dos semanas…». `rango=semana` es la semana natural en curso recortada a hoy y hoy nunca cuenta, así que un lunes no hay ningún día evaluable: `WeekdaySection` (`hasData === false`) enseña «Sin días evaluables en este período.» y el texto esperado no existe. De martes a domingo pasa. Verificado con el DOM de la ejecución fallida; falla igual sin cambios de código (comprobado con `git stash`).
   - **No viola la regla de dominio:** `weekdayBreakdown` (`domain/stats.ts`) es pura y recibe rango y longitud como argumentos. La dependencia del reloj está solo en el test (y en `useToday`, que es el borde permitido).
   - **Arreglo previsto:** fijar el día en el test (`vi.useFakeTimers` + `vi.setSystemTime`, como `RemindersRunner.test.tsx`) o usar un rango que no dependa del día (p. ej. `rango=mes` con historial de ≥ 10 días, o uno personalizado de < 14 días).

@@ -1,8 +1,10 @@
 # Auditoría de la fase 7
 
+Este es el informe cerrado de la fase 7; el estado actual del proyecto está en `CLAUDE.md`.
+
 Recorrido de la app pantalla por pantalla contra las secciones 9 (diseño) y 10 (accesibilidad) de
 `SPEC.md`. Se escribe **a medida que avanza el recorrido**, no al final: si la sesión se corta, la
-siguiente continúa desde aquí. El plan completo de la fase está en `CLAUDE.md`.
+siguiente continúa desde aquí. El resumen de la fase está en `CLAUDE.md`.
 
 Las capturas viven en `auditoria/capturas/` (ignorada por git; solo se commitea este archivo). El
 nombre de cada una es `<pantalla>-<viewport>-<tema>[-<estado>].png`, por ejemplo

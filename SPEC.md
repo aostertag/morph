@@ -139,7 +139,7 @@ Marca: la app se llama **Morph**. Su icono (`brand/morph-icon-source.png`: una �
 
 Lo que sí:
 - Estética de herramienta bien diseñada, como un instrumento de medición o un cuaderno de registro: precisa, calmada, con alta densidad de información bien ordenada.
-- Paleta reducida: un neutro principal, un acento y una escala de intensidad para el heatmap. Cada hábito toma su color de una paleta curada de 8 a 10 tonos que funcionen juntos en modo claro y oscuro.
+- Paleta reducida: un neutro principal, un acento y una escala de intensidad para el heatmap. Cada hábito toma su color de una paleta curada de 13 tonos que funcionen juntos en modo claro y oscuro.
 - Tipografía con carácter: una familia para texto y cifras con números tabulares para que las estadísticas se alineen. Los números grandes (rachas, porcentajes) son protagonistas.
 - Gráficos limpios: cuadrícula mínima, ejes discretos, etiquetas directas sobre los datos en lugar de leyendas cuando sea posible.
 - Mobile-first, pero aprovechando el espacio en escritorio (por ejemplo, panel lateral de estadísticas).
