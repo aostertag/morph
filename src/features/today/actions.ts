@@ -1,4 +1,9 @@
-import { adjustEntryValue, restoreEntry, setEntryValue } from '@/db/repos/entries';
+import {
+  adjustEntryValue,
+  restoreEntry,
+  setEntryValue,
+  toggleEntryValue,
+} from '@/db/repos/entries';
 import type { LocalDay } from '@/domain/day';
 import type { HabitDayView } from '@/domain/today';
 import { formatNumber, formatRelativeDay } from '@/lib/format';
@@ -29,11 +34,10 @@ async function run(action: () => Promise<void>): Promise<void> {
 export function toggleDone(view: HabitDayView, today: LocalDay): Promise<void> {
   return run(async () => {
     const { habit, day } = view;
-    const next = view.value > 0 ? 0 : 1;
-    const snapshot = await setEntryValue(habit.id, day, next);
-    notify(`${habit.name}: ${next ? 'hecho' : 'desmarcado'}${dayNote(day, today)}`, {
+    const { previous, value } = await toggleEntryValue(habit.id, day);
+    notify(`${habit.name}: ${value ? 'hecho' : 'desmarcado'}${dayNote(day, today)}`, {
       key: entryKey(view),
-      undo: () => restoreEntry(habit.id, day, snapshot),
+      undo: () => restoreEntry(habit.id, day, previous),
     });
   });
 }
@@ -71,11 +75,10 @@ export function setValue(view: HabitDayView, value: number, today: LocalDay): Pr
 export function toggleRelapse(view: HabitDayView, today: LocalDay): Promise<void> {
   return run(async () => {
     const { habit, day } = view;
-    const relapsed = view.value > 0;
-    const snapshot = await setEntryValue(habit.id, day, relapsed ? 0 : 1);
+    const { previous, value } = await toggleEntryValue(habit.id, day);
     notify(
-      `${habit.name}: ${relapsed ? 'recaída quitada' : 'recaída registrada'}${dayNote(day, today)}`,
-      { key: entryKey(view), undo: () => restoreEntry(habit.id, day, snapshot) },
+      `${habit.name}: ${value ? 'recaída registrada' : 'recaída quitada'}${dayNote(day, today)}`,
+      { key: entryKey(view), undo: () => restoreEntry(habit.id, day, previous) },
     );
   });
 }

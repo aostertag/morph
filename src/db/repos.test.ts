@@ -14,6 +14,7 @@ import {
   restoreEntry,
   setEntryNote,
   setEntryValue,
+  toggleEntryValue,
 } from './repos/entries';
 import {
   archiveHabit,
@@ -206,6 +207,47 @@ describe('registros', () => {
     expect(jan.map((e) => e.date)).toEqual(['2026-01-01', '2026-01-15']);
     expect(await entriesForHabit('h1')).toHaveLength(3);
     expect(await entriesBetween(d('2026-01-10'), d('2026-02-01'))).toHaveLength(4);
+  });
+
+  it('alterna leyendo el valor real, no uno decidido de antemano', async () => {
+    const first = await toggleEntryValue('h1', day, 100);
+    expect(first).toEqual({ previous: null, value: 1 });
+    expect(await getEntry('h1', day)).toMatchObject({ value: 1, loggedAt: 100 });
+
+    const second = await toggleEntryValue('h1', day, 200);
+    expect(second.value).toBe(0);
+    expect(second.previous).toMatchObject({ value: 1 });
+    expect(await getEntry('h1', day)).toBeUndefined();
+  });
+
+  it('conserva la nota al alternar', async () => {
+    await setEntryNote('h1', day, 'Día duro');
+    const toggled = await toggleEntryValue('h1', day);
+    expect(toggled.value).toBe(1);
+    expect(await getEntry('h1', day)).toMatchObject({ value: 1, note: 'Día duro' });
+  });
+
+  it('dos alternancias a la vez sobre el mismo día siempre se turnan (reproduce el bug de doble pulsación)', async () => {
+    // Antes del arreglo, decidir "qué escribir" a partir de una lectura previa a la transacción
+    // (en vez de dentro de ella) hacía que dos llamadas casi simultáneas leyeran el mismo estado
+    // de partida y las dos escribieran el mismo valor, en vez de alternar. `toggleEntryValue` lee
+    // el valor real dentro de la transacción, así que el orden de llegada no importa: el resultado
+    // siempre es una alternancia completa.
+    const [a, b] = await Promise.all([toggleEntryValue('h1', day), toggleEntryValue('h1', day)]);
+    const values = [a.value, b.value].sort();
+    expect(values).toEqual([0, 1]);
+    expect(await getEntry('h1', day)).toBeUndefined();
+  });
+
+  it('deshacer una alternancia devuelve exactamente el estado anterior', async () => {
+    const { previous } = await toggleEntryValue('h1', day, 300);
+    await restoreEntry('h1', day, previous);
+    expect(await getEntry('h1', day)).toBeUndefined();
+
+    await setEntryValue('h1', day, 4, 10);
+    const { previous: beforeToggle } = await toggleEntryValue('h1', day, 20);
+    await restoreEntry('h1', day, beforeToggle);
+    expect(await getEntry('h1', day)).toMatchObject({ value: 4, loggedAt: 10 });
   });
 });
 

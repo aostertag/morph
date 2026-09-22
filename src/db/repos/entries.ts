@@ -42,30 +42,34 @@ export function entriesOnDay(date: LocalDay): Promise<Entry[]> {
 
 type Change = (current: Entry | undefined) => { value: number; note: string | null };
 
-/** Escribe el registro del día; un valor 0 sin nota lo elimina. */
-function write(
-  habitId: string,
-  date: LocalDay,
-  change: Change,
-  now: number,
-): Promise<EntrySnapshot> {
+/** Resultado de una escritura: el estado anterior (para deshacer) y el valor final guardado. */
+interface WriteResult {
+  readonly previous: EntrySnapshot;
+  readonly value: number;
+}
+
+/** Escribe el registro del día; un valor 0 sin nota lo elimina. `change` decide sobre el valor
+ * real dentro de la transacción, así que dos escrituras seguidas siempre se serializan sobre el
+ * último estado confirmado, nunca sobre uno leído antes de empezar. */
+function write(habitId: string, date: LocalDay, change: Change, now: number): Promise<WriteResult> {
   return withStorage(() =>
     db.transaction('rw', db.entries, async () => {
       const current = await db.entries.where('[habitId+date]').equals([habitId, date]).first();
       const { value, note } = change(current);
-      if (value <= 0 && !note) {
+      const clamped = Math.max(0, value);
+      if (clamped <= 0 && !note) {
         if (current) await db.entries.delete(current.id);
       } else {
         await db.entries.put({
           id: current?.id ?? newId(),
           habitId,
           date,
-          value: Math.max(0, value),
+          value: clamped,
           note,
           loggedAt: now,
         });
       }
-      return current ?? null;
+      return { previous: current ?? null, value: clamped };
     }),
   );
 }
@@ -77,7 +81,9 @@ export function setEntryValue(
   value: number,
   now: number = Date.now(),
 ): Promise<EntrySnapshot> {
-  return write(habitId, date, (current) => ({ value, note: current?.note ?? null }), now);
+  return write(habitId, date, (current) => ({ value, note: current?.note ?? null }), now).then(
+    (r) => r.previous,
+  );
 }
 
 /** Suma (o resta) al valor del día sin bajar de 0. */
@@ -95,7 +101,7 @@ export function adjustEntryValue(
       note: current?.note ?? null,
     }),
     now,
-  );
+  ).then((r) => r.previous);
 }
 
 export function setEntryNote(
@@ -105,7 +111,29 @@ export function setEntryNote(
   now: number = Date.now(),
 ): Promise<EntrySnapshot> {
   const clean = note.trim() || null;
-  return write(habitId, date, (current) => ({ value: current?.value ?? 0, note: clean }), now);
+  return write(habitId, date, (current) => ({ value: current?.value ?? 0, note: clean }), now).then(
+    (r) => r.previous,
+  );
+}
+
+/**
+ * Alterna el registro booleano del día (0↔1) según el valor real en el momento de escribir, no
+ * según lo que hubiera pintado antes: dos alternancias muy seguidas siempre se turnan.
+ */
+export function toggleEntryValue(
+  habitId: string,
+  date: LocalDay,
+  now: number = Date.now(),
+): Promise<WriteResult> {
+  return write(
+    habitId,
+    date,
+    (current) => ({
+      value: (current?.value ?? 0) > 0 ? 0 : 1,
+      note: current?.note ?? null,
+    }),
+    now,
+  );
 }
 
 /** Deja el registro del día exactamente como estaba en `snapshot`. */

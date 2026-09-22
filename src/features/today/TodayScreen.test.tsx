@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { getDayLog, updateDayLog } from '@/db/repos/dayLogs';
 import { getEntry, setEntryValue } from '@/db/repos/entries';
@@ -65,6 +65,39 @@ describe('pantalla Hoy', () => {
     expect(await getEntry(habit.id, todayLocal())).toBeUndefined();
   });
 
+  it('dos pulsaciones muy seguidas alternan de verdad y deshacer vuelve a antes de la primera', async () => {
+    // Reproduce el bug de doble pulsación: dos clics sin esperar el repintado entre uno y otro no
+    // deben repetir la misma decisión (las dos leyendo el mismo valor pintado), sino alternar sobre
+    // el valor real. Una comprobación por valor final es ambigua aquí (dos alternancias vuelven al
+    // mismo valor tanto si el código es correcto como si no), así que la prueba de que la ráfaga se
+    // procesó de verdad es que el registro cambia de `id` (se borra y se vuelve a crear), no solo
+    // que el valor coincida.
+    const habit = await createHabit(habitInput({ name: 'Leer' }));
+    renderRoute(<TodayScreen />);
+    const checkbox = await screen.findByRole('checkbox', { name: 'Leer' });
+
+    fireEvent.click(checkbox);
+    await screen.findByRole('checkbox', { name: 'Leer', checked: true });
+    const firstEntryId = (await getEntry(habit.id, todayLocal()))?.id;
+
+    // Sin esperar a que el aviso se cierre: sigue siendo la misma clave, así que estas dos
+    // pulsaciones seguidas actualizan el mismo toast en vez de abrir uno nuevo.
+    fireEvent.click(checkbox);
+    fireEvent.click(checkbox);
+
+    await waitFor(async () => {
+      const entry = await getEntry(habit.id, todayLocal());
+      expect(entry).toMatchObject({ value: 1 });
+      expect(entry?.id).not.toBe(firstEntryId);
+    });
+    // Sin estado intermedio: la casilla pintada acaba coincidiendo con el valor real de la base.
+    expect(screen.getByRole('checkbox', { name: 'Leer', checked: true })).toBeInTheDocument();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Deshacer' }));
+    await screen.findByRole('checkbox', { name: 'Leer', checked: false });
+    expect(await getEntry(habit.id, todayLocal())).toBeUndefined();
+  });
+
   it('la barra de progreso se llena de izquierda a derecha', async () => {
     await createHabit(habitInput({ name: 'Uno', color: 'rojo' }));
     await createHabit(habitInput({ name: 'Dos', color: 'verde' }));
@@ -121,6 +154,34 @@ describe('pantalla Hoy', () => {
     expect(
       await screen.findByRole('button', { name: 'Quitar la recaída de Tabaco' }),
     ).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('a evitar: dos pulsaciones muy seguidas alternan de verdad y deshacer vuelve a antes de la primera', async () => {
+    const habit = await createHabit(habitInput({ name: 'Tabaco', kind: 'avoid' }));
+    renderRoute(<TodayScreen />);
+    const toggle = await screen.findByRole('button', {
+      name: 'Registrar una recaída en Tabaco',
+    });
+
+    fireEvent.click(toggle);
+    const marked = await screen.findByRole('button', { name: 'Quitar la recaída de Tabaco' });
+    const firstEntryId = (await getEntry(habit.id, todayLocal()))?.id;
+
+    fireEvent.click(marked);
+    fireEvent.click(marked);
+
+    await waitFor(async () => {
+      const entry = await getEntry(habit.id, todayLocal());
+      expect(entry).toMatchObject({ value: 1 });
+      expect(entry?.id).not.toBe(firstEntryId);
+    });
+    expect(
+      screen.getByRole('button', { name: 'Quitar la recaída de Tabaco', pressed: true }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Deshacer' }));
+    await screen.findByRole('button', { name: 'Registrar una recaída en Tabaco', pressed: false });
+    expect(await getEntry(habit.id, todayLocal())).toBeUndefined();
   });
 
   it('navega a días anteriores y bloquea los que superan el límite retroactivo', async () => {

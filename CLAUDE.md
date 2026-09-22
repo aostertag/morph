@@ -461,25 +461,46 @@ falla…», 1,2 s) y el presupuesto de `today.test` › rendimiento (<250 ms), q
 esos límites sin más razón que la saturación artificial esconderría regresiones reales. Si se ven con
 carga normal, anotar aquí test, condición y mensaje.
 
-### Bug: marcar dos veces muy rápido marca en vez de desmarcar (pendiente, para su propia sesión)
+### Bug: marcar dos veces muy rápido marca en vez de desmarcar (cerrado, 2026-09-22)
 
-**Causa:** `toggleDone` y `toggleRelapse` (`features/today/actions.ts`) deciden con `view.value > 0`, es
-decir, con lo que había pintado al pulsar, y escriben un valor absoluto (`setEntryValue(…, 0 | 1)`). Si
-llega una segunda pulsación antes de que `liveQuery` repinte, las dos leen «sin marcar» y las dos escriben
-1. Afecta a la casilla, al botón de recaída y a los atajos numéricos. No afecta a `adjustValue`/`stopTimer`
-(suman dentro de la transacción), `setValue` (absoluto), el cronómetro (lee el store al momento) ni a
-ánimo, energía y nota. Arreglo probable: decidir dentro de la transacción según el registro real (un
-«conmutar» en el repo, como `adjustEntryValue`).
+**Causa:** `toggleDone` y `toggleRelapse` (`features/today/actions.ts`) decidían con `view.value > 0`, es
+decir, con lo que había pintado al pulsar, y escribían un valor absoluto (`setEntryValue(…, 0 | 1)`). Si
+llegaba una segunda pulsación antes de que `liveQuery` repintara, las dos leían «sin marcar» y las dos
+escribían 1. Afectaba a la casilla, al botón de recaída y a los atajos numéricos (los tres llaman a las
+mismas dos funciones). No afectaba a `adjustValue`/`stopTimer` (suman dentro de la transacción, sobre el
+valor real), `setValue` (valor explícito del usuario, no un "flip"), el cronómetro (lee el store al
+momento) ni a ánimo, energía y nota — se revisó todo el dominio y son las dos únicas funciones con este
+patrón.
 
-**Reproducido con Playwright en el build de producción (Chrome 154, 2026-09-22):**
-- `1` dos veces a 4–6 ms: 5/5 mal (la base queda `value: 1`); a ≥12 ms: 0/35.
-- Doble clic en la casilla (dos `change` a 1,6–5 ms): 5/5 mal, con un único toast «Leer: hecho», sin
-  señal de la segunda acción.
-- Tecla mantenida: correcto; `parseShortcut` descarta `event.repeat`.
-- De la tecla a la casilla pintada: ~20–25 ms; con la CPU ralentizada 6× (gama baja) ~30–35 ms, y a esa
-  velocidad dos teclas a 10 ms fallan 4/4 y a ≥25 ms, 0/16.
-- Por debajo del ritmo humano (≥~50 ms entre pulsaciones) en este equipo; en un móvil con IndexedDB lento
-  la ventana puede ser mayor, sin medir.
+**Arreglo:** `db/repos/entries.ts` gana `toggleEntryValue(habitId, date, now?)`, que decide `0↔1` **dentro**
+de la transacción (`write()`, ya usada por `adjustEntryValue`), sobre el registro real, no sobre uno leído
+antes de empezar. Devuelve `{ previous, value }`: `previous` para deshacer (como antes) y `value` (el
+resultado real) para el texto del toast, que también dejó de mirar `view.value`. `write()` internamente
+pasó a devolver `{ previous, value }`; `setEntryValue`/`adjustEntryValue`/`setEntryNote` siguen devolviendo
+solo `previous` (sin cambios en sus ~15 llamadas existentes). Sin cambios visuales: la casilla y el botón
+de recaída siguen leyendo `view.value > 0` directamente, así que no hay parpadeo ni latencia añadida.
+
+**Tests:** `db/repos.test.ts` prueba `toggleEntryValue` con dos llamadas a la vez (`Promise.all`) sin
+esperar entre ellas, y su deshacer. En `TodayScreen.test.tsx`, dos tests (booleano y "a evitar") reproducen
+la ráfaga con `fireEvent.click` sin esperar el repintado entre pulsaciones. Una comprobación por valor final
+es ambigua ahí (dos alternancias vuelven al mismo valor tanto si el código es correcto como si no: el
+estado de partida y el de llegada coinciden), así que la prueba de que la ráfaga se procesó de verdad es
+que el registro cambia de `id` (se borra y se vuelve a crear), no solo que el valor coincida; revertido el
+arreglo, los dos tests fallan (la base queda con el `id` de antes de la ráfaga). Los mismos tests cubren
+deshacer tras la ráfaga (vuelve a antes de la primera pulsación, por el agrupamiento de toasts por clave)
+y que la casilla pintada acaba coincidiendo con la base, sin estado intermedio.
+
+**Verificado con Playwright sobre el build de producción** (`npm run build` + `npm run preview`, Chrome):
+15/15 pulsaciones a 0–35 ms alternan bien, en booleano y en "a evitar"; 30/30 con la CPU ralentizada 6×
+(gama baja); 10/10 con un doble clic real (gesto nativo, no simulado por script) con la casilla siempre
+coherente con la base tras asentarse. Verificado también que sin el arreglo (revirtiendo `entries.ts` y
+`actions.ts` con `git stash`) las mismas 15+10 pulsaciones fallan de forma consistente.
+
+**Trampa al verificar con `npm run preview`:** si el navegador ya tenía un *service worker* activo de una
+build anterior (el aviso "Hay una versión nueva de la app. Recargar" en Hoy lo delata), sigue sirviendo el
+bundle viejo aunque `dist/` esté actualizado, y el bug reaparece con toda su forma exacta (mismo `id`,
+mismo patrón) porque en realidad se está probando el código de antes. Hay que desregistrar el *service
+worker* y borrar las cachés antes de repetir la verificación, o abrir en una ventana/perfil limpio.
 
 ## Limitaciones conocidas
 
