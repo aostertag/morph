@@ -115,6 +115,19 @@ La navegación tiene cuatro pestañas (Hoy, Estadísticas, Hábitos, Ajustes; `N
 
 **Peso del paquete (comprobado en la build del cierre de la fase 6):** el chunk de entrada (Hoy, con `ReviewPrompt`, `Onboarding`, `RemindersRunner` y `GlobalShortcuts` dentro, ~305 kB) solo importa de forma estática el runtime, `Button` y `HabitMarks`. Recharts vive en los chunks de `HabitDetailScreen` y `BarChart`, el informe de la revisión en `ReviewScreen`, Zod y el backup en `SettingsScreen` y Base UI del diálogo de atajos en `ShortcutsDialog`, todos `lazy()`. Si Hoy empieza a arrastrar alguno de ellos, es que algo se importó fuera de un `lazy()`.
 
+## Entorno
+
+El proyecto se trabaja desde dos máquinas, cada una con su propia copia del repo:
+
+- **Windows, PowerShell**, en `C:\Users\oster\Documents\tracker`.
+- **Ubuntu, bash**, en `/home/agustin/Documents/morph`.
+
+**Antes de empezar en cualquiera de las dos: `git pull`.** Son checkouts independientes; nada sincroniza el árbol de trabajo entre ellas salvo git.
+
+- **Las notas específicas de Windows solo valen en Windows.** Hoy hay una en Convenciones (los heredocs largos fallan en ese entorno; usa la herramienta Write). Si aparecen más peculiaridades de shell o de sistema operativo (comandos que no existen como `pkill`, reglas de cortafuegos, rutas con `\`…), documéntalas igual de acotadas: no asumas en Ubuntu algo que se descubrió en PowerShell, ni al revés.
+- **Playwright en una máquina nueva:** `npm install` no basta. El MCP (`@playwright/mcp@latest --browser chromium`, fijado en `.mcp.json`) espera el Chromium del canal `chrome-for-testing` en la versión que pida esa build (comprobado el 2026-09-21: `chromium-1246`); `npx playwright install chromium` a secas puede traer otra build (trajo `chromium-1243`) y el MCP seguirá sin arrancar. El comando correcto es el que da el propio error: `npx @playwright/mcp install-browser chrome-for-testing`. Verificado en Ubuntu; si en Windows hace falta algo más (dependencias del sistema, permisos), anótalo ahí cuando se compruebe.
+- **Node:** el mínimo es 22.12 (`engines` en `package.json`); verificado en Ubuntu con v24.21.0 el 2026-09-21.
+
 ## Stack (versiones verificadas con `npm view` el 2026-09-19)
 
 React 19.3 · TypeScript 7.0 (nativo) · Vite 8.3 + `@vitejs/plugin-react` 6 + React Compiler (vía `@rolldown/plugin-babel` + `@babel/core` 8) · Tailwind 4.3 (CSS-first) · Dexie 4.4 + dexie-react-hooks · Recharts 3.10 · date-fns 4.4 · Zustand 5 · Sonner 2 · Motion 13 · Lucide 1.47 · React Router 8 · Base UI 1.8 · dnd-kit (core 6 + sortable 10) · Zod 4 · vite-plugin-pwa 1.3 · Vitest 5 + jsdom + Testing Library + fake-indexeddb · Biome 2.5.
