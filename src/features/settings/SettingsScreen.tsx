@@ -41,10 +41,14 @@ function parseRetroLimit(text: string): number | null {
 function RetroLimit({ value }: { value: number }) {
   const [text, setText] = useState(String(value));
   const [saved, setSaved] = useState(value);
+  // Lo que se acaba de mandar a guardar y aún no ha vuelto de la base.
+  const [pending, setPending] = useState<number | null>(null);
   // Si el valor cambia por fuera (importar una copia, borrar todo, deshacer), el campo lo refleja.
+  // El eco de un guardado propio no: si se sigue escribiendo mientras llega, pisaría lo escrito.
   if (saved !== value) {
     setSaved(value);
-    setText(String(value));
+    if (pending === null) setText(String(value));
+    else if (value === pending) setPending(null);
   }
 
   const parsed = parseRetroLimit(text);
@@ -55,7 +59,12 @@ function RetroLimit({ value }: { value: number }) {
       setText(String(value));
       return;
     }
-    if (parsed !== value) save({ retroLimitDays: parsed });
+    if (parsed === value) return;
+    setPending(parsed);
+    updateSettings({ retroLimitDays: parsed }).catch((error: unknown) => {
+      setPending(null);
+      notifyError(error);
+    });
   };
 
   return (

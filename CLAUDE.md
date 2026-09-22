@@ -363,6 +363,11 @@ Tras cualquiera: `npm run check`. Si tocas una pantalla, mírala también con `n
 - Estilo Biome: 2 espacios, comillas simples y línea de 100 caracteres. Ejecuta `npm run lint:fix` antes de hacer commit.
 - Ejecuta `npm run check` solo, sin pipes (`| tail`, `| Select-Object`…), y mira su código de salida. Si no es 0, no hagas commit ni push, aunque el fallo parezca ajeno al cambio o ya esté anotado: investígalo o detente y explícalo en el informe.
 - `src/test/setup.ts` también define `Document.prototype.focus`: `user-event` pasa `document` como `relatedTarget` si el elemento con foco se desmonta antes de pulsar otro botón, y Sonner intenta devolverle el foco al desmontarse.
+- Esperas en los tests de UI: antes de una acción que depende de lo pintado, espera a la **vista**, no a
+  la base (la base se actualiza antes de que `liveQuery` repinte). Todo test que compruebe que algo **no**
+  pasó necesita un control positivo que demuestre que el mecanismo estaba vivo y los datos cargados, nunca
+  una espera fija. Los tests que navegan con `<App />` precargan las pantallas `lazy()` con
+  `preloadLazyScreens()` (`src/test/render.tsx`). Detalle en «Pendiente».
 - Los tests de `db/` que necesitan el resto del dominio (p. ej. `pausesEffect.test.ts`) corren en Node con `fake-indexeddb`; los de UI que comprueban atajos montan `<App />` entera.
 - Para escribir archivos con contenido complejo usa la herramienta Write, no heredocs en bash: en este entorno Windows los heredocs largos fallan.
 
@@ -406,28 +411,75 @@ sobrescribir con `TEST_TODAY=YYYY-MM-DD` (mismo criterio de hora local a mediod�
   lunes, un domingo, el 30 de abril, el 1 de enero y un 29 de febrero (`TEST_TODAY=2026-06-15` /
   `2026-06-21` / `2026-04-30` / `2026-01-01` / `2028-02-29`). Un `FAIL` suelto en `SettingsScreen.test.tsx`
   durante una de las tandas no se repitió en dos reintentos con la misma fecha (ni en solitario ni dentro de
-  la suite completa): es el mismo tipo de intermitencia de la suite completa que ya afecta a `App.test.tsx`
-  (ver abajo), no algo ligado al calendario.
+  la suite completa): era la carrera de `RetroLimit` (ver abajo), no algo ligado al calendario.
 
-### `App.test.tsx`: intermitente, no reproducido esta sesión (para su propia sesión)
+### Tests de UI intermitentes: causa encontrada y cerrados (hecho, 2026-09-22)
 
-Confirmado el 2026-09-21: «arranca en Hoy y navega a Hábitos» falló una vez dentro de `npm run check`. El
-2026-09-22 se intentó reproducir a propósito, sin tocar código de producción:
+**Reproducción (Ubuntu, 8 núcleos, sin tocar nada), suite completa:**
+- 10 en reposo: 9/10. Falló `SettingsScreen` › «el límite retroactivo se guarda…» (`expected 14 to be 30`).
+- 10 con `npm run dev` y Chrome abierto en `localhost:5173`: 9/10. Falló `shortcuts` › «los números marcan
+  los hábitos…» (`expected {…(6)} to be undefined`, el de la nota anterior).
+- 10 con eso y 12 bucles de CPU ocupados (saturación artificial): 0/10, con 14 tests distintos agotando
+  `findBy` (1 s) o el límite por test (5 s). Ver «Saturación» abajo.
 
-- 5 veces `App.test.tsx` suelto: 5/5 bien.
-- 5 veces la suite completa sin servidor de desarrollo: 5/5 bien (1341/1341 cada vez).
-- 5 veces la suite completa con `npm run dev` en marcha: 5/5 bien.
-- 10 veces la suite completa con `npm run dev` **y** una pestaña de Chrome abierta en `localhost:5173`
-  (la condición exacta de la nota anterior, vía el MCP de Playwright): 9/10 bien. La que falló no fue
-  `App.test.tsx`, sino `shortcuts.test.tsx` › «los números marcan los hábitos en el orden en que se ven»
-  (`AssertionError: expected { …(6) } to be undefined`), y no se repitió al día siguiente con la misma
-  condición.
+**Causas (las dos primeras, demostradas de forma determinista con sondas temporales):**
+- **Esperar a la base en vez de a la vista.** `toggleDone` y `toggleRelapse` deciden con lo pintado (ver
+  el bug pendiente de abajo). El test esperaba a que la base tuviera el registro y volvía a pulsar `1`; el
+  repintado llega después (`liveQuery` → render) y, con la suite en paralelo, la tecla podía caer en ese
+  hueco y volver a marcar. Arreglo: esperar a la casilla (`toBeChecked()`) antes de la siguiente pulsación.
+- **El eco del propio guardado pisaba el campo (`RetroLimit`, bug de la app, corregido).** El campo se
+  sincroniza con el ajuste guardado para reflejar cambios de fuera (importar, borrar todo). El test
+  guardaba 14 y escribía «30»; el eco del 14 llegaba a mitad y dejaba «14», y el Enter no guardaba nada.
+  Ahora `RetroLimit` recuerda lo que acaba de mandar (`pending`) y su eco no toca el texto. Test de
+  regresión: «el eco de un guardado no pisa lo que se sigue escribiendo».
+- **Esperas que cruzan un `lazy()`** (`App.test`). La primera visita a una pantalla `lazy()` compila el
+  módulo en frío en Vitest: medido 60–190 ms en reposo y hasta 1.241 ms saturado, frente a 15–135 ms en
+  la segunda visita. `findBy` espera 1 s. Arreglo: `preloadLazyScreens()` (`src/test/render.tsx`) en un
+  `beforeAll` de `App.test` y `shortcuts.test`. Si añades una pantalla `lazy()`, añádela ahí.
 
-20 ejecuciones de la suite completa (más 5 sueltas de `App.test.tsx`) y un solo fallo, en un archivo
-distinto al documentado. Esto apunta a una intermitencia general de baja frecuencia bajo carga (contención
-de recursos al correr muchos archivos de UI a la vez), no a una causa propia de `App.test.tsx` ni a nada
-relacionado con el calendario. Queda sin aislar; si vuelve a verse, anotar aquí qué test fue y con qué
-condiciones, para ir acumulando evidencia.
+**Tests que pasaban en falso (comprobaban que algo no ocurrió sin esperar a nada), ya con control positivo:**
+- `shortcuts`: «sin hábito o con Ctrl», «escribiendo en un campo», «con el diálogo abierto» (pulsan luego
+  `2` sobre un segundo hábito y esperan su registro: las escrituras van en cola), «día cerrado» (avanza
+  al primer día abierto y la misma tecla sí registra) y «foco en un radio» (fuera del radio la flecha sí
+  cambia de día).
+- `TodayScreen` › «no lo ofrece si ya tiene reflexión»: las revisiones llegan por su propia consulta, así
+  que no ver el aviso no probaba nada. Ahora se ve el aviso y desaparece al escribir la reflexión.
+- `RemindersRunner`, los cuatro «no avisa…»: esperaban 150 ms fijos. Ahora un hábito de control que sí
+  debe avisar; en el de «sin permiso», un testigo de datos cargados y luego se concede el permiso.
+- Se comprobó que muerden: cada una de 8 regresiones introducidas a propósito en producción (quitar
+  Ctrl, el límite retroactivo de los atajos, el bloqueo por diálogo o por campo, la reflexión, el permiso,
+  «ya hecho» y el arreglo de `RetroLimit`) hace fallar su test.
+- Además, lecturas de la base sin esperar tras un clic, envueltas en `waitFor`: `TodayScreen` (energía,
+  que además pulsaba «Quitar» antes de que se habilitara; nota del día) y `HabitDetailScreen` (Deshacer).
+
+**Verificación:** 30/30 de la suite completa (1342/1342) con `npm run dev` y Chrome abierto, y
+10/10 con 4 bucles de CPU ocupados además. `npm run check` con código 0.
+
+**Saturación (no se arregla, a propósito):** con 12 bucles ocupados sobre 8 núcleos fallan `findBy` de 1 s
+y límites de 5 s en muchos tests (`HabitForm` tarda hasta 2,2 s en reposo; `repos.test` › «si algo
+falla…», 1,2 s) y el presupuesto de `today.test` › rendimiento (<250 ms), que mide tiempo de reloj. Subir
+esos límites sin más razón que la saturación artificial esconderría regresiones reales. Si se ven con
+carga normal, anotar aquí test, condición y mensaje.
+
+### Bug: marcar dos veces muy rápido marca en vez de desmarcar (pendiente, para su propia sesión)
+
+**Causa:** `toggleDone` y `toggleRelapse` (`features/today/actions.ts`) deciden con `view.value > 0`, es
+decir, con lo que había pintado al pulsar, y escriben un valor absoluto (`setEntryValue(…, 0 | 1)`). Si
+llega una segunda pulsación antes de que `liveQuery` repinte, las dos leen «sin marcar» y las dos escriben
+1. Afecta a la casilla, al botón de recaída y a los atajos numéricos. No afecta a `adjustValue`/`stopTimer`
+(suman dentro de la transacción), `setValue` (absoluto), el cronómetro (lee el store al momento) ni a
+ánimo, energía y nota. Arreglo probable: decidir dentro de la transacción según el registro real (un
+«conmutar» en el repo, como `adjustEntryValue`).
+
+**Reproducido con Playwright en el build de producción (Chrome 154, 2026-09-22):**
+- `1` dos veces a 4–6 ms: 5/5 mal (la base queda `value: 1`); a ≥12 ms: 0/35.
+- Doble clic en la casilla (dos `change` a 1,6–5 ms): 5/5 mal, con un único toast «Leer: hecho», sin
+  señal de la segunda acción.
+- Tecla mantenida: correcto; `parseShortcut` descarta `event.repeat`.
+- De la tecla a la casilla pintada: ~20–25 ms; con la CPU ralentizada 6× (gama baja) ~30–35 ms, y a esa
+  velocidad dos teclas a 10 ms fallan 4/4 y a ≥25 ms, 0/16.
+- Por debajo del ritmo humano (≥~50 ms entre pulsaciones) en este equipo; en un móvil con IndexedDB lento
+  la ventana puede ser mayor, sin medir.
 
 ## Limitaciones conocidas
 

@@ -1,8 +1,12 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { updateSettings } from '@/db/repos/settings';
+import { preloadLazyScreens } from '@/test/render';
 import { App } from './App';
+
+// Las pantallas `lazy()` se compilan en frío la primera vez: ver `preloadLazyScreens`.
+beforeAll(preloadLazyScreens);
 
 describe('app', () => {
   it('arranca en Hoy y navega a Hábitos', async () => {

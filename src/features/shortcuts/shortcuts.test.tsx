@@ -1,19 +1,35 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { App } from '@/app/App';
 import { getEntry } from '@/db/repos/entries';
 import { createHabit } from '@/db/repos/habits';
 import { updateSettings } from '@/db/repos/settings';
 import { addDays } from '@/domain/day';
 import { useShortcutsDialog } from '@/state/shortcutsDialog';
-import { habitInput, todayLocal } from '@/test/render';
+import { habitInput, preloadLazyScreens, todayLocal } from '@/test/render';
+
+// Las pantallas `lazy()` se compilan en frío la primera vez: ver `preloadLazyScreens`.
+beforeAll(preloadLazyScreens);
 
 beforeEach(async () => {
   window.history.pushState({}, '', '/');
   useShortcutsDialog.getState().setOpen(false);
   await updateSettings({ onboardingDone: true });
 });
+
+/**
+ * Control positivo de los tests que comprueban que una tecla no hizo nada: pulsa `2`
+ * (el segundo hábito) y espera a que se registre. Así se sabe que los atajos estaban
+ * vivos, y como las escrituras en `entries` van en cola, cualquier escritura que
+ * hubiera provocado una tecla anterior ya estaría en la base.
+ */
+async function expectShortcutsIdle(user: ReturnType<typeof userEvent.setup>, controlId: string) {
+  await user.keyboard('2');
+  await waitFor(async () =>
+    expect(await getEntry(controlId, todayLocal())).toMatchObject({ value: 1 }),
+  );
+}
 
 async function open() {
   const user = userEvent.setup();
@@ -27,22 +43,25 @@ describe('atajos de teclado en Hoy', () => {
     const leer = await createHabit(habitInput({ name: 'Leer' }));
     const correr = await createHabit(habitInput({ name: 'Correr' }));
     const user = await open();
-    await screen.findByRole('checkbox', { name: 'Leer' });
+    const leerBox = await screen.findByRole('checkbox', { name: 'Leer' });
+    const correrBox = screen.getByRole('checkbox', { name: 'Correr' });
 
     await user.keyboard('2');
-    await waitFor(async () =>
-      expect(await getEntry(correr.id, todayLocal())).toMatchObject({ value: 1 }),
-    );
+    await waitFor(() => expect(correrBox).toBeChecked());
+    expect(await getEntry(correr.id, todayLocal())).toMatchObject({ value: 1 });
     expect(await getEntry(leer.id, todayLocal())).toBeUndefined();
 
+    // Marcar y desmarcar deciden según lo que se ve: antes de volver a pulsar hay que
+    // esperar a que la casilla se pinte, no solo a que la base tenga el registro (el
+    // repintado llega después, con `liveQuery`). Ver CLAUDE.md, «Pendiente».
     await user.keyboard('1');
-    await waitFor(async () =>
-      expect(await getEntry(leer.id, todayLocal())).toMatchObject({ value: 1 }),
-    );
+    await waitFor(() => expect(leerBox).toBeChecked());
+    expect(await getEntry(leer.id, todayLocal())).toMatchObject({ value: 1 });
 
     // Pulsar otra vez desmarca.
     await user.keyboard('1');
-    await waitFor(async () => expect(await getEntry(leer.id, todayLocal())).toBeUndefined());
+    await waitFor(() => expect(leerBox).not.toBeChecked());
+    expect(await getEntry(leer.id, todayLocal())).toBeUndefined();
   });
 
   it('la numeración sigue el agrupado por momento del día, no el orden de creación', async () => {
@@ -73,19 +92,24 @@ describe('atajos de teclado en Hoy', () => {
 
   it('un número sin hábito, o con Ctrl, no hace nada', async () => {
     const leer = await createHabit(habitInput({ name: 'Leer' }));
+    const correr = await createHabit(habitInput({ name: 'Correr' }));
     const user = await open();
     await screen.findByRole('checkbox', { name: 'Leer' });
     await user.keyboard('7');
     await user.keyboard('{Control>}1{/Control}');
+    await expectShortcutsIdle(user, correr.id);
     expect(await getEntry(leer.id, todayLocal())).toBeUndefined();
   });
 
   it('escribiendo en un campo no se marca nada', async () => {
     const leer = await createHabit(habitInput({ name: 'Leer' }));
+    const correr = await createHabit(habitInput({ name: 'Correr' }));
     const user = await open();
     const note = await screen.findByRole('textbox', { name: 'Nota del día' });
     await user.type(note, '1 hora de lectura, n?');
     expect(note).toHaveValue('1 hora de lectura, n?');
+    note.blur();
+    await expectShortcutsIdle(user, correr.id);
     expect(await getEntry(leer.id, todayLocal())).toBeUndefined();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(window.location.pathname).toBe('/');
@@ -115,6 +139,17 @@ describe('atajos de teclado en Hoy', () => {
     const user = await open();
     expect(await screen.findByRole('checkbox', { name: 'Leer' })).toBeDisabled();
     await user.keyboard('1');
+
+    // Control: tres días más adelante (hace 7) el día ya se puede registrar y la misma
+    // tecla sí marca. Las escrituras van en cola, así que si la primera pulsación
+    // hubiera escrito, ya estaría en la base.
+    await user.keyboard('{ArrowRight}{ArrowRight}{ArrowRight}');
+    const open7 = addDays(todayLocal(), -7);
+    await waitFor(() => expect(window.location.search).toBe(`?dia=${open7}`));
+    const box = screen.getByRole('checkbox', { name: 'Leer' });
+    await waitFor(() => expect(box).toBeEnabled());
+    await user.keyboard('1');
+    await waitFor(async () => expect(await getEntry(leer.id, open7)).toMatchObject({ value: 1 }));
     expect(await getEntry(leer.id, addDays(todayLocal(), -10))).toBeUndefined();
   });
 
@@ -127,6 +162,12 @@ describe('atajos de teclado en Hoy', () => {
     first.focus();
     await user.keyboard('{ArrowRight}');
     expect(window.location.search).toBe('');
+
+    // Control: fuera del radio, la misma flecha sí cambia de día. La flecha movió el foco
+    // al radio siguiente, así que se suelta el que lo tenga ahora.
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    await user.keyboard('{ArrowLeft}');
+    await waitFor(() => expect(window.location.search).toBe(`?dia=${addDays(todayLocal(), -1)}`));
   });
 });
 
@@ -158,12 +199,16 @@ describe('atajos globales', () => {
 
   it('con el diálogo abierto, las teclas no actúan sobre la pantalla', async () => {
     const leer = await createHabit(habitInput({ name: 'Leer' }));
+    const correr = await createHabit(habitInput({ name: 'Correr' }));
     const user = await open();
     await screen.findByRole('checkbox', { name: 'Leer' });
     await user.keyboard('?');
     await screen.findByRole('dialog', { name: 'Atajos de teclado' });
     await user.keyboard('1');
     await user.keyboard('n');
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await expectShortcutsIdle(user, correr.id);
     expect(await getEntry(leer.id, todayLocal())).toBeUndefined();
     expect(window.location.pathname).toBe('/');
   });

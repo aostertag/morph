@@ -8,6 +8,7 @@ import { getSettings } from '@/db/repos/settings';
 import { buildBackup, parseBackup, serializeBackup } from '@/domain/backup';
 import { addDays } from '@/domain/day';
 import { type DataSet, DEFAULT_SETTINGS } from '@/domain/types';
+import { useSettings } from '@/hooks/useData';
 import { d, entry, habit } from '@/test/factories';
 import { habitInput, renderRoute, todayLocal } from '@/test/render';
 import { SettingsScreen } from './SettingsScreen';
@@ -80,6 +81,31 @@ describe('ajustes: preferencias', () => {
     await user.tab();
     expect(input).toHaveValue('30');
     expect((await getSettings()).retroLimitDays).toBe(30);
+  });
+
+  it('el eco de un guardado no pisa lo que se sigue escribiendo', async () => {
+    // Testigo que lee los mismos ajustes. Se suscribe después que la pantalla y las
+    // lecturas de IndexedDB se resuelven en orden, así que cuando pinta el 14 la pantalla
+    // ya ha recibido el suyo.
+    function SettingsProbe() {
+      const settings = useSettings();
+      return <p>{`testigo: ${settings?.retroLimitDays ?? '…'}`}</p>;
+    }
+    const { user } = renderRoute(
+      <>
+        <SettingsScreen />
+        <SettingsProbe />
+      </>,
+    );
+    const input = await screen.findByLabelText('Registrar días anteriores');
+    await user.clear(input);
+    await user.type(input, '14{Enter}');
+    // Se sigue escribiendo antes de que vuelva el eco del 14.
+    fireEvent.change(input, { target: { value: '3' } });
+    await screen.findByText('testigo: 14');
+    expect(input).toHaveValue('3');
+    await user.type(input, '{Enter}');
+    await waitFor(async () => expect((await getSettings()).retroLimitDays).toBe(3));
   });
 });
 

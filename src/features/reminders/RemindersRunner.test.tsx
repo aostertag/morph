@@ -1,7 +1,8 @@
-import { waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setEntryValue } from '@/db/repos/entries';
 import { createHabit } from '@/db/repos/habits';
+import { useHabitAnalyses } from '@/features/today/useHabitAnalyses';
 import { habitInput, renderRoute, todayLocal } from '@/test/render';
 import { RemindersRunner } from './RemindersRunner';
 
@@ -9,7 +10,7 @@ const shown: { title: string; body: string | undefined }[] = [];
 
 function stubNotification(permission: NotificationPermission) {
   class FakeNotification {
-    static permission = permission;
+    static permission: NotificationPermission = permission;
     onclick: (() => void) | null = null;
     constructor(title: string, options?: NotificationOptions) {
       shown.push({ title, body: options?.body });
@@ -17,6 +18,11 @@ function stubNotification(permission: NotificationPermission) {
     close() {}
   }
   vi.stubGlobal('Notification', FakeNotification);
+  return {
+    grant() {
+      FakeNotification.permission = 'granted';
+    },
+  };
 }
 
 beforeEach(() => {
@@ -33,6 +39,18 @@ afterEach(() => {
 
 const reminder = (time: string) => ({ time, enabled: true });
 
+/**
+ * Control positivo de los tests que comprueban que algo no avisó: un hábito pendiente
+ * cuya hora acaba de pasar y que sí debe avisar. Cuando llega su aviso, el runner ya ha
+ * evaluado los mismos datos que el hábito del test; esperar un tiempo fijo no lo
+ * garantizaba (con la máquina cargada, los datos podían tardar más).
+ */
+async function controlHabit() {
+  await createHabit(habitInput({ name: 'Control', reminder: reminder('09:55') }));
+}
+
+const CONTROL = { title: 'Control', body: 'Pendiente hoy.' };
+
 describe('recordatorios', () => {
   it('avisa de un hábito pendiente cuya hora acaba de pasar, y solo una vez', async () => {
     stubNotification('granted');
@@ -43,9 +61,10 @@ describe('recordatorios', () => {
     first.unmount();
 
     // Recargar la página el mismo día no repite el aviso.
+    await controlHabit();
     renderRoute(<RemindersRunner />);
-    await new Promise((resolve) => setTimeout(resolve, 150));
-    expect(shown).toHaveLength(1);
+    await waitFor(() => expect(shown).toContainEqual(CONTROL));
+    expect(shown).toEqual([{ title: 'Meditar', body: 'Pendiente hoy.' }, CONTROL]);
   });
 
   it('en un hábito con meta, el aviso la recuerda', async () => {
@@ -67,26 +86,43 @@ describe('recordatorios', () => {
     stubNotification('granted');
     const habit = await createHabit(habitInput({ name: 'Leer', reminder: reminder('09:50') }));
     await setEntryValue(habit.id, todayLocal(), 1);
+    await controlHabit();
     renderRoute(<RemindersRunner />);
-    await new Promise((resolve) => setTimeout(resolve, 150));
-    expect(shown).toEqual([]);
+    await waitFor(() => expect(shown).toContainEqual(CONTROL));
+    expect(shown).toEqual([CONTROL]);
   });
 
   it('no avisa sin permiso de notificaciones', async () => {
-    stubNotification('default');
+    const permission = stubNotification('default');
     await createHabit(habitInput({ name: 'Leer', reminder: reminder('09:50') }));
-    renderRoute(<RemindersRunner />);
-    await new Promise((resolve) => setTimeout(resolve, 150));
+    // Sin permiso no avisa nada, así que no cabe un hábito de control: un testigo con los
+    // mismos datos dice cuándo están cargados, y al final se concede el permiso para ver
+    // que entonces sí avisa (el hábito estaba bien preparado).
+    function DataProbe() {
+      return useHabitAnalyses(todayLocal()) ? <p>datos cargados</p> : null;
+    }
+    renderRoute(
+      <>
+        <RemindersRunner />
+        <DataProbe />
+      </>,
+    );
+    await screen.findByText('datos cargados');
     expect(shown).toEqual([]);
+
+    permission.grant();
+    window.dispatchEvent(new Event('focus'));
+    await waitFor(() => expect(shown).toEqual([{ title: 'Leer', body: 'Pendiente hoy.' }]));
   });
 
   it('no avisa de un recordatorio desactivado ni de uno que ya pasó hace mucho', async () => {
     stubNotification('granted');
     await createHabit(habitInput({ name: 'Apagado', reminder: { time: '09:50', enabled: false } }));
     await createHabit(habitInput({ name: 'Antiguo', reminder: reminder('07:00') }));
+    await controlHabit();
     renderRoute(<RemindersRunner />);
-    await new Promise((resolve) => setTimeout(resolve, 150));
-    expect(shown).toEqual([]);
+    await waitFor(() => expect(shown).toContainEqual(CONTROL));
+    expect(shown).toEqual([CONTROL]);
   });
 
   it('un hábito de días concretos que hoy no toca no avisa', async () => {
@@ -99,8 +135,9 @@ describe('recordatorios', () => {
         reminder: reminder('09:50'),
       }),
     );
+    await controlHabit();
     renderRoute(<RemindersRunner />);
-    await new Promise((resolve) => setTimeout(resolve, 150));
-    expect(shown).toEqual([]);
+    await waitFor(() => expect(shown).toContainEqual(CONTROL));
+    expect(shown).toEqual([CONTROL]);
   });
 });

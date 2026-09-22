@@ -161,9 +161,12 @@ describe('pantalla Hoy', () => {
 
       const group = await screen.findByRole('group', { name: 'Energía' });
       await user.click(within(group).getByRole('radio', { name: '2, baja' }));
-      expect(await getDayLog(todayLocal())).toMatchObject({ energy: 2 });
+      await waitFor(async () => expect(await getDayLog(todayLocal())).toMatchObject({ energy: 2 }));
 
-      await user.click(within(group).getByRole('button', { name: 'Quitar' }));
+      // «Quitar» se habilita cuando la vista ya tiene el valor.
+      const clear = within(group).getByRole('button', { name: 'Quitar' });
+      await waitFor(() => expect(clear).toBeEnabled());
+      await user.click(clear);
       await waitFor(async () => {
         expect(await getDayLog(todayLocal())).toBeUndefined();
       });
@@ -177,7 +180,9 @@ describe('pantalla Hoy', () => {
       await user.type(note, 'Día tranquilo');
       await user.click(screen.getByRole('button', { name: 'Guardar nota' }));
 
-      expect(await getDayLog(todayLocal())).toMatchObject({ note: 'Día tranquilo' });
+      await waitFor(async () =>
+        expect(await getDayLog(todayLocal())).toMatchObject({ note: 'Día tranquilo' }),
+      );
     });
 
     it('fuera del límite retroactivo solo se lee', async () => {
@@ -231,13 +236,18 @@ describe('pantalla Hoy', () => {
 
     it('no lo ofrece si esa semana ya tiene reflexión', async () => {
       await habitWithLastWeek();
-      await saveReflection(week.from, 'Ya escrita.');
       renderRoute(<TodayScreen />);
 
-      await screen.findByRole('checkbox', { name: 'Leer' });
-      expect(
-        screen.queryByRole('region', { name: 'Revisión de la semana pasada' }),
-      ).not.toBeInTheDocument();
+      // Sin reflexión se ofrece; así se sabe que las revisiones ya se han leído (llegan
+      // por su propia consulta, aparte de los hábitos) y que lo que lo retira es escribirla.
+      await screen.findByRole('region', { name: 'Revisión de la semana pasada' });
+      await saveReflection(week.from, 'Ya escrita.');
+      await waitFor(() =>
+        expect(
+          screen.queryByRole('region', { name: 'Revisión de la semana pasada' }),
+        ).not.toBeInTheDocument(),
+      );
+      expect((await getSettings()).lastReviewOffered).toBeNull();
     });
   });
 });

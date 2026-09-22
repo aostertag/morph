@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { getEntry, setEntryValue } from '@/db/repos/entries';
 import { createHabit } from '@/db/repos/habits';
@@ -95,7 +95,9 @@ describe('detalle de hábito', () => {
     expect((await getEntry(habit.id, addDays(today, -1)))?.note).toBe('Capítulo 4');
 
     await user.click(screen.getByRole('button', { name: 'Deshacer' }));
-    expect((await getEntry(habit.id, addDays(today, -1)))?.note).toBeNull();
+    await waitFor(async () =>
+      expect((await getEntry(habit.id, addDays(today, -1)))?.note).toBeNull(),
+    );
   });
 
   it('los hábitos de cantidad muestran media, máximo y total', async () => {
