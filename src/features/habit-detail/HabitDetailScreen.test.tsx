@@ -52,6 +52,31 @@ describe('detalle de hábito', () => {
     );
   });
 
+  it('la cabecera da el nombre entero, una sola vez las acciones y sin repetir el tipo', async () => {
+    const habit = await createHabit(
+      habitInput({
+        name: 'Redes sociales antes de dormir',
+        kind: 'avoid',
+        target: null,
+        frequency: { type: 'daily' },
+        timeOfDay: 'any',
+        description: 'Dejar el móvil fuera del dormitorio.',
+      }),
+    );
+    show(habit);
+
+    const title = await screen.findByRole('heading', {
+      level: 1,
+      name: 'Redes sociales antes de dormir',
+    });
+    // Se parte en líneas en vez de cortarse con puntos suspensivos.
+    expect(title.querySelector('.truncate')).toBeNull();
+    expect(screen.getAllByRole('link', { name: 'Editar' })).toHaveLength(1);
+    // El sobretítulo ya dice «A evitar»: la línea de contexto no lo repite.
+    expect(screen.getByText(/^Todos los días · desde el/)).not.toHaveTextContent('A evitar');
+    expect(screen.getByText('Dejar el móvil fuera del dormitorio.')).toBeInTheDocument();
+  });
+
   it('el heatmap se navega con el teclado y abre el día elegido', async () => {
     const habit = await habitWithHistory();
     const { user } = show(habit);

@@ -9,6 +9,7 @@ import { describeHabit } from '@/features/habits/describe';
 import { archive, unarchive } from '@/features/habits/habitActions';
 import { useCategories } from '@/hooks/useData';
 import { useToday } from '@/hooks/useToday';
+import { cx } from '@/lib/cx';
 import { formatDate, HABIT_KIND_LABEL } from '@/lib/format';
 import { ActionsMenu } from '@/ui/ActionsMenu';
 import { ButtonLink } from '@/ui/Button';
@@ -42,6 +43,8 @@ function Header({
   return (
     <ScreenHeader
       title={habit.name}
+      wrapTitle
+      actionsBelowOnMobile
       eyebrow={HABIT_KIND_LABEL[habit.kind]}
       mark={
         <>
@@ -67,17 +70,23 @@ function Header({
           />
         </>
       }
+      below={
+        (habit.description || habit.archivedOn) && (
+          <>
+            {habit.description && <p className="max-w-prose text-md">{habit.description}</p>}
+            {habit.archivedOn && (
+              <p className={cx('text-md text-text-muted', habit.description && 'mt-2')}>
+                Archivado: cuenta hasta el {formatDate(habit.archivedOn, today)}.
+              </p>
+            )}
+          </>
+        )
+      }
     >
       <p className="text-md text-text-muted">
-        {describeHabit(habit, weekStartsOn, categoryName)} · desde el{' '}
+        {describeHabit(habit, weekStartsOn, categoryName, { showAvoid: false })} · desde el{' '}
         {formatDate(habit.createdOn, today)}
       </p>
-      {habit.description && <p className="mt-2 max-w-prose text-md">{habit.description}</p>}
-      {habit.archivedOn && (
-        <p className="mt-2 text-md text-text-muted">
-          Archivado: cuenta hasta el {formatDate(habit.archivedOn, today)}.
-        </p>
-      )}
     </ScreenHeader>
   );
 }
