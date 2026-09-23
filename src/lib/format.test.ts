@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { TIME_OF_DAY_ORDER } from '@/domain/today';
 import { d } from '@/test/factories';
 import {
   describeFrequency,
@@ -13,6 +14,7 @@ import {
   formatWeek,
   formatWeekday,
   orderedWeekdays,
+  TIME_OF_DAY_DISPLAY_ORDER,
 } from './format';
 
 describe('formato', () => {
@@ -68,5 +70,19 @@ describe('formato', () => {
     expect(formatMinutes(65)).toBe('1 h 5 min');
     expect(formatElapsed(245_000)).toBe('4:05');
     expect(formatElapsed(3_729_000)).toBe('1:02:09');
+  });
+});
+
+describe('orden de presentación de "Momento del día"', () => {
+  it('es una permutación de TIME_OF_DAY_ORDER: ningún valor falta ni se repite', () => {
+    expect([...TIME_OF_DAY_DISPLAY_ORDER].sort()).toEqual([...TIME_OF_DAY_ORDER].sort());
+  });
+
+  it('pone "Cualquiera" primero, como Tipo y Frecuencia', () => {
+    expect(TIME_OF_DAY_DISPLAY_ORDER[0]).toBe('any');
+  });
+
+  it('no coincide con el orden de agrupación de Hoy (evita que se confundan)', () => {
+    expect(TIME_OF_DAY_DISPLAY_ORDER).not.toEqual(TIME_OF_DAY_ORDER);
   });
 });

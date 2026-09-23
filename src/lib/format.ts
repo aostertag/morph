@@ -124,6 +124,19 @@ export const TIME_OF_DAY_LABEL: Readonly<Record<TimeOfDay, string>> = {
   any: 'Cualquier momento',
 };
 
+/**
+ * Orden en que el formulario de hábito presenta el selector de "Momento del día":
+ * la opción por defecto (`any`) primero, igual que Tipo y Frecuencia. Solo es de
+ * presentación: `TIME_OF_DAY_ORDER` (`domain/today.ts`), que agrupa la pantalla Hoy
+ * (Mañana, Tarde, Noche y Cualquier momento al final), conserva su propio orden.
+ */
+export const TIME_OF_DAY_DISPLAY_ORDER: readonly TimeOfDay[] = [
+  'any',
+  'morning',
+  'afternoon',
+  'evening',
+];
+
 export const HABIT_KIND_LABEL: Readonly<Record<HabitKind, string>> = {
   boolean: 'Sí / no',
   quantity: 'Cantidad',

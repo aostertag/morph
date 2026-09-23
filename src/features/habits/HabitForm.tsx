@@ -4,7 +4,7 @@ import { type HabitInput, startDateRange, validateHabitInput } from '@/domain/ha
 import { buildDayView } from '@/domain/today';
 import type { Category, HabitKind, TimeOfDay } from '@/domain/types';
 import { HabitRow } from '@/features/today/HabitRow';
-import { formatDate } from '@/lib/format';
+import { formatDate, TIME_OF_DAY_DISPLAY_ORDER } from '@/lib/format';
 import { Button } from '@/ui/Button';
 import { Field, Fieldset, inputClasses } from '@/ui/Field';
 import { Segmented } from '@/ui/Segmented';
@@ -15,6 +15,14 @@ const KIND_HELP: Record<HabitKind, string> = {
   quantity: 'Tiene una meta numérica; se guarda lo que hagas aunque la superes.',
   time: 'Se mide en minutos, con cronómetro opcional.',
   avoid: 'Algo que quieres dejar. Cada día sin registrarlo es un día limpio.',
+};
+
+/** Etiquetas del selector del formulario; ver `TIME_OF_DAY_DISPLAY_ORDER` para el orden. */
+const TIME_OF_DAY_FORM_LABEL: Record<TimeOfDay, string> = {
+  any: 'Cualquiera',
+  morning: 'Mañana',
+  afternoon: 'Tarde',
+  evening: 'Noche',
 };
 
 function startDescription(
@@ -231,12 +239,10 @@ export function HabitForm({
             wrap
             value={draft.timeOfDay}
             onChange={(timeOfDay) => update({ timeOfDay })}
-            options={[
-              { value: 'morning', label: 'Mañana' },
-              { value: 'afternoon', label: 'Tarde' },
-              { value: 'evening', label: 'Noche' },
-              { value: 'any', label: 'Cualquiera' },
-            ]}
+            options={TIME_OF_DAY_DISPLAY_ORDER.map((timeOfDay) => ({
+              value: timeOfDay,
+              label: TIME_OF_DAY_FORM_LABEL[timeOfDay],
+            }))}
           />
         </Fieldset>
 
