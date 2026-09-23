@@ -12,6 +12,7 @@ export function routeTitle(pathname: string): string {
   else if (/^\/habitos\/[^/]+$/.test(path)) section = 'Detalle del hábito';
   else if (path === '/revision') section = 'Revisión semanal';
   else if (path === '/ajustes') section = 'Ajustes';
+  else if (path === '/privacidad') section = 'Privacidad';
   else section = 'Página no encontrada';
   return section === APP_NAME ? APP_NAME : `${section} / ${APP_NAME}`;
 }

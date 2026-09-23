@@ -39,4 +39,16 @@ describe('app', () => {
     expect(document.title).toBe('Ajustes / Morph');
     expect(document.getElementById('contenido')).toHaveFocus();
   });
+
+  it('el pie de Ajustes lleva a la página de privacidad', async () => {
+    await updateSettings({ onboardingDone: true });
+    window.history.pushState({}, '', '/ajustes');
+    const user = userEvent.setup();
+    render(<App />);
+    await screen.findByRole('heading', { name: 'Ajustes', level: 1 });
+
+    await user.click(screen.getByRole('link', { name: 'Privacidad' }));
+    await screen.findByRole('heading', { name: 'Privacidad', level: 1 });
+    expect(document.title).toBe('Privacidad / Morph');
+  });
 });

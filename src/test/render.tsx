@@ -48,5 +48,6 @@ export async function preloadLazyScreens(): Promise<void> {
     import('@/features/settings/SettingsScreen'),
     import('@/features/habit-detail/HabitDetailScreen'),
     import('@/features/shortcuts/ShortcutsDialog'),
+    import('@/features/privacy/PrivacyScreen'),
   ]);
 }

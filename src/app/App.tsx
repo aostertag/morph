@@ -36,6 +36,9 @@ const HabitDetailScreen = lazy(() =>
     default: m.HabitDetailScreen,
   })),
 );
+const PrivacyScreen = lazy(() =>
+  import('@/features/privacy/PrivacyScreen').then((m) => ({ default: m.PrivacyScreen })),
+);
 
 function initialResolvedTheme(): ResolvedTheme {
   return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
@@ -90,6 +93,7 @@ function AppShell() {
             <Route path="estadisticas" element={<StatsScreen />} />
             <Route path="revision" element={<ReviewScreen />} />
             <Route path="ajustes" element={<SettingsScreen />} />
+            <Route path="privacidad" element={<PrivacyScreen />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>

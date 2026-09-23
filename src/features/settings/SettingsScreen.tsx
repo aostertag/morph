@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { updateSettings } from '@/db/repos/settings';
 import { DevToolsFooter } from '@/dev/DevTools';
 import type { Weekday } from '@/domain/day';
@@ -179,6 +180,11 @@ export function SettingsScreen() {
       <footer className="mt-16 text-sm text-text-muted">
         <p>Hecho por Agustín Ostertag</p>
         <p>Versión {version}</p>
+        <p>
+          <Link to="/privacidad" className="underline underline-offset-4 hover:text-text">
+            Privacidad
+          </Link>
+        </p>
       </footer>
     </div>
   );
