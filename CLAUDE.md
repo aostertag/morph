@@ -104,6 +104,65 @@ renombrar y borrar, todo con «Deshacer».
   (`describeHabit(habit, weekStartsOn, categoryName)`): en móvil la línea se corta por el final y era
   la categoría lo que se perdía.
 
+### Cabeceras de seguridad (hecho)
+
+`public/_headers` (sintaxis de Cloudflare Pages; Vite lo copia tal cual a `dist/`, no hace falta tocar
+`vite.config.ts`). Cloudflare Pages ya pone `x-content-type-options` y `referrer-policy` por defecto; se
+fijan igual en el archivo para no depender de un default de la plataforma que puede cambiar sin avisar.
+
+- **Content-Security-Policy**, estricta porque la app no hace ninguna petición de red propia (todo vive
+  en IndexedDB local, fuente autoalojada, sin CDNs):
+  `default-src 'self'; script-src 'self' 'sha256-…'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests`.
+  - **`script-src` con hash, no `unsafe-inline`:** el único `<script>` en línea es el que aplica el tema
+    antes de pintar (`index.html`); su contenido es estático, así que se referencia por hash en vez de
+    abrir `unsafe-inline` a cualquier script. **Punto frágil, cubierto por un test:**
+    `src/lib/securityHeaders.test.ts` calcula el hash sha256 de cada `<script>` sin `src` de `index.html`
+    y falla si no aparece en `public/_headers`. Si editas ese script, recalcula el hash y pégalo en
+    `_headers` — no hace falta compilar, solo:
+    ```
+    node -e "const c=require('fs').readFileSync('index.html','utf8').match(/<script>([\s\S]*?)<\/script>/)[1];console.log('sha256-'+require('crypto').createHash('sha256').update(c,'utf8').digest('base64'))"
+    ```
+    (si hay más de un `<script>` sin `src`, calcula uno por cada uno). Sin el arreglo, `npm run check`
+    falla con un mensaje que dice exactamente esto.
+  - **`style-src` sí lleva `unsafe-inline`:** React (`style={{...}}`), Recharts y Motion escriben el
+    atributo `style` en tiempo de ejecución con valores que cambian por dato (colores, porcentajes), así
+    que no son hasheables. Es la única concesión de la política; no hay `dangerouslySetInnerHTML` ni CSS
+    generada a partir de texto libre del usuario (los colores de hábito salen de `HABIT_COLORS`, una
+    paleta fija), así que el riesgo real es bajo.
+  - `object-src 'none'`, `base-uri 'self'` y `frame-ancestors 'none'` son endurecimiento estándar (sin
+    plugins/embeds, sin `<base>`, y nada debe poder meter la app en un iframe ajeno).
+- **`X-Frame-Options: DENY`**: de respaldo para navegadores que no miran `frame-ancestors`.
+- **`Strict-Transport-Security: max-age=31536000; includeSubDomains`, sin `preload`.** Sobre
+  `habit-tracker-c6c.pages.dev` es en la práctica redundante (`.dev` entero ya fuerza HTTPS por estar
+  precargado en los navegadores), pero securityheaders.com puntúa la cabecera igual, y hará falta el día
+  que haya un dominio propio. Sin `preload` a propósito: pedirlo es difícil de revertir (hay que enviar
+  el dominio a la lista de Chrome y esperar), y solo tiene sentido decidirlo cuando exista ese dominio.
+- **`Permissions-Policy`** deshabilita todo lo que la app no usa (comprobado con grep sobre `src/`:
+  cámara, micrófono, geolocalización, USB, sensores, pagos, huella de FLoC/Topics):
+  `accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=(), browsing-topics=()`.
+- **`Cross-Origin-Opener-Policy: same-origin`**: bajo riesgo aquí porque la app no abre ventanas ni
+  popups a otros orígenes.
+- **No se añaden:** `X-XSS-Protection` (cabecera obsoleta; omitirla es la recomendación actual, incluida
+  la de securityheaders.com) ni `Cross-Origin-Embedder-Policy` (no aporta a la nota y no se verificó a
+  fondo que no rompiera nada).
+- **Verificación (2026-09-22):** `wrangler pages dev dist` se queda con el service worker en
+  `installing` para siempre en esta máquina **incluso sin ninguna cabecera nueva** (probado quitando
+  `_headers` y reproduciéndose igual), así que no sirve para probar el registro del SW en local — es un
+  problema del emulador de Miniflare, no de esta app ni de esta política. La verificación real se hizo
+  con un servidor estático mínimo que aplica el mismo `_headers` sobre `dist/` (con el MIME correcto por
+  extensión) y Playwright: onboarding completo, alta de un hábito de principio a fin (formulario,
+  marcarlo, racha, detalle con heatmap y gráfico de Recharts), Estadísticas, cambio de tema (confirma que
+  el hash del script en línea sigue funcionando: `data-theme` se aplica en la recarga sin ningún error de
+  consola), modo sin conexión (`context.setOffline(true)` + recarga, sirve desde la caché del service
+  worker), exportar e importar la copia de seguridad (con el diálogo de confirmación de Base UI),
+  exportar CSV, notificaciones (permiso + `showNotification` vía el registro del service worker) y el
+  aviso "Hay una versión nueva de la app" con su botón "Recargar" (se forzó publicando una segunda build
+  con un cambio trivial en `index.html` mientras el navegador ya tenía la primera activa, y se comprobó
+  que "Recargar" sirve de verdad la versión nueva). Cero errores de consola en todo el recorrido, con la
+  CSP puesta.
+- **Solo se puede comprobar tras publicar:** el efecto real de HSTS (si el navegador ya cacheó la
+  política) y la nota de securityheaders.com — no reproducible en local.
+
 ## Entorno
 
 El proyecto se trabaja desde dos máquinas, cada una con su propia copia del repo:
