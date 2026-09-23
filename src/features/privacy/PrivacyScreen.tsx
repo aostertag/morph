@@ -12,6 +12,14 @@ export function PrivacyScreen() {
           envía a ningún sitio.
         </p>
         <p>
+          <strong className="font-medium">Pero también puedes perderlos sin querer.</strong> Si
+          borras los datos del sitio desde el navegador, desinstalas la app o la usas en una ventana
+          privada o de incógnito, esos datos desaparecen: nadie más tiene una copia, así que
+          conviene exportar la tuya de vez en cuando. Para evitar sorpresas, instala Morph (el
+          navegador ofrece «Añadir a la pantalla de inicio» o «Instalar aplicación») y guarda una
+          copia de seguridad desde Ajustes.
+        </p>
+        <p>
           <strong className="font-medium">Sin seguimiento.</strong> La app no usa analítica, no
           muestra publicidad y no comparte datos con terceros. No hace ninguna petición a un
           servidor propio.
@@ -28,14 +36,6 @@ export function PrivacyScreen() {
             Puedes exportar, importar o borrar tus datos cuando quieras
           </strong>
           , desde Ajustes.
-        </p>
-        <p>
-          <strong className="font-medium">Pero también puedes perderlos sin querer.</strong> Si
-          borras los datos del sitio desde el navegador, desinstalas la app o la usas en una ventana
-          privada o de incógnito, esos datos desaparecen — nadie los tiene guardados en otro sitio,
-          así que no hay forma de recuperarlos. Para evitarlo, instala Morph (el navegador ofrece
-          «Añadir a la pantalla de inicio» o «Instalar aplicación») y exporta una copia de seguridad
-          de vez en cuando desde Ajustes.
         </p>
         <p>
           <strong className="font-medium">El alojamiento es Cloudflare Pages.</strong> Como
