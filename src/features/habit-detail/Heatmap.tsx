@@ -31,7 +31,7 @@ import {
  * Lado de la celda: 24 px en móvil (WCAG 2.5.8; la rejilla se desplaza en horizontal) y
  * compacta, de 12 px, en escritorio, donde el año cabe entero.
  */
-const CELL = 'size-6 lg:size-3';
+const CELL = 'size-6 min-w-6 lg:size-3 lg:min-w-3';
 
 /** Relleno de la celda: la escala de intensidad, o la de recaídas en "a evitar". */
 function fillFor(cell: HeatCell): CSSProperties {
