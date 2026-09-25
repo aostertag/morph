@@ -50,11 +50,11 @@ Todo se comprobó contra la **build de producción** (`npm run build` + `npm run
 
 ### Notas del entorno (no son defectos de la app)
 
-- El MCP de Playwright arrancaba con el canal `chrome`, que no está instalado en esta máquina. Se
+- El MCP de Playwright arrancaba con el canal `chrome`, que no estaba instalado en el entorno Windows. Se
   añadió `--browser chromium` a `.mcp.json` (tendrá efecto en la próxima sesión) y se descargó el
   Chromium que pide la versión actual (`chromium-1246`). El recorrido se hizo con scripts propios
   sobre `playwright-core`.
-- Con `launchPersistentContext`, `CacheStorage` falla en esta máquina («Failed to execute 'open' on
+- Con `launchPersistentContext`, `CacheStorage` falla en el entorno Windows («Failed to execute 'open' on
   'CacheStorage'») y el service worker no llega a instalarse. Con un contexto normal funciona. Es
   cosa del perfil de Chromium, no de la app.
 

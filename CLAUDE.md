@@ -23,7 +23,7 @@ La app se llama **Morph** (título «Hoy / Morph» vía `APP_NAME` en `app/route
 - **Excepción consciente:** el icono es un activo de marca externo a los tokens. Hoy no lleva nada prohibido por la sección 9 del SPEC (azul plano ≈ `accent`, sin gradientes); si uno futuro los llevara, la excepción vale solo para el icono, nunca para la interfaz.
 - **`theme_color` y `background_color`** del manifest siguen en `#f6f5f1` (papel): es el fondo real de la app y el de la pantalla de arranque; las variantes claro/oscuro van en las metas de `index.html`.
 - **Identificadores heredados, NO renombrar:** `DB_NAME = 'habit-tracker'` (`db/schema.ts`), `BACKUP_FORMAT = 'habit-tracker-backup'` (`domain/backup.ts`) y las claves `tracker:*` de `localStorage`. Cambiarlos dejaría sin datos a las instalaciones existentes o invalidaría las copias ya exportadas. Los archivos exportados siguen llamándose `habitos-*`.
-- **Repositorio de GitHub:** `aostertag/morph` (antes `habit-tracker`, renombrado el 2026-09-21; `origin` ya apunta a la URL nueva). No hay workflows ni referencias por texto al nombre viejo. El proyecto de Cloudflare Pages (`habit-tracker-c6c.pages.dev`) conserva su nombre y dominio; su dashboard sigue mostrando «habit-tracker» como nombre del repo, y el cambio de dominio queda para otra sesión.
+- **Repositorio de GitHub:** `aostertag/morph` (antes `habit-tracker`, renombrado; `origin` ya apunta a la URL nueva). No hay workflows ni referencias por texto al nombre viejo. El proyecto de Cloudflare Pages (`habit-tracker-c6c.pages.dev`) conserva su nombre y dominio; su dashboard sigue mostrando «habit-tracker» como nombre del repo, y el cambio de dominio queda para otra sesión.
 
 ### Fase 7 (pulido final): terminada
 
@@ -146,7 +146,7 @@ fijan igual en el archivo para no depender de un default de la plataforma que pu
   la de securityheaders.com) ni `Cross-Origin-Embedder-Policy` (no aporta a la nota y no se verificó a
   fondo que no rompiera nada).
 - **Verificación (2026-09-22):** `wrangler pages dev dist` se queda con el service worker en
-  `installing` para siempre en esta máquina **incluso sin ninguna cabecera nueva** (probado quitando
+  `installing` para siempre en el entorno donde se probó **incluso sin ninguna cabecera nueva** (probado quitando
   `_headers` y reproduciéndose igual), así que no sirve para probar el registro del SW en local — es un
   problema del emulador de Miniflare, no de esta app ni de esta política. La verificación real se hizo
   con un servidor estático mínimo que aplica el mismo `_headers` sobre `dist/` (con el MIME correcto por
@@ -177,15 +177,17 @@ fijan igual en el archivo para no depender de un default de la plataforma que pu
 
 ## Entorno
 
-El proyecto se trabaja desde dos máquinas, cada una con su propia copia del repo:
+El proyecto se trabaja desde dos entornos, cada uno con su propia copia del repo:
 
-- **Windows, PowerShell**, en `C:\Users\oster\Documents\tracker`.
-- **Ubuntu, bash**, en `/home/agustin/Documents/morph`.
+- **Windows, con PowerShell.**
+- **Linux (Ubuntu), con bash.**
+
+Claude Code trabaja dentro de la carpeta donde se abre: no dependas de rutas concretas.
 
 **Antes de empezar en cualquiera de las dos: `git pull`.** Son checkouts independientes; nada sincroniza el árbol de trabajo entre ellas salvo git.
 
 - **Las notas específicas de Windows solo valen en Windows.** Hoy hay una en Convenciones (los heredocs largos fallan en ese entorno; usa la herramienta Write). Si aparecen más peculiaridades de shell o de sistema operativo (comandos que no existen como `pkill`, reglas de cortafuegos, rutas con `\`…), documéntalas igual de acotadas: no asumas en Ubuntu algo que se descubrió en PowerShell, ni al revés.
-- **Playwright en una máquina nueva:** `npm install` no basta. El MCP (`@playwright/mcp@latest --browser chromium`, fijado en `.mcp.json`) espera el Chromium del canal `chrome-for-testing` en la versión que pida esa build (comprobado el 2026-09-21: `chromium-1246`); `npx playwright install chromium` a secas puede traer otra build (trajo `chromium-1243`) y el MCP seguirá sin arrancar. El comando correcto es el que da el propio error: `npx @playwright/mcp install-browser chrome-for-testing`. Verificado en Ubuntu; si en Windows hace falta algo más (dependencias del sistema, permisos), anótalo ahí cuando se compruebe. En el PC con Windows (donde se hizo la fase 7, antes de usar la laptop con Ubuntu), el MCP arrancaba con el canal `chrome`, que no estaba instalado allí; de eso viene el `--browser chromium` fijado en `.mcp.json`. También allí: con `launchPersistentContext`, `CacheStorage` fallaba y el service worker no llegaba a instalarse; con un contexto normal funcionaba.
+- **Playwright en una máquina nueva:** `npm install` no basta. El MCP (`@playwright/mcp@latest --browser chromium`, fijado en `.mcp.json`) espera el Chromium del canal `chrome-for-testing` en la versión que pida esa build (comprobado el 2026-09-21: `chromium-1246`); `npx playwright install chromium` a secas puede traer otra build (trajo `chromium-1243`) y el MCP seguirá sin arrancar. El comando correcto es el que da el propio error: `npx @playwright/mcp install-browser chrome-for-testing`. Verificado en Ubuntu; si en Windows hace falta algo más (dependencias del sistema, permisos), anótalo ahí cuando se compruebe. En el entorno Windows (donde se hizo la fase 7, antes de usar el de Linux), el MCP arrancaba con el canal `chrome`, que no estaba instalado allí; de eso viene el `--browser chromium` fijado en `.mcp.json`. También allí: con `launchPersistentContext`, `CacheStorage` fallaba y el service worker no llegaba a instalarse; con un contexto normal funcionaba.
 - **Node:** el mínimo es 22.12 (`engines` en `package.json`); verificado en Ubuntu con v24.21.0 el 2026-09-21.
 
 ## Stack (versiones verificadas con `npm view` el 2026-09-19)
@@ -406,7 +408,7 @@ Tras cualquiera: `npm run check`. Si tocas una pantalla, mírala también con `n
   - los tres profundos (`marino`, `ciruela`, `petroleo`) aportan profundidad solo en claro (L≈33–40 frente a ≈53 de los demás): en oscuro el mínimo de 7 obliga a L≥~71, así que se separan por tono y saturación (ΔE OKLab ≥5,4 al vecino más cercano). Se descartaron `carmesi` (5,3 del magenta en oscuro), `bosque` y `marron` (casi iguales a verde y naranja en oscuro);
   - los pasos bajos del heatmap están por debajo de 3:1, compensados con marcas, tabla alternativa y tooltips;
   - los tres pasos de recaída superan 3:1 sobre la celda vacía y sobre el fondo en ambos temas.
-- **Tamaño de la raíz por ancho:** desde 1600 px CSS, `html` pasa de 16 a 17 px (`--root-font-size-wide`, 106,25 %, en `tokens.css`; la media query está en `base.css`). Como escala, espaciado, contenedores y objetivos táctiles están en `rem`, suben juntos; los breakpoints de Tailwind (`lg` = 64rem) **no** se mueven, porque las media queries en `rem` se resuelven contra los 16 px del navegador. Por debajo de 1600 px no cambia nada. Nació de comparar el 100 % con el 110 % de zoom de Chrome en un monitor de 24″ a 1080p: el texto de 12–13 px se quedaba pequeño. Lo que sigue en píxeles a propósito: bordes (1 px), focos (2 px), radios, sombras, la barra de color (`w-0.75`, en rem, sí escala) y los iconos Lucide (`size={16|18|20}`, dentro de cajas de `size-touch` que sí escalan). Las etiquetas de Recharts llevan `fontSize: 12` en píxeles y se igualan con una regla en `base.css` (`.recharts-cartesian-axis-tick-value`, `.recharts-label` → `--text-xs`); las alturas de los gráficos (160–200 px) y los anchos del eje Y (44/48 px) siguen fijos. No hay segundo escalón para 2560 px: no se ha podido probar. Si el zoom de Chrome está al 110 % el efecto se suma (el viewport sigue por encima de 1600).
+- **Tamaño de la raíz por ancho:** desde 1600 px CSS, `html` pasa de 16 a 17 px (`--root-font-size-wide`, 106,25 %, en `tokens.css`; la media query está en `base.css`). Como escala, espaciado, contenedores y objetivos táctiles están en `rem`, suben juntos; los breakpoints de Tailwind (`lg` = 64rem) **no** se mueven, porque las media queries en `rem` se resuelven contra los 16 px del navegador. Por debajo de 1600 px no cambia nada. Nació de comparar el 100 % con el 110 % de zoom de Chrome en un monitor a 1080p: el texto de 12–13 px se quedaba pequeño. Lo que sigue en píxeles a propósito: bordes (1 px), focos (2 px), radios, sombras, la barra de color (`w-0.75`, en rem, sí escala) y los iconos Lucide (`size={16|18|20}`, dentro de cajas de `size-touch` que sí escalan). Las etiquetas de Recharts llevan `fontSize: 12` en píxeles y se igualan con una regla en `base.css` (`.recharts-cartesian-axis-tick-value`, `.recharts-label` → `--text-xs`); las alturas de los gráficos (160–200 px) y los anchos del eje Y (44/48 px) siguen fijos. No hay segundo escalón para 2560 px: no se ha podido probar. Si el zoom de Chrome está al 110 % el efecto se suma (el viewport sigue por encima de 1600).
 - **Tipografía:** IBM Plex Sans Variable autoalojada (`@fontsource-variable/ibm-plex-sans/wght.css`). Sus cifras son tabulares por diseño: las 10 miden 600 unidades, verificado con fontTools. El subconjunto no trae `tnum`, `zero` ni versalitas reales. La escala va de `text-xs` (12) a `text-4xl` (56). Las etiquetas de sección usan la utilidad `label-caps`.
 - **Espaciado:** rejilla de 4px (`--spacing: 0.25rem`), `px-gutter` (16) / `px-gutter-desktop` (32) y `min-h-touch` / `size-touch` (44px).
 - **Radios:** `sm` 3, `md` 6 y `lg` 10.
@@ -503,7 +505,7 @@ sobrescribir con `TEST_TODAY=YYYY-MM-DD` (mismo criterio de hora local a mediod�
 
 ### Tests de UI intermitentes: causa encontrada y cerrados (hecho, 2026-09-22)
 
-**Reproducción (Ubuntu, 8 núcleos, sin tocar nada), suite completa:**
+**Reproducción (Linux, 8 núcleos, sin tocar nada), suite completa:**
 - 10 en reposo: 9/10. Falló `SettingsScreen` › «el límite retroactivo se guarda…» (`expected 14 to be 30`).
 - 10 con `npm run dev` y Chrome abierto en `localhost:5173`: 9/10. Falló `shortcuts` › «los números marcan
   los hábitos…» (`expected {…(6)} to be undefined`, el de la nota anterior).
