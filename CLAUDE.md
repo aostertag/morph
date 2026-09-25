@@ -163,6 +163,18 @@ fijan igual en el archivo para no depender de un default de la plataforma que pu
 - **Solo se puede comprobar tras publicar:** el efecto real de HSTS (si el navegador ya cacheó la
   política) y la nota de securityheaders.com — no reproducible en local.
 
+### Página de privacidad (hecha)
+
+`/privacidad` (`features/privacy/PrivacyScreen.tsx`, con `PrivacyScreen.test.tsx`), enlazada desde el pie de Ajustes (`SettingsScreen.tsx`); su título sale de `routeTitle.ts`. Es texto estático. Lo que afirma:
+
+- No hay cuentas ni servidor propio, y la app no hace peticiones de red propias.
+- No hay analítica, publicidad ni terceros.
+- Los datos viven solo en IndexedDB y `localStorage` de ese navegador y dispositivo; cada navegador y cada dispositivo guardan lo suyo por separado. Avisa de que se pierden si se borran los datos del sitio, se desinstala la app o se usa una ventana privada, y recomienda instalar y exportar una copia.
+- Se puede exportar, importar o borrar desde Ajustes.
+- El alojamiento es Cloudflare Pages, que como cualquier servidor web registra datos técnicos de los visitantes; eso ocurre fuera de la app y no tiene relación con los hábitos.
+
+**Advertencia:** si un cambio futuro añade una petición de red, analítica, un recurso externo o cualquier envío de datos fuera del dispositivo, hay que actualizar esta página **antes**, porque hoy promete lo contrario a quien la usa. La CSP de `public/_headers` (`connect-src 'self'`) ya bloquearía la mayoría, pero no sustituye a revisar el texto.
+
 ## Entorno
 
 El proyecto se trabaja desde dos máquinas, cada una con su propia copia del repo:
@@ -430,11 +442,24 @@ Tras cualquiera: `npm run check`. Si tocas una pantalla, mírala también con `n
   la base (la base se actualiza antes de que `liveQuery` repinte). Todo test que compruebe que algo **no**
   pasó necesita un control positivo que demuestre que el mecanismo estaba vivo y los datos cargados, nunca
   una espera fija. Los tests que navegan con `<App />` precargan las pantallas `lazy()` con
-  `preloadLazyScreens()` (`src/test/render.tsx`). Detalle en «Pendiente».
+  `preloadLazyScreens()` (`src/test/render.tsx`). Detalle en «Incidencias resueltas (historial)».
 - Los tests de `db/` que necesitan el resto del dominio (p. ej. `pausesEffect.test.ts`) corren en Node con `fake-indexeddb`; los de UI que comprueban atajos montan `<App />` entera.
 - Para escribir archivos con contenido complejo usa la herramienta Write, no heredocs en bash: en este entorno Windows los heredocs largos fallan.
 
-## Pendiente (para su propia sesión)
+## Pendiente
+
+Trabajo real por hacer, cada punto para su propia sesión.
+
+- **Tema claro con un blanco más cálido, tipo hueso.** Antes de aplicar nada, pedir opciones con su hex y su contraste.
+- **Mejorar los estados vacíos de Hoy, Estadísticas y Hábitos**, que se sienten muy vacíos sin hábitos, sin romper la sobriedad.
+- **Explicar en la interfaz que el día en curso no cuenta en las estadísticas.** Hoy una tabla puede decir «martes 100 % (3 d)» mientras el martes en curso va al 60 %, y nada lo aclara. Resolverlo junto con los estados vacíos.
+- **Capturas del README** (Hoy y Estadísticas con datos de ejemplo, en `docs/`), pendientes desde la portada.
+- **Inventario de animaciones sutiles:** proponer dónde una transición corta mejora la comprensión, sin implementar hasta que el usuario elija.
+- **Cambiar el nombre del proyecto en Cloudflare Pages** para tener una dirección más corta. Los datos de los usuarios no viajan al cambiar de dominio (IndexedDB y `localStorage` son por origen): hay que avisarles de que exporten su copia antes.
+
+## Incidencias resueltas (historial)
+
+Es historial, no trabajo por hacer: causas y trampas de problemas ya cerrados, conservadas porque sirven para el futuro.
 
 ### Los tests de UI ya no dependen del calendario (hecho, 2026-09-22)
 
@@ -570,3 +595,5 @@ worker* y borrar las cachés antes de repetir la verificación, o abrir en una v
 - Los recordatorios del navegador solo se disparan con la app abierta o activa, porque no hay servidor push. Se dice en Ajustes.
 - Los subconjuntos cirílico, griego y vietnamita de la fuente no se precachean: sin conexión, un texto en esos alfabetos usaría la fuente del sistema.
 - Las pausas creadas por `unarchiveHabit` pueden solaparse con una pausa del mismo hábito creada a mano; el análisis las une, pero al editar una de las dos el formulario avisa del solape.
+- Selector de color a 320 px: queda una celda suelta en la tercera fila (6+6+1). A 360 y 375 px son 7+6.
+- El día en curso no cuenta en las estadísticas (solo días cerrados), y la interfaz no lo aclara: una tabla puede decir «martes 100 % (3 d)» mientras el martes en curso va al 60 %. Ver el pendiente «Explicar que el día en curso no cuenta».

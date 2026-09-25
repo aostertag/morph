@@ -1,5 +1,7 @@
 # SPEC: Morph
 
+> Esta es la especificación original del proyecto. Lo construido ha ido más allá en varias cosas (categorías, hábitos que empiezan en el futuro, pausas en Ajustes, página de privacidad, cabeceras de seguridad). El estado actual está en `CLAUDE.md`.
+
 ## 0. Cómo trabajar este proyecto
 
 Vas a construir una aplicación web de seguimiento de hábitos con calidad de producto terminado. No es una demo ni un prototipo: tiene que sentirse sólida, rápida y bien pensada en cada detalle, y sobre todo debe entregar un recuento profundo del progreso con estadísticas que digan algo útil.
