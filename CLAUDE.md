@@ -25,6 +25,12 @@ La app se llama **Morph** (título «Hoy / Morph» vía `APP_NAME` en `app/route
 - **Identificadores heredados, NO renombrar:** `DB_NAME = 'habit-tracker'` (`db/schema.ts`), `BACKUP_FORMAT = 'habit-tracker-backup'` (`domain/backup.ts`) y las claves `tracker:*` de `localStorage`. Cambiarlos dejaría sin datos a las instalaciones existentes o invalidaría las copias ya exportadas. Los archivos exportados siguen llamándose `habitos-*`.
 - **Repositorio de GitHub:** `aostertag/morph` (antes `habit-tracker`, renombrado; `origin` ya apunta a la URL nueva). No hay workflows ni referencias por texto al nombre viejo. El proyecto de Cloudflare Pages (`habit-tracker-c6c.pages.dev`) conserva su nombre y dominio; su dashboard sigue mostrando «habit-tracker» como nombre del repo, y el cambio de dominio queda para otra sesión.
 
+### Licencia y contribuciones
+
+- **Licencia MIT** (`LICENSE`, © 2026 Agustín Ostertag, sin correo) y `"license": "MIT"` en `package.json`. Se mantiene `"private": true`: solo evita publicar en npm por error, no afecta a la visibilidad del repositorio.
+- **Postura sobre contribuciones:** proyecto personal. Los reportes de errores (issues) son bienvenidos; no se buscan contribuciones de código por ahora. Lo dice el README, y no hay que cambiarlo sin que el usuario lo decida.
+- El README es la portada para quien llega de fuera: arriba, una o dos frases directas; el detalle de funciones después; tono sobrio. No cites rutas de máquinas ni datos personales salvo el nombre.
+
 ### Fase 7 (pulido final): terminada
 
 Recorrido contra las secciones 9 y 10 de `SPEC.md` y corrección de los 12 hallazgos H1–H12. El detalle,
