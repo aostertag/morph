@@ -4,7 +4,7 @@ import { canLogOn } from '@/domain/evaluate';
 import { dayProgress, groupByTimeOfDay, viewForDay } from '@/domain/today';
 import { Onboarding } from '@/features/onboarding/Onboarding';
 import { ReviewPrompt } from '@/features/review/ReviewPrompt';
-import { useDayLog, useReviews } from '@/hooks/useData';
+import { useDayLog, useDayLogs, useReviews } from '@/hooks/useData';
 import { useToday } from '@/hooks/useToday';
 import { formatDate, formatRelativeDay, TIME_OF_DAY_LABEL } from '@/lib/format';
 import { ButtonLink } from '@/ui/Button';
@@ -34,11 +34,13 @@ export function TodayScreen() {
   const data = useHabitAnalyses(today);
   const log = useDayLog(day);
   const reviews = useReviews();
+  const dayLogs = useDayLogs();
 
-  if (!data) return null;
+  if (!data || !dayLogs) return null;
 
   const { analyses, settings, hasHabits, upcoming } = data;
-  if (!settings.onboardingDone && !hasHabits) return <Onboarding />;
+  // Quien ya tiene ánimo, energía o nota guardados no está empezando: no se le enseña el onboarding.
+  if (!settings.onboardingDone && !hasHabits && dayLogs.length === 0) return <Onboarding />;
   const views = analyses.map((a) => viewForDay(a, day)).filter((v) => v.scheduled);
   const progress = dayProgress(views);
   const groups = groupByTimeOfDay(views);

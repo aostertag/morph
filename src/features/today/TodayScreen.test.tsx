@@ -1,5 +1,6 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { EMPTY_DATA, restoreSnapshot } from '@/db/repos/dataset';
 import { getDayLog, updateDayLog } from '@/db/repos/dayLogs';
 import { getEntry, setEntryValue } from '@/db/repos/entries';
 import { archiveHabit, createHabit } from '@/db/repos/habits';
@@ -259,6 +260,27 @@ describe('pantalla Hoy', () => {
   });
 
   describe('sin hábitos', () => {
+    it('con un registro del día guardado no se enseña el onboarding aunque no se haya completado', async () => {
+      await updateDayLog(todayLocal(), { mood: 4, note: 'Ya empecé' });
+      expect((await getSettings()).onboardingDone).toBe(false);
+      renderRoute(<TodayScreen />);
+
+      expect(await screen.findByRole('heading', { name: 'Cómo fue el día' })).toBeInTheDocument();
+      expect(screen.getByText('Todavía no hay hábitos.')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Saltar introducción' })).not.toBeInTheDocument();
+    });
+
+    it('«Borrar todo» vuelve a activar el onboarding aunque hubiera registros del día', async () => {
+      await updateDayLog(todayLocal(), { note: 'Se irá' });
+      await restoreSnapshot({ data: EMPTY_DATA, settings: null });
+      renderRoute(<TodayScreen />);
+
+      expect(
+        await screen.findByRole('button', { name: 'Saltar introducción' }),
+      ).toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'Cómo fue el día' })).not.toBeInTheDocument();
+    });
+
     it('el registro del día sigue visible junto al estado vacío y se puede editar', async () => {
       await updateSettings({ onboardingDone: true });
       await updateDayLog(todayLocal(), { mood: 4, note: 'Sigue aquí' });
