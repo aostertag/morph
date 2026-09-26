@@ -380,6 +380,7 @@ Tras cualquiera: `npm run check`. Si tocas una pantalla, mírala también con `n
 - **Hábitos "a evitar":** solo admiten frecuencia diaria o días concretos. Un registro es una recaída.
 - **Retroactivo:** `settings.retroLimitDays` (7 por defecto). No se puede registrar antes de `createdOn` ni después de `archivedOn`. Para rellenar días anteriores se puede adelantar la fecha de inicio, al crear y al editar (al editar, nunca después del primer registro).
 - **Archivar:** `archivedOn: LocalDay` es el último día que cuenta. Es hoy si hoy ya tiene registro; si no, ayer (`archiveDayFor`). Al restaurar se crea una pausa del hábito (nota "Archivado") que cubre el hueco, para que esos días no cuenten como fallados (`unarchiveGap`). Deshacer la restauración borra esa pausa.
+- **Registro del día sin hábitos:** ánimo, energía y nota no pertenecen a ningún hábito. `TodayScreen` pinta `DayLogPanel` siempre (salvo Onboarding), debajo del estado vacío. `deleteHabit`/`archiveHabit` nunca tocan `dayLogs` (`db/repos.test.ts`), la copia los incluye sin hábitos (`db/dataset.test.ts`) y flechas y límite retroactivo funcionan igual (`TodayScreen.test.tsx`). Solo «Borrar todo» los elimina.
 - **Progreso del día (Hoy):**
   - Cuentan los hábitos programados y no pausados.
   - **Los hábitos "a evitar" no cuentan:** no son tareas.

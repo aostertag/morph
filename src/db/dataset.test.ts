@@ -120,6 +120,32 @@ describe('atomicidad: si la escritura falla, no cambia nada', () => {
   });
 });
 
+describe('registros del día sin hábitos', () => {
+  it('la copia de seguridad los incluye, se valida y se restaura sin ningún hábito', async () => {
+    const data: DataSet = {
+      ...EMPTY_DATA,
+      dayLogs: [dayLog('2026-02-01', 4, 2, 'Nota'), dayLog('2026-02-03', null, 5)],
+    };
+    await replaceAllData(data, DEFAULT_SETTINGS);
+    expect(await db.habits.count()).toBe(0);
+
+    const snapshot = await readSnapshot();
+    expect(snapshot.data.habits).toHaveLength(0);
+    expect(snapshot.data.dayLogs).toEqual(data.dayLogs);
+
+    const text = serializeBackup(
+      buildBackup(snapshot.data, snapshot.settings ?? DEFAULT_SETTINGS, new Date()),
+    );
+    const parsed = parseBackup(text);
+    if (!parsed.ok) throw new Error(parsed.errors.join(' | '));
+    expect(parsed.backup.data.dayLogs).toEqual(data.dayLogs);
+
+    await Promise.all(db.tables.map((table) => table.clear()));
+    await replaceAllData(parsed.backup.data, parsed.backup.settings);
+    expect((await readSnapshot()).data.dayLogs).toEqual(data.dayLogs);
+  });
+});
+
 describe('deshacer una restauración', () => {
   it('restaurar devuelve el estado anterior y volver a restaurarlo lo recupera', async () => {
     await replaceAllData(sample(), { ...DEFAULT_SETTINGS, theme: 'dark' });

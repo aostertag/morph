@@ -133,9 +133,8 @@ export function TodayScreen() {
           </>
         )}
 
-        {hasHabits && (
-          <DayLogPanel day={day} today={today} log={log ?? undefined} locked={tooOld} />
-        )}
+        {/* Ánimo, energía y nota no pertenecen a ningún hábito: se ven y se editan aunque no haya. */}
+        <DayLogPanel day={day} today={today} log={log ?? undefined} locked={tooOld} />
       </div>
 
       {hasHabits && (

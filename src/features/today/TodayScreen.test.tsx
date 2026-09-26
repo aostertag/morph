@@ -2,7 +2,7 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { getDayLog, updateDayLog } from '@/db/repos/dayLogs';
 import { getEntry, setEntryValue } from '@/db/repos/entries';
-import { createHabit } from '@/db/repos/habits';
+import { archiveHabit, createHabit } from '@/db/repos/habits';
 import { saveReflection } from '@/db/repos/reviews';
 import { getSettings, updateSettings } from '@/db/repos/settings';
 import { addDays } from '@/domain/day';
@@ -255,6 +255,64 @@ describe('pantalla Hoy', () => {
       expect(await screen.findByText(/Ánimo: muy bueno/)).toBeInTheDocument();
       expect(screen.getByText('Buen día')).toBeInTheDocument();
       expect(screen.queryByRole('group', { name: 'Ánimo' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('sin hábitos', () => {
+    it('el registro del día sigue visible junto al estado vacío y se puede editar', async () => {
+      await updateSettings({ onboardingDone: true });
+      await updateDayLog(todayLocal(), { mood: 4, note: 'Sigue aquí' });
+      const { user } = renderRoute(<TodayScreen />);
+
+      expect(await screen.findByText('Todavía no hay hábitos.')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Crear hábito' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Cómo fue el día' })).toBeInTheDocument();
+      const note = await screen.findByRole('textbox', { name: 'Nota del día' });
+      await waitFor(() => expect(note).toHaveValue('Sigue aquí'));
+      expect(screen.getByRole('radio', { name: '4, bueno' })).toBeChecked();
+
+      await user.click(screen.getByRole('radio', { name: '2, baja' }));
+      await waitFor(async () => expect(await getDayLog(todayLocal())).toMatchObject({ energy: 2 }));
+    });
+
+    it('con las flechas se ve la nota de días anteriores y el límite retroactivo se respeta', async () => {
+      await updateSettings({ onboardingDone: true, retroLimitDays: 2 });
+      const today = todayLocal();
+      await updateDayLog(addDays(today, -1), { note: 'Ayer' });
+      await updateDayLog(addDays(today, -3), { mood: 5, note: 'Hace tres días' });
+      const { user } = renderRoute(<TodayScreen />);
+      await screen.findByText('Todavía no hay hábitos.');
+
+      // Hoy: editable.
+      await screen.findByRole('textbox', { name: 'Nota del día' });
+
+      // Ayer: dentro del límite, editable y con su nota.
+      await user.keyboard('{ArrowLeft}');
+      expect(await screen.findByRole('textbox', { name: 'Nota del día' })).toHaveValue('Ayer');
+
+      // Hace dos días: en el límite, editable y vacío. Control positivo de que la flecha avanza.
+      await user.keyboard('{ArrowLeft}');
+      await screen.findByRole('button', { name: 'Hoy' });
+      await waitFor(() =>
+        expect(screen.getByRole('textbox', { name: 'Nota del día' })).toHaveValue(''),
+      );
+
+      // Hace tres días: pasado el límite, solo lectura con lo guardado.
+      await user.keyboard('{ArrowLeft}');
+      expect(await screen.findByText(/Este día es de solo lectura/)).toBeInTheDocument();
+      expect(screen.getByText('Hace tres días')).toBeInTheDocument();
+      expect(screen.getByText(/Ánimo: muy bueno/)).toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: 'Nota del día' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('group', { name: 'Ánimo' })).not.toBeInTheDocument();
+    });
+
+    it('con todos los hábitos archivados el registro del día sigue disponible', async () => {
+      const habit = await createHabit(
+        habitInput({ name: 'Leer', createdOn: addDays(todayLocal(), -5) }),
+      );
+      await archiveHabit(habit.id, todayLocal());
+      renderRoute(<TodayScreen />);
+      expect(await screen.findByRole('textbox', { name: 'Nota del día' })).toBeInTheDocument();
     });
   });
 

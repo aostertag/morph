@@ -153,6 +153,35 @@ describe('hábitos', () => {
     expect(await entriesForHabit(h.id)).toHaveLength(1);
     expect(await listPauses()).toHaveLength(1);
   });
+
+  it('eliminar hábitos no toca ningún registro del día, ni siquiera al quedarse sin hábitos', async () => {
+    const h = await createHabit(input());
+    const other = await createHabit(input({ name: 'Otro' }));
+    await updateDayLog(d('2026-01-01'), { mood: 4, energy: 2, note: 'Nota' });
+    await updateDayLog(d('2026-01-02'), { mood: 1 });
+    const before = await db.dayLogs.toArray();
+    expect(before).toHaveLength(2);
+
+    const deleted = await deleteHabit(h.id);
+    expect(await db.dayLogs.toArray()).toEqual(before);
+    await deleteHabit(other.id);
+    expect(await db.habits.count()).toBe(0);
+    expect(await db.dayLogs.toArray()).toEqual(before);
+
+    // Deshacer devuelve el hábito y los registros del día siguen tal cual.
+    if (!deleted) throw new Error('esperaba un hábito eliminado');
+    await restoreHabit(deleted);
+    expect(await getHabit(h.id)).toEqual(h);
+    expect(await db.dayLogs.toArray()).toEqual(before);
+  });
+
+  it('archivar todos los hábitos tampoco toca los registros del día', async () => {
+    const h = await createHabit(input({ createdOn: d('2026-01-01') }));
+    await updateDayLog(d('2026-01-05'), { mood: 3, note: 'Nota' });
+    const before = await db.dayLogs.toArray();
+    await archiveHabit(h.id, d('2026-01-20'));
+    expect(await db.dayLogs.toArray()).toEqual(before);
+  });
 });
 
 describe('registros', () => {
