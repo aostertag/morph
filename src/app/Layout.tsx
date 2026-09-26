@@ -1,8 +1,9 @@
 import { ChartColumn, CircleCheck, ListChecks, Settings } from 'lucide-react';
 import { type RefObject, useEffect, useRef } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router';
+import { NavLink, Outlet, useLocation, useNavigationType } from 'react-router';
 import { cx } from '@/lib/cx';
 import { routeTitle } from './routeTitle';
+import { readScroll, writeScroll } from './scrollMemory';
 
 const NAV = [
   { to: '/', label: 'Hoy', icon: CircleCheck, end: true },
@@ -59,9 +60,95 @@ function useRouteAnnouncement(main: RefObject<HTMLElement | null>): void {
   }, [pathname, main]);
 }
 
+/** La carga actual es una recarga o una vuelta atrás desde otro sitio (no una visita nueva). */
+function isReload(): boolean {
+  const [nav] = performance.getEntriesByType('navigation');
+  const kind = (nav as PerformanceNavigationTiming | undefined)?.type;
+  return kind === 'reload' || kind === 'back_forward';
+}
+
+/**
+ * Posición de desplazamiento entre pantallas. Una navegación del cliente no recarga la
+ * página, así que sin esto el `scrollY` de la pantalla anterior se hereda y el navegador
+ * lo recorta al alto de la nueva (Ajustes al final → Privacidad abría abajo).
+ *
+ * - Ir a otra ruta (enlace, pestaña, `navigate`) empieza arriba.
+ * - Los cambios que solo tocan la URL de búsqueda (`?dia=`, rango) no mueven nada.
+ * - Atrás/adelante (`POP`) recupera la posición guardada de esa entrada del historial. Se
+ *   hace a mano: la restauración nativa pierde la carrera contra las pantallas `lazy()`,
+ *   que aún no existen (documento corto) cuando el navegador intenta restaurar.
+ *
+ * La posición se guarda al **iniciar** la navegación (clic, tecla o `popstate`, en fase de
+ * captura, antes de que el router cambie nada), no escuchando `scroll`: al montarse la
+ * pantalla nueva el documento se encoge y el navegador recorta el desplazamiento —a 0
+ * incluso—, y ese evento llegaba a pisar lo guardado antes de limpiar el listener.
+ */
+function useRouteScroll(): void {
+  const { pathname, key } = useLocation();
+  const type = useNavigationType();
+  const previous = useRef<string | null>(null);
+  const current = useRef({ key, pathname });
+  current.current = { key, pathname };
+  const restoring = useRef(false);
+
+  useEffect(() => {
+    if (typeof history !== 'undefined') history.scrollRestoration = 'manual';
+    const snapshot = () => {
+      // Mientras se restaura, el `scrollY` es parcial: lo guardado sigue siendo el objetivo.
+      if (!restoring.current)
+        writeScroll(current.current.key, current.current.pathname, window.scrollY);
+    };
+    const events = ['click', 'keydown', 'popstate', 'pagehide'] as const;
+    for (const ev of events) window.addEventListener(ev, snapshot, { capture: true });
+    return () => {
+      for (const ev of events) window.removeEventListener(ev, snapshot, { capture: true });
+    };
+  }, []);
+
+  useEffect(() => {
+    const firstLoad = previous.current === null;
+    const changedRoute = !firstLoad && previous.current !== pathname;
+    previous.current = pathname;
+    const fresh = type !== 'POP' || (firstLoad && !isReload());
+    const target = fresh ? (changedRoute ? 0 : null) : readScroll(key, pathname);
+    if (target === null) return;
+
+    window.scrollTo({ top: target, behavior: 'instant' });
+    if (target === 0) return;
+
+    // La pantalla puede tardar en tener alto (carga `lazy()`, datos): se reintenta unos instantes.
+    restoring.current = true;
+    const until = performance.now() + 1500;
+    let frame = 0;
+    const settle = () => {
+      if (Math.abs(window.scrollY - target) < 2 || performance.now() > until) {
+        restoring.current = false;
+        return;
+      }
+      if (document.documentElement.scrollHeight - window.innerHeight >= target) {
+        window.scrollTo({ top: target, behavior: 'instant' });
+      }
+      frame = requestAnimationFrame(settle);
+    };
+    frame = requestAnimationFrame(settle);
+    // Si la persona se pone a desplazar, se deja de forzar.
+    const stop = () => {
+      cancelAnimationFrame(frame);
+      restoring.current = false;
+    };
+    const inputs = ['wheel', 'touchstart', 'keydown'] as const;
+    for (const ev of inputs) window.addEventListener(ev, stop, { once: true, passive: true });
+    return () => {
+      stop();
+      for (const ev of inputs) window.removeEventListener(ev, stop);
+    };
+  }, [pathname, key, type]);
+}
+
 export function Layout() {
   const main = useRef<HTMLElement>(null);
   useRouteAnnouncement(main);
+  useRouteScroll();
   return (
     <div className="min-h-dvh lg:flex">
       <a

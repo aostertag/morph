@@ -72,6 +72,9 @@ if (!window.matchMedia) {
     }) as MediaQueryList;
 }
 
+// jsdom no implementa `window.scrollTo` y avisa por consola; los tests que lo comprueban lo espían.
+window.scrollTo = () => {};
+
 // Recharts mide su contenedor con ResizeObserver, que jsdom no trae.
 if (!globalThis.ResizeObserver) {
   globalThis.ResizeObserver = class {
