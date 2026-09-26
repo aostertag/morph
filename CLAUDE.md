@@ -31,6 +31,14 @@ La app se llama **Morph** (título «Hoy / Morph» vía `APP_NAME` en `app/route
 - **Postura sobre contribuciones:** proyecto personal. Los reportes de errores (issues) son bienvenidos; no se buscan contribuciones de código por ahora. Lo dice el README, y no hay que cambiarlo sin que el usuario lo decida.
 - El README es la portada para quien llega de fuera: arriba, una o dos frases directas; el detalle de funciones después; tono sobrio. No cites rutas de máquinas ni datos personales salvo el nombre.
 
+### Capturas del README (hechas)
+
+`docs/hoy.png`, `docs/detalle-habito.png` y `docs/estadisticas.png` (tema oscuro, 1280 px, versionadas; `docs/` no está ignorado). El README las enlaza con rutas relativas justo después de la portada.
+
+- **Cómo regenerarlas:** el botón «Generar datos de ejemplo» solo existe con `npm run dev` (`import.meta.env.DEV`). Se generan en dev, se exporta la copia desde Ajustes y se importa en el build de producción (`npm run build` + `npm run preview`) desde un contexto de Playwright limpio y con el service worker bloqueado (ver la trampa de `npm run preview`). Los datos dependen de la fecha del día.
+- **Cómo se tomaron:** Hoy a 1280×912 con Ejercicio marcado, Caminar y Beber agua sumados y el aviso de revisión descartado; detalle de «Meditar» a 1280×1600; Estadísticas con rango personalizado (`?rango=personalizado&desde=…&hasta=…`, del primer día de datos a hoy), que da más correlaciones que el trimestre y no deja meses vacíos como «Este año». La altura del viewport se ajusta al contenido para no cortar nada.
+- Si cambia el diseño, hay que rehacerlas: el README las muestra como estado actual.
+
 ### Fase 7 (pulido final): terminada
 
 Recorrido contra las secciones 9 y 10 de `SPEC.md` y corrección de los 12 hallazgos H1–H12. El detalle,
@@ -461,7 +469,6 @@ Trabajo real por hacer, cada punto para su propia sesión.
 - **Tema claro con un blanco más cálido, tipo hueso.** Antes de aplicar nada, pedir opciones con su hex y su contraste.
 - **Mejorar los estados vacíos de Hoy, Estadísticas y Hábitos**, que se sienten muy vacíos sin hábitos, sin romper la sobriedad.
 - **Explicar en la interfaz que el día en curso no cuenta en las estadísticas.** Hoy una tabla puede decir «martes 100 % (3 d)» mientras el martes en curso va al 60 %, y nada lo aclara. Resolverlo junto con los estados vacíos.
-- **Capturas del README** (Hoy y Estadísticas con datos de ejemplo, en `docs/`), pendientes desde la portada.
 - **Inventario de animaciones sutiles:** proponer dónde una transición corta mejora la comprensión, sin implementar hasta que el usuario elija.
 - **Cambiar el nombre del proyecto en Cloudflare Pages** para tener una dirección más corta. Los datos de los usuarios no viajan al cambiar de dominio (IndexedDB y `localStorage` son por origen): hay que avisarles de que exporten su copia antes.
 

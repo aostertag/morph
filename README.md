@@ -12,6 +12,26 @@
     </a>
 </div>
 
+<p align="center">
+  <img src="docs/hoy.png" alt="Pantalla Hoy de Morph en tema oscuro, con los hábitos del día, el progreso y las rachas activas" width="720">
+  <br>
+  <sub>Hoy: los hábitos del día agrupados por momento, el progreso y las rachas activas.</sub>
+</p>
+
+<p align="center">
+  <img src="docs/detalle-habito.png" alt="Detalle de un hábito de meditación con calendario de actividad, evolución semanal, hitos y cifras" width="720">
+  <br>
+  <sub>Detalle de un hábito: calendario de actividad, evolución, hitos y cifras.</sub>
+</p>
+
+<p align="center">
+  <img src="docs/estadisticas.png" alt="Estadísticas de seis meses con consistencia por hábito, categorías y correlaciones" width="720">
+  <br>
+  <sub>Estadísticas: consistencia por hábito y categoría, y correlaciones con el ánimo y la energía.</sub>
+</p>
+
+*Capturas con los datos de ejemplo de desarrollo.*
+
 ## Qué es
 
 Morph es una aplicación web para registrar hábitos y ver cómo evolucionan. Está pensada para quien quiere llevar el seguimiento de forma sencilla y sin darle sus datos a nadie. Se puede instalar como app (PWA) y funciona sin conexión.
