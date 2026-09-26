@@ -3,6 +3,8 @@ import { ScreenHeader } from '@/ui/ScreenHeader';
 export function PrivacyScreen() {
   return (
     <div className="max-w-list">
+      {/* Identidad de la página: el título ya nombra la pantalla, así que el icono es mudo (alt vacío). */}
+      <img src="/pwa-192.png" alt="" width={64} height={64} className="block size-16 rounded-md" />
       <ScreenHeader title="Privacidad" />
       <div className="flex max-w-prose flex-col gap-4 text-md">
         <p>
