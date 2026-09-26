@@ -12,6 +12,20 @@
     </a>
 </div>
 
+## Qué es
+
+Morph es una aplicación web para registrar hábitos y ver cómo evolucionan. Está pensada para quien quiere llevar el seguimiento de forma sencilla y sin darle sus datos a nadie. Se puede instalar como app (PWA) y funciona sin conexión.
+
+## Qué incluye
+
+- Hábitos de cuatro tipos: sí/no, cantidad, tiempo y «a evitar».
+- Frecuencia diaria, en días concretos, X veces por semana o X veces por mes.
+- Rachas con comodines, pausas y registro de días anteriores dentro de un límite configurable.
+- Detalle de cada hábito con calendario de actividad, métricas e hitos.
+- Estadísticas globales, comparación entre períodos y registro de ánimo y energía con correlaciones.
+- Revisión semanal con reflexión escrita.
+- Recordatorios (con la app abierta o activa), atajos de teclado y tema claro y oscuro.
+
 <p align="center">
   <img src="docs/hoy.png" alt="Pantalla Hoy de Morph en tema oscuro, con los hábitos del día, el progreso y las rachas activas" width="720">
   <br>
@@ -31,20 +45,6 @@
 </p>
 
 *Capturas con los datos de ejemplo de desarrollo.*
-
-## Qué es
-
-Morph es una aplicación web para registrar hábitos y ver cómo evolucionan. Está pensada para quien quiere llevar el seguimiento de forma sencilla y sin darle sus datos a nadie. Se puede instalar como app (PWA) y funciona sin conexión.
-
-## Qué incluye
-
-- Hábitos de cuatro tipos: sí/no, cantidad, tiempo y «a evitar».
-- Frecuencia diaria, en días concretos, X veces por semana o X veces por mes.
-- Rachas con comodines, pausas y registro de días anteriores dentro de un límite configurable.
-- Detalle de cada hábito con calendario de actividad, métricas e hitos.
-- Estadísticas globales, comparación entre períodos y registro de ánimo y energía con correlaciones.
-- Revisión semanal con reflexión escrita.
-- Recordatorios (con la app abierta o activa), atajos de teclado y tema claro y oscuro.
 
 ## Datos y privacidad
 
