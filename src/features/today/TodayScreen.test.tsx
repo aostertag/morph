@@ -6,9 +6,9 @@ import { getEntry, setEntryValue } from '@/db/repos/entries';
 import { archiveHabit, createHabit } from '@/db/repos/habits';
 import { saveReflection } from '@/db/repos/reviews';
 import { getSettings, updateSettings } from '@/db/repos/settings';
-import { addDays } from '@/domain/day';
+import { addDays, type LocalDay, startOfWeek } from '@/domain/day';
 import { lastCompleteWeek } from '@/domain/review';
-import { formatWeek } from '@/lib/format';
+import { formatDate, formatWeek, formatWeekday } from '@/lib/format';
 import { habitInput, renderRoute, todayLocal } from '@/test/render';
 import { TodayScreen } from './TodayScreen';
 
@@ -198,6 +198,83 @@ describe('pantalla Hoy', () => {
     await createHabit(habitInput({ name: 'Leer' }));
     renderRoute(<TodayScreen />, { url: `/?dia=${addDays(todayLocal(), 3)}` });
     expect(await screen.findByRole('button', { name: 'Día siguiente' })).toBeDisabled();
+  });
+
+  describe('tira de la semana', () => {
+    it('marca hoy como elegido y no deja elegir días futuros', async () => {
+      await createHabit(habitInput({ name: 'Leer' }));
+      renderRoute(<TodayScreen />);
+      const start = startOfWeek(todayLocal(), 1);
+      const nav = await screen.findByRole('navigation', {
+        name: formatWeek({ from: start, to: addDays(start, 6) }, todayLocal()),
+      });
+
+      const buttons = within(nav).getAllByRole('button');
+      expect(buttons).toHaveLength(7);
+      const current = buttons.find((b) => b.getAttribute('aria-current') === 'date');
+      expect(current).toHaveAccessibleName(/, hoy: 0 de 1 hábitos$/);
+      const after = buttons.slice(buttons.indexOf(current as HTMLElement) + 1);
+      for (const button of after) expect(button).toBeDisabled();
+      // Un solo punto de tabulación: el día elegido.
+      expect(buttons.filter((b) => b.tabIndex === 0)).toEqual([current]);
+    });
+
+    it('dice el cumplimiento de cada día y cambia de día al pulsar', async () => {
+      const today = todayLocal();
+      const leer = await createHabit(habitInput({ name: 'Leer', createdOn: addDays(today, -30) }));
+      const correr = await createHabit(
+        habitInput({ name: 'Correr', createdOn: addDays(today, -30) }),
+      );
+      // Una semana entera ya pasada: ningún día es futuro.
+      const start = startOfWeek(addDays(today, -7), 1);
+      await setEntryValue(leer.id, start, 1);
+      await setEntryValue(correr.id, start, 1);
+      await setEntryValue(leer.id, addDays(start, 1), 1);
+      const { user } = renderRoute(<TodayScreen />, { url: `/?dia=${addDays(start, 3)}` });
+
+      const nav = await screen.findByRole('navigation', { name: /^Semana del/ });
+      const day = (d: LocalDay) =>
+        within(nav).getByRole('button', {
+          name: new RegExp(`^${formatWeekday(d)} ${formatDate(d, today)}:`),
+        });
+      await waitFor(() => expect(day(start)).toHaveAccessibleName(/2 de 2 hábitos$/));
+      expect(day(addDays(start, 1))).toHaveAccessibleName(/1 de 2 hábitos$/);
+      expect(day(addDays(start, 2))).toHaveAccessibleName(/0 de 2 hábitos$/);
+
+      await user.click(day(addDays(start, 1)));
+      expect(
+        await screen.findByRole('heading', {
+          level: 1,
+          name: formatDate(addDays(start, 1), today),
+        }),
+      ).toBeInTheDocument();
+      expect(day(addDays(start, 1))).toHaveAttribute('aria-current', 'date');
+      expect(day(addDays(start, 3))).not.toHaveAttribute('aria-current');
+    });
+
+    it('con el foco en la tira, las flechas mueven el foco al día nuevo, también a otra semana', async () => {
+      const today = todayLocal();
+      await createHabit(habitInput({ name: 'Leer', createdOn: addDays(today, -30) }));
+      const start = startOfWeek(addDays(today, -7), 1);
+      const { user } = renderRoute(<TodayScreen />, { url: `/?dia=${start}` });
+
+      const nav = await screen.findByRole('navigation', { name: /^Semana del/ });
+      const first = within(nav).getAllByRole('button')[0];
+      first?.focus();
+      await user.keyboard('{ArrowLeft}');
+
+      const sunday = addDays(start, -1);
+      expect(
+        await screen.findByRole('heading', { level: 1, name: formatDate(sunday, today) }),
+      ).toBeInTheDocument();
+      const moved = await screen.findByRole('navigation', {
+        name: formatWeek({ from: addDays(start, -7), to: sunday }, today),
+      });
+      await waitFor(() =>
+        expect(document.activeElement).toBe(within(moved).getAllByRole('button')[6]),
+      );
+      expect(document.activeElement).toHaveAttribute('aria-current', 'date');
+    });
   });
 
   describe('ánimo, energía y nota del día', () => {

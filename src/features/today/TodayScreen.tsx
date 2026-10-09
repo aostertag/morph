@@ -16,6 +16,7 @@ import { HabitRow } from './HabitRow';
 import { SidePanel } from './SidePanel';
 import { TodayShortcuts } from './TodayShortcuts';
 import { useHabitAnalyses } from './useHabitAnalyses';
+import { WeekStrip } from './WeekStrip';
 
 /** Día seleccionado en la URL (`?dia=YYYY-MM-DD`); hoy si falta o no es válido. */
 function useSelectedDay(today: LocalDay): [LocalDay, (day: LocalDay) => void] {
@@ -59,6 +60,13 @@ export function TodayScreen() {
           onSelectDay={setDay}
         />
         <DayHeader day={day} today={today} onChange={setDay} />
+        <WeekStrip
+          analyses={analyses}
+          day={day}
+          today={today}
+          weekStartsOn={settings.weekStartsOn}
+          onSelectDay={setDay}
+        />
 
         {day === today && hasHabits && reviews && (
           <ReviewPrompt analyses={analyses} settings={settings} reviews={reviews} today={today} />

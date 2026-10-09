@@ -139,6 +139,11 @@ export function monthOf(day: LocalDay): number {
   return parts(day)[1];
 }
 
+/** Día del mes, de 1 a 31. */
+export function dayOfMonth(day: LocalDay): number {
+  return parts(day)[2];
+}
+
 export function minDay(a: LocalDay, b: LocalDay): LocalDay {
   return a <= b ? a : b;
 }
