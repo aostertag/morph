@@ -126,10 +126,6 @@
   --duration-base: 180ms;
   --duration-slow: 200ms;
 
-  /* Punto de corte para pantallas muy estrechas (340): por debajo, siete objetivos de 44 px
-     no caben entre los márgenes (la tira de la semana de Hoy reparte su área táctil). */
-  --breakpoint-narrow: 21.25rem;
-
   /* Anchos de la maqueta */
   --container-list: 42.5rem; /* 680 */
   --container-panel: 20rem; /* 320 */

@@ -17,7 +17,7 @@ export function DayProgress({
   if (progress.total === 0) return null;
 
   return (
-    <section aria-label="Progreso del día" className="mt-8">
+    <section aria-label="Progreso del día" className="mt-4 lg:mt-8">
       <div className="flex items-end justify-between gap-6">
         <p className="text-4xl font-semibold">{formatPercent(progress.ratio)}</p>
         <p className="pb-1 text-right text-md text-text-muted">

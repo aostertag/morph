@@ -60,13 +60,7 @@ export function TodayScreen() {
           onSelectDay={setDay}
         />
         <DayHeader day={day} today={today} onChange={setDay} />
-        <WeekStrip
-          analyses={analyses}
-          day={day}
-          today={today}
-          weekStartsOn={settings.weekStartsOn}
-          onSelectDay={setDay}
-        />
+        <WeekStrip analyses={analyses} day={day} today={today} onSelectDay={setDay} />
 
         {day === today && hasHabits && reviews && (
           <ReviewPrompt analyses={analyses} settings={settings} reviews={reviews} today={today} />
