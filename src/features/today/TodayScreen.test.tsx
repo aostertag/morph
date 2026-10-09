@@ -1,5 +1,5 @@
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EMPTY_DATA, restoreSnapshot } from '@/db/repos/dataset';
 import { getDayLog, updateDayLog } from '@/db/repos/dayLogs';
 import { getEntry, setEntryValue } from '@/db/repos/entries';
@@ -8,8 +8,10 @@ import { saveReflection } from '@/db/repos/reviews';
 import { getSettings, updateSettings } from '@/db/repos/settings';
 import { addDays, type LocalDay } from '@/domain/day';
 import { lastCompleteWeek } from '@/domain/review';
+import { LG_QUERY } from '@/hooks/useMediaQuery';
 import { formatDate, formatWeek, formatWeekday } from '@/lib/format';
-import { habitInput, renderRoute, todayLocal } from '@/test/render';
+import { mediaQueryList } from '@/test/mediaQuery';
+import { habitInput, mobileViewport, renderRoute, todayLocal } from '@/test/render';
 import { TodayScreen } from './TodayScreen';
 
 describe('pantalla Hoy', () => {
@@ -201,7 +203,14 @@ describe('pantalla Hoy', () => {
   });
 
   describe('tira de días', () => {
-    it('marca hoy como elegido, con tres días futuros desactivados y ninguno más', async () => {
+    // La tira solo se dibuja en móvil; los demás tests de Hoy corren en escritorio.
+    let restoreViewport: () => void;
+    beforeEach(() => {
+      restoreViewport = mobileViewport();
+    });
+    afterEach(() => restoreViewport());
+
+    it('termina en hoy, elegido, y no dibuja días futuros', async () => {
       await createHabit(habitInput({ name: 'Leer' }));
       renderRoute(<TodayScreen />);
       const nav = await screen.findByRole('navigation', { name: 'Días' });
@@ -209,19 +218,55 @@ describe('pantalla Hoy', () => {
       const buttons = within(nav).getAllByRole('button');
       const current = buttons.find((b) => b.getAttribute('aria-current') === 'date');
       expect(current).toHaveAccessibleName(/, hoy: 0 de 1 hábitos$/);
-      const after = buttons.slice(buttons.indexOf(current as HTMLElement) + 1);
-      expect(after).toHaveLength(3);
-      for (const button of after) expect(button).toBeDisabled();
+      expect(buttons.at(-1)).toBe(current);
+      for (const button of buttons) expect(button).toBeEnabled();
       // Un solo punto de tabulación: el día elegido.
       expect(buttons.filter((b) => b.tabIndex === 0)).toEqual([current]);
     });
 
-    it('no pasa del primer hábito hacia atrás', async () => {
+    it('llega un año atrás aunque el hábito sea de hoy', async () => {
       const today = todayLocal();
-      await createHabit(habitInput({ name: 'Leer', createdOn: addDays(today, -10) }));
+      const first = addDays(today, -365);
+      await createHabit(habitInput({ name: 'Leer', createdOn: today }));
       renderRoute(<TodayScreen />);
       const nav = await screen.findByRole('navigation', { name: 'Días' });
-      expect(within(nav).getAllByRole('button')).toHaveLength(10 + 1 + 3);
+      const buttons = within(nav).getAllByRole('button');
+      expect(buttons).toHaveLength(365 + 1);
+      expect(buttons[0]).toHaveAccessibleName(
+        new RegExp(`^${formatWeekday(first)} ${formatDate(first, today)}:`),
+      );
+    });
+
+    it('también tiene el año entero sin ningún hábito', async () => {
+      await updateSettings({ onboardingDone: true });
+      renderRoute(<TodayScreen />);
+      const nav = await screen.findByRole('navigation', { name: 'Días' });
+      expect(within(nav).getAllByRole('button')).toHaveLength(365 + 1);
+    });
+
+    it('un día anterior a los hábitos se puede elegir: sin nada programado, y de solo lectura pasado el límite', async () => {
+      const today = todayLocal();
+      await createHabit(habitInput({ name: 'Leer', createdOn: today }));
+      const { user } = renderRoute(<TodayScreen />);
+      const nav = await screen.findByRole('navigation', { name: 'Días' });
+      const day = (d: LocalDay) =>
+        within(nav).getByRole('button', {
+          name: new RegExp(`^${formatWeekday(d)} ${formatDate(d, today)}:`),
+        });
+
+      const recent = addDays(today, -3);
+      expect(day(recent)).toHaveAccessibleName(/: nada programado$/);
+      await user.click(day(recent));
+      expect(
+        await screen.findByRole('heading', { level: 1, name: formatDate(recent, today) }),
+      ).toBeInTheDocument();
+      expect(screen.queryByRole('checkbox', { name: 'Leer' })).not.toBeInTheDocument();
+      expect(screen.queryByText(/Este día es de solo lectura/)).not.toBeInTheDocument();
+
+      const old = addDays(today, -200);
+      await user.click(day(old));
+      expect(await screen.findByText(/Este día es de solo lectura/)).toBeInTheDocument();
+      expect(day(old)).toHaveAttribute('aria-current', 'date');
     });
 
     it('dice el cumplimiento de cada día y cambia de día al pulsar', async () => {
@@ -277,6 +322,43 @@ describe('pantalla Hoy', () => {
       expect(document.activeElement).toHaveAccessibleName(
         new RegExp(`^${formatWeekday(before)} ${formatDate(before, today)}:`),
       );
+    });
+  });
+
+  describe('tira de días según el ancho', () => {
+    it('no se dibuja en escritorio; al estrechar aparece colocada y al ensanchar se va', async () => {
+      const listeners = new Set<() => void>();
+      let narrow = false;
+      const previous = window.matchMedia;
+      window.matchMedia = (query: string) =>
+        mediaQueryList(query, query === LG_QUERY && !narrow, listeners);
+      const scrollTo = vi.fn();
+      Element.prototype.scrollTo = scrollTo;
+      const resize = (toNarrow: boolean) =>
+        act(() => {
+          narrow = toNarrow;
+          for (const listener of listeners) listener();
+        });
+      try {
+        await createHabit(habitInput({ name: 'Leer' }));
+        renderRoute(<TodayScreen />);
+        await screen.findByRole('checkbox', { name: 'Leer' });
+        expect(screen.queryByRole('navigation', { name: 'Días' })).not.toBeInTheDocument();
+
+        resize(true);
+        const nav = await screen.findByRole('navigation', { name: 'Días' });
+        expect(within(nav).getAllByRole('button')).toHaveLength(365 + 1);
+        // Se coloca al aparecer (sin esto quedaba en el día más antiguo, a la izquierda).
+        expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'instant' }));
+
+        resize(false);
+        await waitFor(() =>
+          expect(screen.queryByRole('navigation', { name: 'Días' })).not.toBeInTheDocument(),
+        );
+      } finally {
+        window.matchMedia = previous;
+        delete (Element.prototype as { scrollTo?: unknown }).scrollTo;
+      }
     });
   });
 

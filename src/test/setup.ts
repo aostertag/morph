@@ -4,6 +4,7 @@ import { cleanup } from '@testing-library/react';
 import { toast } from 'sonner';
 import { afterEach, beforeEach, vi } from 'vitest';
 import { db } from '@/db/schema';
+import { desktopMatchMedia } from './mediaQuery';
 
 /**
  * Fecha base de los tests de UI: miércoles a mitad de mes, lejos de cualquier
@@ -57,20 +58,10 @@ if (!Element.prototype.setPointerCapture) {
   Element.prototype.hasPointerCapture = () => false;
 }
 
-// jsdom tampoco implementa matchMedia (tema del sistema).
-if (!window.matchMedia) {
-  window.matchMedia = (query: string) =>
-    ({
-      matches: false,
-      media: query,
-      onchange: null,
-      addEventListener: () => {},
-      removeEventListener: () => {},
-      addListener: () => {},
-      removeListener: () => {},
-      dispatchEvent: () => false,
-    }) as MediaQueryList;
-}
+// jsdom tampoco implementa matchMedia (tema del sistema, ancho). Por defecto, un escritorio:
+// así Hoy no dibuja la tira de días (solo móvil), que añade ~1.800 nodos y encarece cada consulta
+// por rol. Los tests de la tira simulan un móvil con `mobileViewport()` (`test/render.tsx`).
+if (!window.matchMedia) window.matchMedia = desktopMatchMedia;
 
 // jsdom no implementa `window.scrollTo` y avisa por consola; los tests que lo comprueban lo espían.
 window.scrollTo = () => {};

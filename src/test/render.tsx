@@ -6,6 +6,7 @@ import { Toaster } from 'sonner';
 import { toLocalDay } from '@/domain/day';
 import type { HabitInput } from '@/domain/habit';
 import { habit } from './factories';
+import { mediaQueryList } from './mediaQuery';
 
 /** Renderiza una pantalla dentro de un router en memoria, con el Toaster montado. */
 export function renderRoute(element: ReactNode, { path = '/', url = '/' } = {}) {
@@ -20,6 +21,18 @@ export function renderRoute(element: ReactNode, { path = '/', url = '/' } = {}) 
     </MemoryRouter>,
   );
   return { user, ...result };
+}
+
+/**
+ * Simula un móvil estrecho (por debajo de `lg`) y devuelve la función que lo deshace. Úsalo en un
+ * `beforeEach`/`afterEach`: los tests de UI corren «en escritorio» por defecto (ver `setup.ts`).
+ */
+export function mobileViewport(): () => void {
+  const previous = window.matchMedia;
+  window.matchMedia = (query: string) => mediaQueryList(query, false);
+  return () => {
+    window.matchMedia = previous;
+  };
 }
 
 export function todayLocal() {
